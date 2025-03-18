@@ -13,7 +13,7 @@
     <div>
         <div class="mx-auto px-4 h-24 flex items-center bg-white">
             <div class="font-black">
-                <img src="{{ asset('imgs/logo/server-hub-logo2.svg') }}" alt="Logo" class="w-70">
+                <a href="{{ route('home') }}"><img src="{{ asset('imgs/logo/server-hub-logo2.svg') }}" alt="Logo" class="w-70"></a>
             </div>
 
             <ul class="flex items-center ml-auto space-x-3">
@@ -21,7 +21,7 @@
                     <a href="" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
                 </li>
                 <li>
-                    <a href="" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Servidores</a>
+                    <a href="{{ route('servidores') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Servidores</a>
                 </li>
                 <li>
                     <a href="" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Sobre</a>
@@ -31,6 +31,11 @@
         </div>
     </div>
     <!-- header -->
+    <!-- banner -->
+    <div style="background: url('{{ asset('imgs/banner/Banner.jpg') }}'); height: 597px;">
+        <div class="container mx-auto"></div>
+    </div>
+<!-- banner -->
     @yield('content')
 </body>
 </html>
