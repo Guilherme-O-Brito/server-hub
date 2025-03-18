@@ -16,3 +16,7 @@ Route::get('/login', function (){
 Route::get('/servidores', function (){
     return view('servidores.index');
 })->name('servidores');
+
+Route::get('/sobre', function (){
+    return view('sobre.index');
+})->name('sobre');
