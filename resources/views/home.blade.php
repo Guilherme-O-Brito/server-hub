@@ -1,71 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto">
-    <h6 class="font-bold mb-2">Barrinha</h6>
-    <div>
-        <button
-            class="flex items-center text-sm bg-blue-500 hover:bg-blue-600 px-4 py-1 rounded-lg text-white shadow-lg cursor-pointer"
-        >
-            Butão
-            <svg class="w-6" data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5"></path>
+<!-- banner -->
+<div style="background: url('{{ asset('imgs/banner/Banner.jpg') }}'); height: 597px;">
+    <div class="container mx-auto"></div>
+</div>
+<!-- banner -->
+<!-- pings -->
+<div class="flex items-center justify-center mt-4">
+    <div class="flex bg-white rounded-md shadow-lg gap-2 px-4 py-2">
+        <div class="text-gray-900 font-semibold">Ping Medio: 15ms</div>
+        <div>
+            <svg class="w-5 text-green-500" data-slot="icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75ZM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 0 1-1.875-1.875V8.625ZM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 0 1 3 19.875v-6.75Z"></path>
             </svg>
-        </button>
-        <div class="absolute inline bg-white border border-gray-300 py-1 shadow-md rounded-sm">
-            <a 
-                href="{{ url('/login') }}"
-                class="w-full text-sm px-3 bg-white hover:bg-gray-100"
-            >Login</a>
-            <a 
-                href=""
-                class="w-full text-sm px-3 bg-white hover:bg-gray-100"
-            >Link 2</a>
-            <a 
-                href=""
-                class="w-full text-sm px-3 bg-white hover:bg-gray-100"
-            >Link 3</a>
         </div>
     </div>
 </div>
-<br>
-<div class=" relative space-y-4">
-    <div class="flex justify-center">
-        <img src="{{ asset('imgs/Logo server-hub2.svg') }}" alt="Logo" class="w-100">
-    </div>
-    <div class="pt-8">
-        <p class="text-2xl font-bold text-center">Para acessar efetue o login.</p>
-    </div>
-    <div>
-        <h2 class="text-5xl text-emerald-500 font-bold text-center">Bem Vindo ao Server-hub!</h2>
-    </div>
-    <div>
-        <p class="text-2xl font-bold text-amber-500 text-center">Para acessar efetue o login.</p>
-    </div>
-    <div class="flex flex-col bg-green-300 mx-150 rounded-2xl shadow-lg overflow-hidden">
-        <div class="bg-green-600 p-4">
-            <h1 class="text-2xl text-white ml-5">Faça seu Login</h1>
-        </div>
-        <br>
-        <p class="text-base text-white ml-5">Login</p>
-        <input 
-            type="text"
-            class="bg-white focus:bg-green-100 text-lg p-3 m-5 focus:text-blue-700 rounded-2xl focus:shadow-lg focus:outline-none"
-        >
-        <br>
-        <p class="text-base text-white ml-5">Senha</p>
-        <input 
-            type="text"
-            class="bg-white focus:bg-green-100 text-lg p-3 m-5 focus:text-blue-700 rounded-2xl focus:shadow-lg focus:outline-none"
-        >
-        <div class="flex justify-center bg-green-700 p-2">
-            <button 
-                type="button" 
-                class="text-white bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:bg-gradient-to-br font-medium rounded-lg px-5 py-2.5 text-center text-5xl me-2 mb-2 shadow cursor-pointer"
-            >
-                Login
-            </button>
-        </div>
-    </div>
+<!-- pings -->
+<!-- container entrar -->
+
+<div class="flex justify-center mt-4">
+    <button
+        type="submit"
+        class="flex items-center justify-center gap-2 font-bold text-xl text-white bg-gradient-to-bl from-indigo-600 to-purple-600 px-4 py-2 rounded-3xl transition duration-300 ease-in-out hover:bg-gradient-to-tr hover:ring-2 ring-purple-400 hover:scale-110 cursor-pointer"
+    >
+    Entre para começar a gerenciar seu servidor
+        <svg class="w-5" data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"></path>
+        </svg>
+    </button>
 </div>
+
+<!-- container entrar -->
 @endsection

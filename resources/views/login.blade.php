@@ -14,7 +14,7 @@
             <div class="flex items-center space-x-20">
 
                 <div class="flex-1">
-                    <img src="{{ asset('imgs/Logo server-hub2.svg') }}" alt="Logo" class="w-90">
+                    <img src="{{ asset('imgs/logo/Logo server-hub2.svg') }}" alt="Logo" class="w-90">
                 </div>
 
                 <div class="flex-1 scale-120">
