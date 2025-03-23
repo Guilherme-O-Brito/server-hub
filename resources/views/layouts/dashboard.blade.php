@@ -104,6 +104,7 @@
         </div>
     </div>
     <!-- limite de conteudo -->
+    @vite('resources/js/app.js')
 </body>
 <footer class="mt-8 text-center text-sm text-gray-500">
     Server-Hub © 2025 • <a href="{{ route('sobre') }}" class="underline hover:text-gray-700">Sobre</a>
