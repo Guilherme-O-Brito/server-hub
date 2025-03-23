@@ -18,7 +18,7 @@
     <!-- grid para os cards -->
     <div class="grid grid-cols-3 gap-5 mb-10">
         <!-- assetto card -->
-        <div class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
+        <a href="{{ route('dashboard.assettoCorsa.index') }}" class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
             <img src="{{ asset('imgs/Assetto.png') }}" alt="Minecraft">
             <div class="pb-4 mx-2 mt-2 space-y-2 relative">
                 <div class="flex items-center space-x-1 w-min text-right text-yellow-600 font-bold text-sm bg-amber-200 px-2 rounded-3xl absolute right-0">
@@ -55,10 +55,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
         <!-- assetto card -->
         <!-- minecraft card -->
-        <div class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
+        <a href="{{ route('dashboard.minecraft.index') }}" class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
             <img src="{{ asset('imgs/Minecraft.png') }}" alt="Minecraft">
             <div class="pb-4 mx-2 mt-2 space-y-2 relative">
                 <div class="flex items-center space-x-1 w-min text-right text-green-600 font-bold text-sm bg-green-200 px-2 rounded-3xl absolute right-0">
@@ -107,10 +107,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
         <!-- minecraft card -->
         <!-- terraria card -->
-        <div class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
+        <a href="{{ route('dashboard.terraria.index') }}" class="bg-white rounded-lg overflow-hidden shadow-lg text-gray-900 cursor-pointer hover:scale-110 hover:shadow-2xl transition duration-300 ease-in-out">
             <img src="{{ asset('imgs/Terraria.png') }}" alt="Minecraft">
             <div class="pb-4 mx-2 mt-2 space-y-2 relative">
                 <div class="flex items-center space-x-1 w-min text-right text-gray-600 font-bold text-sm bg-gray-200 px-2 rounded-3xl absolute right-0">
@@ -147,7 +147,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
         <!-- terraria card -->
         <!--div class="bg-red-200">
             <img src="{{ asset('imgs/Minecraft.png') }}" alt="Minecraft">
