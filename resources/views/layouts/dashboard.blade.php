@@ -26,6 +26,14 @@
                 <li>
                     <a href="{{ route('sobre') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Sobre</a>
                 </li>
+                @auth
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="p-2 font-bold text-base text-red-600 hover:bg-red-200 rounded-lg transition duration-400 ease-in-out cursor-pointer">Desconectar</button>
+                        </form>
+                    </li>
+                @endauth
             </ul>
 
         </div>
