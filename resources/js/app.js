@@ -1,10 +1,14 @@
 import './bootstrap';
 
 import { createApp } from 'vue';
-import App from './components/App.vue';
+import { ZiggyVue } from 'ziggy-js';
+import { Ziggy } from './ziggy.js';
+import MinecraftDashboard from './components/dashboards/minecraft/MinecraftDashboard.vue';
 
-const app = createApp();
+const dashboard = createApp();
 
-app.component('app', App);
+dashboard.use(ZiggyVue, Ziggy);
+dashboard.component('minecraft-dashboard', MinecraftDashboard);
+dashboard.mount('#dashboard-app');
 
-app.mount('#app');
+

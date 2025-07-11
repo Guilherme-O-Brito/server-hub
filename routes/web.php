@@ -1,11 +1,22 @@
 <?php
 
+use App\Events\ConsoleOutput;
 use App\Http\Controllers\AssettoCorsaDashBoardController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MinecraftDashBoardController;
+use App\Http\Controllers\MinecraftServerController;
 use App\Http\Controllers\TerrariaDashBoardController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/ping', function () {
+    return response('', 200);
+});
+
+Route::get('/teste/{message}', function (string $message) {
+    broadcast(new ConsoleOutput($message));
+    return response()->json(['message' => 'Mensagem: '. $message .' enviada']);
+});
 
 Route::get('/', function () {
     return view('home');
@@ -37,6 +48,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [MinecraftDashBoardController::class, 'index'])->name('index');
             Route::get('/arquivos', [MinecraftDashBoardController::class, 'arquivos'])->name('arquivos');
             Route::get('/config', [MinecraftDashBoardController::class, 'config'])->name('config');
+            Route::post('/start', [MinecraftServerController::class, 'start'])->name('startServer');
+            Route::post('/stop', [MinecraftServerController::class, 'stop'])->name('stopServer');
+            Route::post('/send-command', [MinecraftServerController::class, 'sendCommand'])->name('sendCommand');
         });
     
         Route::prefix('/assetto-corsa')->as('assettoCorsa.')->group(function() {
