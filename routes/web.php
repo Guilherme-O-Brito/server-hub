@@ -1,21 +1,18 @@
 <?php
 
 use App\Events\ConsoleOutput;
+use App\Http\Controllers\AdminPanelController;
 use App\Http\Controllers\AssettoCorsaDashBoardController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MinecraftDashBoardController;
 use App\Http\Controllers\MinecraftServerController;
 use App\Http\Controllers\TerrariaDashBoardController;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', function () {
     return response('', 200);
-});
-
-Route::get('/teste/{message}', function (string $message) {
-    broadcast(new ConsoleOutput($message));
-    return response()->json(['message' => 'Mensagem: '. $message .' enviada']);
 });
 
 Route::get('/', function () {
@@ -35,6 +32,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 // middleware garantindo autenticação para algumas rotas
 Route::middleware('auth')->group(function () {
+
+    Route::get('/admin', [AdminPanelController::class, 'index'])->middleware(EnsureUserIsAdmin::class)->name('admin');
 
     // rota da pagina servidores
     Route::get('/servidores', function (){

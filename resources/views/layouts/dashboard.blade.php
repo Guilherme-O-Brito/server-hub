@@ -17,9 +17,13 @@
             </div>
 
             <ul class="flex items-center ml-auto space-x-3">
+                @auth
+                @if (Auth::user()->isAdmin())    
                 <li>
-                    <a href="#" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
+                    <a href="{{ route('admin') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
                 </li>
+                @endif
+                @endauth
                 <li>
                     <a href="{{ route('servidores') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Servidores</a>
                 </li>

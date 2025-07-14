@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class GameServer extends Model
 {
+    protected $table = 'gameservers';
+
     protected $fillable = [
         'name',
         'game_type',
         'config',
         'user_id'
+    ];
+
+    protected $casts = [
+        'config' => 'array',
     ];
 
     public function owner(): BelongsTo
