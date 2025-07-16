@@ -34,6 +34,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 Route::middleware('auth')->group(function () {
 
     Route::get('/admin', [AdminPanelController::class, 'index'])->middleware(EnsureUserIsAdmin::class)->name('admin');
+    Route::post('/create_user', [AdminPanelController::class, 'createUser'])->middleware(EnsureUserIsAdmin::class)->name('createUser');
 
     // rota da pagina servidores
     Route::get('/servidores', function (){
