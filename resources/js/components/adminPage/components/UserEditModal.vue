@@ -17,32 +17,35 @@
                 <h2 class="font-semibold text-purple-600">Criado em: <span class="font-medium text-gray-800">14/07/2025</span></h2>
                 <h2 class="font-semibold text-purple-600">Modificado em: <span class="font-medium text-gray-800">14/07/2025</span></h2>
             </div>
-            <form action="" method="post">
-                <input hidden name="id" type="text" value="teste">
+            <form @submit.prevent="submiteForm">
+                <!--input hidden name="id" type="text" value="teste"-->
                 <label for="name" class="block mb-2 text-md font-medium text-gray-800">Nome</label>
                 <input 
+                    v-model="form.name"
                     id="name"
                     type="text" name="name"
                     placeholder="Digite o nome aqui" 
                     class="bg-gray-200 text-gray-800 text-md rounded-lg focus:outline-purple-300 focus:ring-0 focus:ring-offset-0 block w-full p-2.5">
-                
+                <p v-if="errors.name" class="text-red-500 text-sm">{{ errors.name[0] }}</p>
                 <label for="email" class="block mb-2 mt-4 text-md font-medium text-gray-800">Email</label>
                 <input 
                     id="email"
+                    v-model="form.email"
                     type="text" name="email"
                     placeholder="Digite o email aqui" 
                     class="bg-gray-200 text-gray-800 text-md rounded-lg focus:outline-purple-300 focus:ring-0 focus:ring-offset-0 block w-full p-2.5">
-                
+                <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email[0] }}</p>
                 <label for="password" class="block mb-2 mt-4 text-md font-medium text-gray-800">Senha</label>
                 <input 
                     id="password"
+                    v-model="form.password"
                     type="text" name="password"
                     placeholder="Digite a senha aqui" 
                     class="bg-gray-200 text-gray-800 text-md rounded-lg focus:outline-purple-300 focus:ring-0 focus:ring-offset-0 block w-full p-2.5">
-                
+                <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password[0] }}</p>
                 <div class="flex mt-4">
-                    <label for="admin" class="text-md font-medium text-gray-800 mr-4">Admin</label>
-                    <input id="admin" type="checkbox" value="" class="form-checkbox text-purple-600 bg-gray-100 border-gray-300 rounded mt-1 focus:outline-none focus:ring-0 focus:ring-offset-0">
+                    <label for="is_admin" class="text-md font-medium text-gray-800 mr-4">Admin</label>
+                    <input id="is_admin" type="checkbox" v-model="form.is_admin" class="form-checkbox text-purple-600 bg-gray-100 border-gray-300 rounded mt-1 focus:outline-none focus:ring-0 focus:ring-offset-0">
                 </div>
 
                 <button type="submit" class="w-full mt-4 bg-purple-600 text-white text-lg font-semibold rounded-lg cursor-pointer hover:bg-purple-700 transition duration-400 ease-out">
@@ -56,9 +59,47 @@
 </template>
 
 <script>
+import { route } from 'ziggy-js';
+import { Ziggy } from '../../../ziggy';
 export default {
     props: {
         show: Boolean,
     },
+    data() {
+        return {
+            form: {
+                name: '',
+                email: '',
+                password:'',
+                is_admin: false
+            },
+            errors: {}
+        }
+    },
+    methods: {
+        async submiteForm() {
+            this.errors = {} // limpando erros
+            try {
+                await axios.post(route('createUser', undefined, undefined, Ziggy), this.form)
+                .then(response => {
+                    location.reload();
+                });
+                // resetando formulario
+                this.form = {
+                    name: '',
+                    email: '',
+                    password:'',
+                    is_admin: false
+                };
+            } catch (error) {
+                if (error.response && error.response.status === 422) {
+                    this.errors = error.response.data.errors;
+                } else {
+                    console.error('Erro fora do padrão:', error);
+                }
+            }
+        },
+    }
 }
+
 </script>
