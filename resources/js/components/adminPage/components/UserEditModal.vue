@@ -13,12 +13,11 @@
         </div>
         <!--body-->
         <div class="p-4">
-            <div class="flex mb-4">
-                <h2 class="font-semibold text-purple-600">Criado em: <span class="font-medium text-gray-800">14/07/2025</span></h2>
-                <h2 class="font-semibold text-purple-600">Modificado em: <span class="font-medium text-gray-800">14/07/2025</span></h2>
+            <div class="flex mb-4 justify-between">
+                <h2 v-if="created_at" class="font-semibold text-purple-600">Criado em: <span class="font-medium text-gray-800">{{ created_at }}</span></h2>
+                <h2 v-if="updated_at" class="font-semibold text-purple-600">Modificado em: <span class="font-medium text-gray-800">{{ updated_at }}</span></h2>
             </div>
             <form @submit.prevent="submiteForm">
-                <!--input hidden name="id" type="text" value="teste"-->
                 <label for="name" class="block mb-2 text-md font-medium text-gray-800">Nome</label>
                 <input 
                     v-model="form.name"
@@ -64,9 +63,12 @@ import { Ziggy } from '../../../ziggy';
 export default {
     props: {
         show: Boolean,
+        user: {}
     },
     data() {
         return {
+            created_at: '',
+            updated_at: '',
             form: {
                 name: '',
                 email: '',
@@ -76,11 +78,40 @@ export default {
             errors: {}
         }
     },
+    watch: {
+        user: {
+            handler(newValue) {
+                if (newValue && newValue.data) {
+                    this.form.name = newValue.data[0];
+                    this.form.email = newValue.data[1];
+                    this.form.is_admin = newValue.data[2];
+                    this.created_at = new Date(newValue.created_at).toLocaleDateString();
+                    this.updated_at = new Date(newValue.updated_at).toLocaleDateString();
+                } else {
+                    this.form.name = '';
+                    this.form.email = '';
+                    this.form.is_admin = false;
+                    this.created_at = '';
+                    this.updated_at = '';
+                }
+            }
+        },
+    },
     methods: {
         async submiteForm() {
             this.errors = {} // limpando erros
+            // se o usuario não for nulo então estamos editando um user e não criando um novo
+            let url;
+            let id;
+            if (this.user != null) {
+                url = 'updateUser';
+                id = this.user.id;
+            } else {
+                url = 'createUser';
+                id = undefined;
+            }
             try {
-                await axios.post(route('createUser', undefined, undefined, Ziggy), this.form)
+                await axios.post(route(url, id, undefined, Ziggy), this.form)
                 .then(response => {
                     location.reload();
                 });
@@ -95,9 +126,10 @@ export default {
                 if (error.response && error.response.status === 422) {
                     this.errors = error.response.data.errors;
                 } else {
-                    console.error('Erro fora do padrão:', error);
+                    console.error(error);
                 }
             }
+
         },
     }
 }

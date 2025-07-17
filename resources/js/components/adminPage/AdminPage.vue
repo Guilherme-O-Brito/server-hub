@@ -1,12 +1,12 @@
 <template>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 m-6">
-    <CrudCard head-title="Usuários" :t-head="tHeadUsers" :t-row="tRowUsers" @showEditModal="showUserModal = true" @deleteRow="(row) => {selectedUser = row; showDeleteModal = true}"/>
+    <CrudCard head-title="Usuários" :t-head="tHeadUsers" :t-row="tRowUsers" @editRow="(row) => {selectedUser = row; showUserModal = true}" @deleteRow="(row) => {selectedUser = row; showDeleteModal = true}"/>
     <CrudCard head-title="Servidores de Jogos" :t-head="tHeadServers" :t-row="tRowServers"/>
     <Informations />
 </div>
 
-<UserEditModal :show="showUserModal" @closeUserModal="showUserModal = false"/>
+<UserEditModal :show="showUserModal" :user="selectedUser" @closeUserModal="showUserModal = false; selectedUser = null"/>
 <DeleteModal :show="showDeleteModal" @cancel="showDeleteModal = false; selectedUser = null" @confirm="deleteUser" />
 
 </template>
@@ -52,7 +52,7 @@ export default {
     mounted() {
         // tratando os dados recebidos do servidor e enviando salvando para envio aos components
         this.users.forEach(element => {
-            this.tRowUsers.push({id: Number(element['id']), data: [element['name'], element['email'], Boolean(element['is_admin'])]});
+            this.tRowUsers.push({id: Number(element['id']), data: [element['name'], element['email'], Boolean(element['is_admin'])], created_at: element['created_at'], updated_at: element['updated_at']});
         });
         this.servers.forEach(element => {
             this.tRowServers.push({id: Number(element['id']), data: [element['name'], this.getGameName(Number(element['game_type'])), element['owner'].name]});
