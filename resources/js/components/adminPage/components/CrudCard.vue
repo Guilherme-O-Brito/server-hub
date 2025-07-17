@@ -39,7 +39,7 @@
                                     </svg>
                                 </button>
                                 <button 
-                                    @click="$emit('showDeleteModal')"
+                                    @click="$emit('deleteRow', row)"
                                     title="Excluir"
                                     class="bg-red-700 cursor-pointer flex justify-center items-center hover:bg-red-800 transition duration-400 ease-out rounded-lg mx-1 p-1">
                                     <svg class="text-white w-3" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc. -->
