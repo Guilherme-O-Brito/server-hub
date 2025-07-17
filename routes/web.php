@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin', [AdminPanelController::class, 'index'])->middleware(EnsureUserIsAdmin::class)->name('admin');
     Route::post('/create_user', [AdminPanelController::class, 'createUser'])->middleware(EnsureUserIsAdmin::class)->name('createUser');
+    Route::post('/delete/{id}', [AdminPanelController::class, 'deleteUser'])->middleware(EnsureUserIsAdmin::class)->name('deleteUser');
 
     // rota da pagina servidores
     Route::get('/servidores', function (){

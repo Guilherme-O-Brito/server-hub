@@ -10,7 +10,8 @@ use Illuminate\Validation\Rules\Password;
 
 class AdminPanelController extends Controller
 {
-    public function index() {
+    public function index() 
+    {
         
         $users = User::all(['id', 'name', 'email', 'is_admin'])->makeHidden(['password', 'remember_token']);
         $servers = GameServer::with('owner')->get()->makeHidden(['config', 'user_id']);
@@ -19,7 +20,8 @@ class AdminPanelController extends Controller
         
     }
 
-    public function createUser(Request $request) {
+    public function createUser(Request $request) 
+    {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -41,6 +43,20 @@ class AdminPanelController extends Controller
 
         return response()->json(['message' => 'Usuário criado com sucesso!'], 201);
 
+    }
+
+    public function deleteUser(Request $request) 
+    {
+        $user = User::findOrFail($request->id);
+
+        // garante que o admin não esta deletando a si proprio
+        if (auth()->id() === $user->id) {
+            return response()->json(['error' => 'Você não pode deletar a si mesmo'], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['succes' => true]);
     }
 
 }

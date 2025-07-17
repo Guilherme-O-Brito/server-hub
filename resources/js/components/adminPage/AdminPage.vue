@@ -1,17 +1,19 @@
 <template>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 m-6">
-    <CrudCard head-title="Usuários" :t-head="tHeadUsers" :t-row="tRowUsers" @showEditModal="showUserModal = true" @showDeleteModal="showDeleteModal = true"/>
+    <CrudCard head-title="Usuários" :t-head="tHeadUsers" :t-row="tRowUsers" @showEditModal="showUserModal = true" @deleteRow="(row) => {selectedUser = row; showDeleteModal = true}"/>
     <CrudCard head-title="Servidores de Jogos" :t-head="tHeadServers" :t-row="tRowServers"/>
     <Informations />
 </div>
 
 <UserEditModal :show="showUserModal" @closeUserModal="showUserModal = false"/>
-<DeleteModal :show="showDeleteModal" @closeDeleteModal="showDeleteModal = false"/>
+<DeleteModal :show="showDeleteModal" @cancel="showDeleteModal = false; selectedUser = null" @confirm="deleteUser" />
 
 </template>
 
 <script>
+import { route } from 'ziggy-js';
+import { Ziggy } from '../../ziggy';
 import UserEditModal from './components/UserEditModal.vue';
 import ServerEditModal from './components/ServerEditModal.vue';
 import DeleteModal from './components/DeleteModal.vue';
@@ -31,6 +33,8 @@ export default {
             tRowServers: [],
             tHeadUsers: ['Nome', 'Email', 'Admin'],
             tRowUsers: [],
+            selectedUser: null,
+            selectedServer: null,
             showUserModal: false,
             showServerModal: false,
             showDeleteModal: false
@@ -53,9 +57,11 @@ export default {
         this.servers.forEach(element => {
             this.tRowServers.push({id: Number(element['id']), data: [element['name'], this.getGameName(Number(element['game_type'])), element['owner'].name]});
         });
+        //setInterval(() => {console.log(this.selectedUser)}, 1000);
     },
 
     methods: {
+
         getGameName(num) {
             switch (num) {
                 case 0:
@@ -66,7 +72,27 @@ export default {
                     return 'Terraria';
             
             }
+        },
+
+        async deleteUser() {
+            try {
+                await axios.post(route('deleteUser', this.selectedUser.id, undefined, Ziggy))
+                .then(response => {
+                    location.reload();
+                });
+                this.selectedUser = null;
+                this.showDeleteModal = false;
+            } catch (error) {
+                this.selectedUser = null;
+                this.showDeleteModal = false;
+                if (error.response && error.response.status === 403) {
+                    alert(error.response.data.error).then(() => {location.reload()});
+                } else {
+                    console.error(error);
+                }
+            }
         }
+
     },
 
 }
