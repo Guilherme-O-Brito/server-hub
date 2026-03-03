@@ -1,0 +1,80 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: server_hub
+    image: server_hub:0.0.1
+    ports:
+      - "80:80"
+    environment:
+      DB_HOST: mariadb
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/storage
+      - /var/www/html/bootstrap/cache
+      - ./docker/httpd-vhosts.conf:/etc/apache2/sites-enabled/000-default.conf
+      - /var/www/.ssh
+    working_dir: /var/www/html
+    user: "www-data"
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+      - redis
+
+  queue:
+    image:
+      server_hub:0.0.1
+    restart: unless-stopped
+    command: php artisan queue:work
+    environment:
+      DB_HOST: mariadb
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+  
+  reverb:
+    image: server_hub:0.0.1
+    restart: unless-stopped
+    command: php artisan reverb:start
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: mariadb
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+      REVERB_HOST: 0.0.0.0
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel_db
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: o1N1b3dgtDP2jGD
+    volumes:
+      - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+
+volumes:
+  db_data:
