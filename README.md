@@ -1,66 +1,309 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Server-Hub
+A project dedicated to creating a centralized way to manage self-hosted game servers such as Minecraft, Assetto Corsa, Terraria, etc.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Table of Contents
+* [Authentication](#authentication)
+* [API Endpoints](#API-Endpoints)
+* [Web Routes](#Web-Routes)
+* [Error Codes](#error-codes)
+* [Rate Limiting](#rate-limiting)
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Getting Started
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Authentication
+WIP
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## API Endpoints
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 1. Get Console History
+Retrieves the last 200 messages from the running game console
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+* **URL:** `/api/console/history`
+* **Method:** `GET`
+* **Auth:** Required (Bearer Token)
+* **Success Response:**
+  * **Code:** `200 OK`
+  * **Content:** 
+    ```json
+    [
+        "Server started successfully",
+        "Player joined the game",
+        "Command executed"
+    ]
+    ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+### 2. Get Server Resources
+Retrieves the total server memory, CPU and memory usage
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+* **URL:** `/api/server-status`
+* **Method:** `GET`
+* **Auth:** Required (Bearer Token)
+* **Success Response:**
+    * **Code:** `200 OK`
+  * **Content:** 
+    ```json
+    {
+        "cpu_usage": 75,
+        "memory_usage": "512MB",
+        "total_memory": "2GB"
+    }
+    ```
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 3. Create User
+Creates a new user
 
-## Contributing
+* **URL:** `/api/users`
+* **Method:** `POST`
+* **Auth:** Required (Admin only)
+* **Data Params:**
+    ```json
+    {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "password": "secure_password",
+        "is_admin": true
+    }
+    ```
+* **Success Response:**
+    * **Code:** `201 Created`
+    * **Content:**
+     ```json
+    {
+        "message": "User created successfully"
+    }
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+### 4. Update User
+Update an existing user
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* **URL:** `/api/users/{id}`
+* **Method:** `PUT`
+* **Auth:** Required (Admin only)
+* **Data Params:**
+    ```json
+    {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "password": "new_password",
+        "is_admin": false
+    }
+    ```
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:**
+     ```json
+    {
+        "message": "User updated successfully"
+    }
+    ```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 5. Delete User
+Delete an existing user
 
-## License
+* **URL:** `/api/users/{id}`
+* **Method:** `DELETE`
+* **Auth:** Required (Admin only)
+* **Success Response:**
+    * **Code:** `204 No Content`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+### 6. Start Minecraft Server (WIP)
+Starts the Minecraft server
+
+* **URL:** `/api/minecraft/start`
+* **Method:** `POST`
+* **Auth:** Required
+* **Success Response:**
+    * **Code:** `202 Accepted`
+    * **Content:**
+     ```json
+    {
+        "message": "Server starting"
+    }
+    ```
+
+---
+
+### 7. Stop Minecraft Server (WIP)
+Stops the Minecraft server
+
+* **URL:** `/api/minecraft/stop`
+* **Method:** `POST`
+* **Auth:** Required
+* **Success Response:**
+    * **Code:** `202 Accepted`
+    * **Content:**
+     ```json
+    {
+        "message": "Server stopping"
+    }
+    ```
+
+---
+
+### 8. Minecraft Server Command (WIP)
+Send commands to a running Minecraft server console
+
+* **URL:** `/api/minecraft/command`
+* **Method:** `POST`
+* **Auth:** Required
+* **Data Params:**
+    ```json
+    {
+        "command": "say Hello world"
+    }
+    ```
+* **Success Response:**
+    * **Code:** `202 Accepted`
+    * **Content:**
+     ```json
+    {
+        "message": "Command sent successfully"
+    }
+    ```
+
+---
+
+## Web Routes
+
+### 1. Home Page
+Returns the home page view
+
+* **URL:** `/`
+* **Method:** `GET`
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 2. Sobre Page
+Returns the sobre page view
+
+* **URL:** `/sobre`
+* **Method:** `GET`
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 3. Login Page
+Returns the login page view
+
+* **URL:** `/login`
+* **Method:** `GET`
+* **Auth:** Non-authenticated only
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 4. Login
+Send the login form
+
+* **URL:** `/login`
+* **Method:** `POST`
+* **Data Params:**
+    ```json
+    {
+        "email": "john@example.com",
+        "password": "secure_password"
+    }
+    ```
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `session`
+
+---
+
+### 5. Logout
+Destroys your login session
+
+* **URL:** `/logout`
+* **Method:** `POST`
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `Home HTML Page`
+
+---
+
+### 6. Admin Page
+Returns the admin page view
+
+* **URL:** `/admin`
+* **Method:** `GET`
+* **Auth:** Required (Admin only)
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 7. Servers Page
+Returns the server page view
+
+* **URL:** `/servers`
+* **Method:** `GET`
+* **Auth:** Required (Authenticated user)
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 8. Dashboard Page
+Returns the user dashboard page view
+
+* **URL:** `/dashboard`
+* **Method:** `GET`
+* **Auth:** Required (Authenticated user)
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+### 9. Minecraft Dashboard Page
+Returns the user Minecraft dashboard page view
+
+* **URL:** `/dashboard/minecraft`
+* **Method:** `GET`
+* **Auth:** Required (Authenticated user)
+* **Success Response:**
+    * **Code:** `200 OK`
+    * **Content:** `HTML Page`
+
+---
+
+## Error Codes
+
+Common HTTP status codes returned by the API:
+
+| Code | Name | Description |
+| :--- | :--- | :--- |
+| 200 | OK | Request successful |
+| 400 | Bad Request | Missing or invalid parameters |
+| 401 | Unauthorized | Invalid or missing authentication |
+| 404 | Not Found | Resource not found |
+| 500 | Server Error | Internal server error |
+
+---
+
+## Rate Limiting
+
+You can only do 5 login attempts per minute. Progressive bans will be applied starting with a 1-hour ban.
