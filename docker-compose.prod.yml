@@ -59,7 +59,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel_db
       MYSQL_USER: laravel_user
-      MYSQL_PASSWORD: o1N1b3dgtDP2jGD
+      MYSQL_PASSWORD: 123ab
     volumes:
       - db_data:/var/lib/mysql
 
