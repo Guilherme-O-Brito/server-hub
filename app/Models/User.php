@@ -46,4 +46,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function ownedMinecraftServers() 
+    {
+        return $this->hasMany(MinecraftServer::class, 'owner_id');
+    }
+
+    public function adminMinecraftServers()
+    {
+        return $this->belongsToMany(MinecraftServer::class, 'minecraft_server_admins');
+    }
+
 }
