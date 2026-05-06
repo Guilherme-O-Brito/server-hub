@@ -18,9 +18,10 @@
                 <h1 class="text-purple-600 font-bold text-5xl">Bem Vindo ao Server-Hub {{ Auth::user()->name }}! </h1>
                 <p class="text-xl">Acesse a pagina <span class="text-purple-600 font-semibold">Servidores</span> para começar a jogar.</p> 
             </div>
-            <a href="{{ route('logout') }}">
-                    <button>Sair</button>
-                </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit">Sair</button>
+            </form>
             @endauth
 
             @guest
