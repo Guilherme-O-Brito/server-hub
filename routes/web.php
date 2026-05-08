@@ -18,11 +18,17 @@ Route::middleware('guest')->group(function (){
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
 // authenticated admins routes
-Route::middleware([Authenticate::class, EnsureUserIsAdmin::class])->group(function () {
+Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD
     Route::prefix('/user')->group(function () {
-        Route::post('/', [UserController::class, 'create']);
+        Route::post('/', [UserController::class, 'create'])->name('register.user');
+        Route::put('/', [UserController::class, 'update']);
+        Route::delete('/', [UserController::class, 'delete']);
+        Route::get('/', [UserController::class, 'index']);
+    });
 
+    Route::get('/register', function () {
+        return view('registrer');
     });
 });
     
