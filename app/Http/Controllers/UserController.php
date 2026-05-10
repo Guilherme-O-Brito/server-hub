@@ -29,7 +29,7 @@ class UserController extends Controller
             'is_admin' => $validated['is_admin']
         ]);
         
-        return response()->json(['message' => 'User created successfully']);
+        return response()->json(['message' => 'User created successfully'], 201);
 
     }
 }
