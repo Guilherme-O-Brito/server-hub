@@ -64,4 +64,18 @@ class UserController extends Controller
 
     }
 
+    public function delete(Request $request, $id) 
+    {
+        $user = User::findOrFail($id);
+
+        // admin cant delete itself
+        if (auth()->id() === $user->id) {
+            return response()->json(['error' => 'Are you dumb?'], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'User successfully deleted']);
+    }
+
 }

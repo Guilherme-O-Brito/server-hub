@@ -23,7 +23,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::prefix('/user')->group(function () {
         Route::post('/', [UserController::class, 'create'])->name('register.user');
         Route::put('/{id}', [UserController::class, 'update'])->name('update.user');
-        Route::delete('/', [UserController::class, 'delete']);
+        Route::delete('/{id}', [UserController::class, 'delete']);
         Route::get('/', [UserController::class, 'index']);
     });
 
