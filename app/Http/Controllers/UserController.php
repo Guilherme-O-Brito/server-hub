@@ -70,7 +70,7 @@ class UserController extends Controller
 
         // admin cant delete itself
         if (auth()->id() === $user->id) {
-            return response()->json(['error' => 'Are you dumb?'], 403);
+            return response()->json(['message' => 'Are you dumb?'], 403);
         }
 
         $user->delete();
