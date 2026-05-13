@@ -60,7 +60,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return response()->json(['message' => 'Alteração registrada com sucesso!'], 204);
+        return response()->json(['message' => 'User successfully modified']);
 
     }
 
