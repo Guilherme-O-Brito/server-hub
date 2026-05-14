@@ -16,7 +16,7 @@ class MinecraftServer extends Model
         'allow_flight',
     ];
     
-    protected $guarded = ['id', 'owner'];
+    protected $guarded = ['id', 'owner_id'];
 
     protected $casts = [
         'force_gamemode' => 'boolean',
