@@ -33,7 +33,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::prefix('/server/minecraft')->group(function () {
+    Route::prefix('/servers/minecraft')->group(function () {
         Route::post('/', [MinecraftServerController::class, 'create'])->name('register.minecraftServer');
         Route::put('/{id}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
         Route::delete('/{id}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
