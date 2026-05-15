@@ -39,6 +39,3 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
     });
 });
-
-
-    

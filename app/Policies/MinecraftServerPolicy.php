@@ -45,7 +45,7 @@ class MinecraftServerPolicy
      */
     public function delete(User $user, MinecraftServer $minecraftServer): bool
     {
-        return false;
+        return $minecraftServer->owner_id === $user->id;
     }
 
     /**

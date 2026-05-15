@@ -68,4 +68,15 @@ class MinecraftServerController extends Controller
         return response()->json(['message' => 'Minecraft server successfully modified']);
     }
 
+    public function delete(Request $request, MinecraftServer $minecraftServer) 
+    {
+        if ($request->user()->cannot('delete', $minecraftServer)) {
+            abort(403);
+        }
+
+        $minecraftServer->delete();
+
+        return response()->json(['message' => 'Server successfully deleted']);
+    }
+
 }
