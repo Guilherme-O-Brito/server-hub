@@ -36,11 +36,11 @@ class UserController extends Controller
     }
 
     // admin only
-     public function update(Request $request, $id)
+     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', Password::min(8)
                 ->letters()
                 ->mixedCase()
@@ -48,8 +48,6 @@ class UserController extends Controller
                 ->symbols()],
             'is_admin' => ['required', 'boolean'] 
         ]);
-
-        $user = User::findOrFail($id);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
@@ -64,10 +62,8 @@ class UserController extends Controller
 
     }
 
-    public function delete(Request $request, $id) 
+    public function delete(Request $request, User $user) 
     {
-        $user = User::findOrFail($id);
-
         // admin cant delete itself
         if (auth()->id() === $user->id) {
             return response()->json(['message' => 'Are you dumb?'], 403);

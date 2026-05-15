@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MinecraftServer extends Model
 {
-    
+    use HasFactory;
+
     protected $fillable = [
         'server_name',
         'level_name',

@@ -22,8 +22,8 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD
     Route::prefix('/user')->group(function () {
         Route::post('/', [UserController::class, 'create'])->name('register.user');
-        Route::put('/{id}', [UserController::class, 'update'])->name('update.user');
-        Route::delete('/{id}', [UserController::class, 'delete'])->name('delete.user');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
+        Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
         //Route::get('/', [UserController::class, 'index']);
     });
 
@@ -35,8 +35,8 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::prefix('/servers/minecraft')->group(function () {
         Route::post('/', [MinecraftServerController::class, 'create'])->name('register.minecraftServer');
-        Route::put('/{id}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
-        Route::delete('/{id}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
+        Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
+        Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
     });
 });
 
