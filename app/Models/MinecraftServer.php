@@ -11,13 +11,14 @@ class MinecraftServer extends Model
 
     protected $fillable = [
         'server_name',
+        'level_name',
         'motd',
         'difficulty',
         'force_gamemode',
         'allow_flight',
     ];
     
-    protected $guarded = ['id', 'owner_id', 'level_name'];
+    protected $guarded = ['id', 'owner_id'];
 
     protected $casts = [
         'force_gamemode' => 'boolean',
