@@ -16,7 +16,7 @@ class CreateMinecraftServerTest extends TestCase
 	{
 		$user = User::factory()->create();
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test Server',
 			'level_name' => 'world',
 			'motd' => 'A cool server',
@@ -39,7 +39,7 @@ class CreateMinecraftServerTest extends TestCase
 
 	public function test_guest_cannot_create_minecraft_server()
 	{
-		$response = $this->post('/server/minecraft', []);
+		$response = $this->post('/servers/minecraft', []);
 
 		$response->assertRedirect('/login');
 	}
@@ -48,7 +48,7 @@ class CreateMinecraftServerTest extends TestCase
 	{
 		$user = User::factory()->create();
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => '',
 			'level_name' => 'world',
 			'difficulty' => 0
@@ -61,10 +61,29 @@ class CreateMinecraftServerTest extends TestCase
 	{
 		$user = User::factory()->create();
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
 			'level_name' => '',
 			'difficulty' => 0
+		]);
+
+		$response->assertSessionHasErrors('level_name');
+	}
+
+	public function test_level_name_must_be_unique()
+	{
+		$user = User::factory()->create();
+
+		$this->actingAs($user)->post('/servers/minecraft', [
+			'server_name' => 'First Server',
+			'level_name' => 'world',
+			'difficulty' => 1,
+		]);
+
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
+			'server_name' => 'Second Server',
+			'level_name' => 'world',
+			'difficulty' => 2,
 		]);
 
 		$response->assertSessionHasErrors('level_name');
@@ -74,12 +93,12 @@ class CreateMinecraftServerTest extends TestCase
 	{
 		$user = User::factory()->create();
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
 			'level_name' => 'world',
 		]);
 
-        $response2 = $this->actingAs($user)->post('/server/minecraft', [
+        $response2 = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
 			'level_name' => 'world',
 			'difficulty' => 5
@@ -93,7 +112,7 @@ class CreateMinecraftServerTest extends TestCase
 	{
 		$user = User::factory()->create();
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
 			'level_name' => 'world',
 			'difficulty' => 1,
@@ -110,7 +129,7 @@ class CreateMinecraftServerTest extends TestCase
 
 		$long = str_repeat('a', 300);
 
-		$response = $this->actingAs($user)->post('/server/minecraft', [
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
 			'level_name' => 'world',
 			'difficulty' => 1,
