@@ -27,10 +27,6 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
         Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
         //Route::get('/', [UserController::class, 'index']);
     });
-
-    Route::get('/register', function () {
-        return view('registrer');
-    });
 });
 
 Route::middleware('auth')->group(function () {
