@@ -1,5 +1,11 @@
 node_modules
 vendor
 .git 
-.env 
-storage/logs
+.env
+.env.example
+bootstrap/cache/*.php
+k8s
+docker
+LICENSE
+ERD.png
+README.md

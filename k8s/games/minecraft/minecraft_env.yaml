@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minecraft-env
+  namespace: games
+
+data:
+  EULA: "TRUE"
+  MEMORY: "<memory_to_be_used_by_the_server_in_Mib>M"
+  VERSION: "26.1.2"
+  MAX_PLAYERS: "10"
+  MOTD: "Server-Hub minecraft server"
+  USE_AIKAR_FLAGS: "true"
+  USE_MEOWICE_FLAGS: "true"
+  TZ: "America/Sao_Paulo"
+  DIFFICULTY: "3"
+  FORCE_GAMEMODE: "true"
+  SIMULATION_DISTANCE: "12"
+  VIEW_DISTANCE: "32"
+  OPS: |-
+    <your, list, of, users, separated, by, comma>
+  ENABLE_WHITELIST: "true"
+  WHITELIST: |-
+    <your, list, of, users, separated, by, comma>
+  PREVENT_PROXY_CONNECTIONS: "true"
+  PLAYER_IDLE_TIMEOUT: "5"
+  ALLOW_FLIGHT: "true"
+  ANNOUNCE_PLAYER_ACHIEVEMENTS: "true"
+  SERVER_NAME: "Server-Hub"

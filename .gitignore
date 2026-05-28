@@ -24,3 +24,4 @@ yarn-error.log
 storage/telescope/
 storage/horizon/
 /minecraft
+.directory
