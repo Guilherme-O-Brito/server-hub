@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: server-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+      - name: mariadb
+        image: mariadb:12.2.2
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: "root"
+          - name: MYSQL_DATABASE 
+            value: "laravel_db"
+          - name: MYSQL_USER
+            value: "laravel_user"
+          - name: MYSQL_PASSWORD
+            value: "<your_db_password"
+        volumeMounts:
+          - name: db
+            mountPath: /var/lib/mysql
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: mariadb-data-claim

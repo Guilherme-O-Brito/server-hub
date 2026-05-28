@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: laravel-service
+  namespace: server-hub
+spec:
+  type: ClusterIP
+  selector:
+    app: laravel
+  ports:
+    - port: 80
+      targetPort: 8080

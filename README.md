@@ -5,6 +5,7 @@ A project dedicated to creating a centralized way to manage self-hosted game ser
 * [Endpoints](#Endpoints)
 * [Error Codes](#error-codes)
 * [Rate Limiting](#rate-limiting)
+* [Kubernetes Architecture](#kubernetes-architecture)
 
 ---
 
@@ -484,3 +485,92 @@ Common HTTP status codes returned by the APP:
 ## Rate Limiting
 
 You can only do 5 login attempts per minute. Progressive bans will be applied starting with a 1-hour ban.
+
+---
+
+## Kubernetes Architecture
+
+This project includes a recommended Kubernetes-based deployment architecture under the `k8s/` folder. It is the preferred way to run and validate Server-Hub before releasing updates, but it is not mandatory. If you prefer, you can ignore the Kubernetes manifests and use the Docker image published in the releases, then configure everything yourself.
+
+The architecture is designed to be practical for both production and home-lab environments. For smaller self-hosted setups, K3s is usually lighter and easier to maintain than full Kubernetes, but both K3s and Kubernetes are valid choices.
+
+### Visual Reference
+![Kubernetes Architecture](k8s/k3s%20diagram.png)
+If you keep the architecture diagram next to this documentation, use it as the visual reference for the deployment flow. It is a good example of the kind of diagram that helps explain how the stack is connected.
+
+### How the `k8s/` folder is organized
+
+The manifests are split by responsibility so each part of the platform is easy to understand and maintain:
+
+* `k8s/platform/` contains the core application infrastructure.
+* `k8s/platform/namespace.yaml` isolates the main platform resources from the rest of the cluster.
+* `k8s/platform/laravel/` is where the web application workloads and supporting configuration live.
+* `k8s/platform/mariadb/` provides the database layer used by the web application.
+* `k8s/platform/redis/` provides cache and queue support for the application.
+* `k8s/infrastructure/cloudflared.yaml` represents the tunnel layer used to expose the web app securely.
+* `k8s/games/` separates game-related workloads from the platform layer.
+* `k8s/games/namespace.yaml` keeps game services isolated from the web stack.
+* `k8s/games/minecraft/` is the example game workload for Minecraft.
+
+This separation is intentional. The web platform, persistent services, and game workloads are isolated so that each part can be scaled, secured, and updated independently.
+
+### What this architecture is doing
+
+At a high level, the platform is built around three ideas:
+
+1. The Laravel web app runs inside the cluster and talks to internal services such as MariaDB and Redis.
+2. Cloudflared or a similar tunnel layer exposes the web application to the internet without opening the web app directly to the public network.
+3. Game workloads are kept separate from the web platform so the application can manage them independently.
+
+The Minecraft workload inside `k8s/games/minecraft/` should be treated as an example of how the app can create or manage a server dynamically. It is there to show the pattern, not because you are required to use this exact workload layout.
+
+### Important deployment requirements
+
+This architecture assumes that the physical server running the project has Kubernetes available and that the web application has network access to the Kubernetes API it needs to manage workloads. If the app cannot reach the cluster API, the dynamic server management flow will not work.
+
+Running the application outside Kubernetes may still be possible, but that path is not tested here and is entirely up to the user to figure out and maintain. The recommended path is to use the cluster-based architecture shown in this repository.
+
+### Environment variables and placeholders
+
+Several manifests use placeholder values written between `< >` so you can fill them in for your own environment. These placeholders are important because they prevent hardcoding sensitive values and make the same architecture reusable across different servers.
+
+### Benefits of this architecture
+
+This layout gives you several advantages:
+
+* Security: internal services stay inside the cluster, while only the intended entry points are exposed.
+* Separation of concerns: web, database, cache, infrastructure, and game workloads are isolated from each other.
+* Easier maintenance: each part can be tested and updated independently.
+* Better portability: the same manifests can be adapted for K3s, Kubernetes, and different hosting environments.
+* Better observability and debugging: each workload has a clear role and can be inspected separately.
+* Better scaling options: the web app, cache, database, and game layer can evolve without forcing a single monolithic deployment.
+
+Performance also benefits from this structure. Redis can absorb cache and queue work, MariaDB stays dedicated to persistence, and the web application does not have to manage all concerns in the same container. This generally reduces contention and makes resource usage easier to tune.
+
+### Security notes
+
+This project is built with security in mind, but no system is perfect or impenetrable. For production use on the public internet, it is strongly recommended to place the web application behind a tunnel such as Cloudflare Tunnel or a similar service.
+
+If you use a tunnel provider, configure it so that it never accepts plain HTTP from outside your local network and always prefers HTTPS for external traffic. Also enable every security control the provider offers, such as access policies, authentication controls, and request filtering.
+
+It is also strongly recommended to configure a Web Application Firewall (WAF) on your side. This documentation does not cover WAF setup because it is outside the scope of this project.
+
+Even with a tunnel, HTTPS, and a WAF, the Minecraft server remains the weakest security point because game traffic cannot be hidden behind an HTTP tunnel in the same way the web app can. If you want players to connect without installing extra software such as a VPN or a game tunnel, you will need to expose the Minecraft port on your host firewall and router.
+
+In this project, that commonly means opening port `30000` for Minecraft. If you are behind CGNAT or your provider blocks inbound ports, you can use IPv6 instead, but then your Kubernetes cluster must also be configured for IPv6 support, whether you are using K3s or Kubernetes.
+
+These port-opening and IPv6 approaches are not the most secure options available. They are the weakest link in the security chain and should only be used at your own risk.
+
+For the safest possible setup, a VPN or a peer-to-peer tunnel for game traffic is usually better, even if it is less convenient for players. That avoids exposing the Minecraft server directly to the public network.
+
+Do not modify this project to remove the whitelist requirement for a publicly exposed Minecraft server unless you fully understand the risk. Because this project is open source, you can do it, but that choice is entirely on you, especially if the server is reachable from the public internet.
+
+### Recommended, but not required
+
+This architecture is recommended because it will be kept tested before project updates are released. That makes it the safest and most reliable path for users who want a known-good deployment.
+
+At the same time, it is still optional. You can use the released Docker image and build your own environment if you prefer. The repository documents the Kubernetes path because it is the one we expect to validate regularly, not because every installation must use it.
+
+### Practical summary
+
+If you want the most balanced setup, use Kubernetes or K3s for the platform, keep the web app behind a tunnel, secure the cluster with a WAF, and expose Minecraft only if you accept the risk. If you want maximum convenience instead, you can run the Docker image outside Kubernetes, but that route is not covered or tested here.

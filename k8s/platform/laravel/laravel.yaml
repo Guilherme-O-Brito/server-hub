@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel
+  namespace: server-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel
+  template:
+    metadata:
+      labels:
+        app: laravel
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+      initContainers:
+        - name: laravel-storage-init
+          image: server_hub:0.0.1
+          command:
+            - /bin/sh
+            - -c 
+            - |
+              mkdir -p /app/storage/framework/cache
+              mkdir -p /app/storage/framework/sessions
+              mkdir -p /app/storage/framework/views
+              mkdir -p /app/storage/logs
+              mkdir -p /app/bootstrap/cache
+          volumeMounts:
+            - name: laravel-data
+              mountPath: /app/storage
+            - name: bootstrap-cache
+              mountPath: /app/bootstrap/
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            capabilities:
+              drop:
+                - ALL
+            
+      containers:
+        - name: laravel
+          image: server_hub:0.0.1
+          envFrom:
+            - configMapRef:
+                name: laravel-env
+            - secretRef:
+                name: laravel-secret
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: laravel-data
+              mountPath: /app/storage
+            - name: bootstrap-cache
+              mountPath: /app/bootstrap/cache
+            - name: tmp
+              mountPath: /tmp
+            - name: caddy-data
+              mountPath: /data
+            - name: caddy-config
+              mountPath: /config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: 8080
+            initialDelaySeconds: 30
+
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: 8080
+            initialDelaySeconds: 5
+
+      volumes:
+        - name: laravel-data
+          persistentVolumeClaim:
+            claimName: laravel-data-claim
+        - name: bootstrap-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: caddy-data
+          emptyDir: {}
+        - name: caddy-config
+          emptyDir: {}
