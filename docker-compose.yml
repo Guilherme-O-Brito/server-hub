@@ -6,17 +6,16 @@ services:
     container_name: server_hub
     image: server_hub:0.0.1
     ports:
-      - "80:80"
+      - "8080:8080"
     environment:
       DB_HOST: mariadb
       REDIS_HOST: redis
       QUEUE_CONNECTION: redis
     volumes:
-      - .:/var/www/html
-      - /var/www/html/storage
-      - /var/www/html/bootstrap/cache
-      - ./docker/httpd-vhosts.conf:/etc/apache2/sites-enabled/000-default.conf
-    working_dir: /var/www/html
+      - .:/app
+      - /app/storage
+      - /app/bootstrap/cache
+    working_dir: /app
     user: "www-data"
     env_file:
       - .env
