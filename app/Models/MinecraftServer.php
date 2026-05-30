@@ -36,4 +36,8 @@ class MinecraftServer extends Model
         return $this->belongsToMany(User::class, 'minecraft_server_admins');
     }
 
+    public function whitelist()
+    {
+        return $this->hasMany(MinecraftWhitelist::class);
+    }
 }
