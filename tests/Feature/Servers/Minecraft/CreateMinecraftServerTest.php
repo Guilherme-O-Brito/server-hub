@@ -18,7 +18,6 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'A cool server',
 			'difficulty' => 1,
 			'force_gamemode' => true,
@@ -29,7 +28,6 @@ class CreateMinecraftServerTest extends TestCase
 		$response->assertJson(['message' => 'Minecraft server created successfully']);
 		$this->assertDatabaseHas('minecraft_servers', [
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'A cool server',
 			'difficulty' => 1,
 			'force_gamemode' => true,
@@ -50,27 +48,11 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => '',
-			'level_name' => 'world',
 			'difficulty' => 0
 		]);
 
 		$response->assertSessionHasErrors('server_name');
 	}
-
-	public function test_level_name_is_required()
-	{
-		$user = User::factory()->create();
-
-		$response = $this->actingAs($user)->post('/servers/minecraft', [
-			'server_name' => 'Test',
-			'level_name' => '',
-			'difficulty' => 0
-		]);
-
-		$response->assertSessionHasErrors('level_name');
-	}
-
-	
 
 	public function test_difficulty_is_required_and_in_range()
 	{
@@ -78,12 +60,10 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
-			'level_name' => 'world',
 		]);
 
         $response2 = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
-			'level_name' => 'world',
 			'difficulty' => 5
 		]);
 
@@ -97,7 +77,6 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
-			'level_name' => 'world',
 			'difficulty' => 1,
 			'force_gamemode' => 'notabool',
 			'allow_flight' => 'notabool'
@@ -114,7 +93,6 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
 			'server_name' => 'Test',
-			'level_name' => 'world',
 			'difficulty' => 1,
 			'motd' => $long
 		]);

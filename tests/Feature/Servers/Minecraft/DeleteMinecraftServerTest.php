@@ -16,7 +16,6 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$minecraftServer = $owner->ownedMinecraftServers()->create([
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
 			'force_gamemode' => true,
@@ -39,7 +38,6 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$minecraftServer = $owner->ownedMinecraftServers()->create([
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
 			'force_gamemode' => true,
@@ -58,7 +56,6 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$minecraftServer = $owner->ownedMinecraftServers()->create([
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
 			'force_gamemode' => true,

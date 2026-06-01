@@ -13,7 +13,6 @@ class MinecraftServerController extends Controller
     {
         $validated = $request->validate([
             'server_name' => ['required', 'string', 'max:255'],
-            'level_name' => ['required', 'string', 'max:255', 'unique:minecraft_servers,level_name'],
             'motd' => ['nullable', 'string', 'max:255'],
             'difficulty' => ['required', 'integer', 'min:0', 'max:3'],  
             'force_gamemode' => ['boolean'],
@@ -30,7 +29,6 @@ class MinecraftServerController extends Controller
 
         $user->ownedMinecraftServers()->create([
             'server_name' => $validated['server_name'],
-            'level_name' => $validated['level_name'],
             'motd' => $motd,
             'difficulty' => $validated['difficulty'],
             'force_gamemode' => $force_gamemode,

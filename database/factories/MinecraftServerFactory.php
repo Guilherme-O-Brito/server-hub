@@ -19,7 +19,6 @@ class MinecraftServerFactory extends Factory
     {
         return [
             'server_name' => fake()->word(),
-            'level_name' => 'world',
             'motd' => fake()->sentence(),
             'difficulty' => fake()->numberBetween(0, 3),
             'force_gamemode' => fake()->boolean(),

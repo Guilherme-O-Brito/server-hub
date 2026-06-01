@@ -16,7 +16,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Old Server',
-            'level_name' => 'world',
             'motd' => 'Old motd',
             'difficulty' => 0,
             'force_gamemode' => true,
@@ -38,7 +37,6 @@ class UpdateMinecraftServerTest extends TestCase
             'id' => $minecraftServer->id,
             'owner_id' => $owner->id,
             'server_name' => 'Updated Server',
-            'level_name' => 'world',
             'motd' => 'Updated motd',
             'difficulty' => 2,
             'force_gamemode' => false,
@@ -52,7 +50,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,
@@ -77,7 +74,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,
@@ -101,7 +97,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,
@@ -116,79 +111,12 @@ class UpdateMinecraftServerTest extends TestCase
         $response->assertSessionHasErrors('server_name');
     }
 
-    public function test_level_name_remains_unchanged_on_update()
-    {
-        $owner = User::factory()->create();
-
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'level_name' => 'world',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-        ]);
-
-        $response->assertOk();
-
-        $this->assertDatabaseHas('minecraft_servers', [
-            'id' => $minecraftServer->id,
-            'level_name' => 'world',
-        ]);
-    }
-
-    public function test_other_server_level_name_remains_unchanged_during_update()
-    {
-        $owner = User::factory()->create();
-
-        $firstServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'First Server',
-            'level_name' => 'world-one',
-            'motd' => 'First motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Second Server',
-            'level_name' => 'world-two',
-            'motd' => 'Second motd',
-            'difficulty' => 2,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$firstServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-        ]);
-
-        $response->assertOk();
-
-        $this->assertDatabaseHas('minecraft_servers', [
-            'id' => $firstServer->id,
-            'level_name' => 'world-one',
-        ]);
-
-        $this->assertDatabaseHas('minecraft_servers', [
-            'server_name' => 'Second Server',
-            'level_name' => 'world-two',
-        ]);
-    }
-
     public function test_difficulty_is_required_and_in_range_on_update()
     {
         $owner = User::factory()->create();
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,
@@ -214,7 +142,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,
@@ -237,7 +164,6 @@ class UpdateMinecraftServerTest extends TestCase
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
             'server_name' => 'Test Server',
-            'level_name' => 'world',
             'motd' => 'Test motd',
             'difficulty' => 1,
             'force_gamemode' => true,

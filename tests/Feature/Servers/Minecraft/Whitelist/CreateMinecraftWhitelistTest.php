@@ -121,8 +121,8 @@ class CreateMinecraftWhitelistTest extends TestCase
 	public function test_same_nickname_can_be_used_in_different_servers(): void
 	{
 		$user = User::factory()->create();
-		$firstServer = $this->createMinecraftServer($user, ['server_name' => 'First Server', 'level_name' => 'world-one']);
-		$secondServer = $this->createMinecraftServer($user, ['server_name' => 'Second Server', 'level_name' => 'world-two']);
+		$firstServer = $this->createMinecraftServer($user, ['server_name' => 'First Server']);
+		$secondServer = $this->createMinecraftServer($user, ['server_name' => 'Second Server']);
 
 		$firstResponse = $this->actingAs($user)->post("/servers/minecraft/{$firstServer->id}/whitelist", [
 			'nickname' => 'Steve_01',
@@ -218,7 +218,6 @@ class CreateMinecraftWhitelistTest extends TestCase
 	{
 		return $user->ownedMinecraftServers()->create(array_merge([
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'A cool server',
 			'difficulty' => 1,
 			'force_gamemode' => true,

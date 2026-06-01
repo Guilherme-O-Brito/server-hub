@@ -127,7 +127,7 @@ class DeleteMinecraftWhitelistTest extends TestCase
 	{
 		$owner = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($owner);
-		$otherServer = $this->createMinecraftServer($owner, ['server_name' => 'Other Server', 'level_name' => 'world-two']);
+		$otherServer = $this->createMinecraftServer($owner, ['server_name' => 'Other Server']);
 
 		$minecraftWhitelist = $otherServer->whitelist()->create([
 			'nickname' => 'ForeignNick',
@@ -145,7 +145,6 @@ class DeleteMinecraftWhitelistTest extends TestCase
 	{
 		return $user->ownedMinecraftServers()->create(array_merge([
 			'server_name' => 'Test Server',
-			'level_name' => 'world',
 			'motd' => 'A cool server',
 			'difficulty' => 1,
 			'force_gamemode' => true,
