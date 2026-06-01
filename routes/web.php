@@ -3,6 +3,7 @@
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MinecraftServerAdminController;
 use App\Http\Controllers\MinecraftServerController;
+use App\Http\Controllers\MinecraftWhitelistController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
@@ -36,5 +37,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
         Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->name('store.minecraftServer.admin');
         Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->name('delete.minecraftServer.admin');
+        Route::prefix('/{minecraftServer}/whitelist')->group(function () {
+            Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
+            Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->name('delete.minecraftServer.whitelist');
+            Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
+        });
     });
 });

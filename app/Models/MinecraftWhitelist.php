@@ -10,7 +10,7 @@ class MinecraftWhitelist extends Model
     use HasFactory;
     protected $fillable = ['nickname'];
 
-    protected $guarded = ['id', 'server_id'];
+    protected $guarded = ['id', 'minecraft_server_id'];
 
     public function server()
     {

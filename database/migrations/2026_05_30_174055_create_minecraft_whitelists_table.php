@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('minecraft_whitelists', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('server_id')->constrained('minecraft_servers')->cascadeOnDelete();
+            $table->foreignId('minecraft_server_id')->constrained('minecraft_servers')->cascadeOnDelete();
             $table->string('nickname', 16);
             $table->timestamps();
-            $table->unique(['server_id', 'nickname']);
         });
     }
 
