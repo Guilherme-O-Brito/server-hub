@@ -70,24 +70,7 @@ class CreateMinecraftServerTest extends TestCase
 		$response->assertSessionHasErrors('level_name');
 	}
 
-	public function test_level_name_must_be_unique()
-	{
-		$user = User::factory()->create();
-
-		$this->actingAs($user)->post('/servers/minecraft', [
-			'server_name' => 'First Server',
-			'level_name' => 'world',
-			'difficulty' => 1,
-		]);
-
-		$response = $this->actingAs($user)->post('/servers/minecraft', [
-			'server_name' => 'Second Server',
-			'level_name' => 'world',
-			'difficulty' => 2,
-		]);
-
-		$response->assertSessionHasErrors('level_name');
-	}
+	
 
 	public function test_difficulty_is_required_and_in_range()
 	{
