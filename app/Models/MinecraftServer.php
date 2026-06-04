@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class MinecraftServer extends Model
 {
     use HasFactory;
+
+    public const MORPH_TYPE = 'minecraft';
 
     protected $fillable = [
         'server_name',
@@ -39,5 +42,13 @@ class MinecraftServer extends Model
     public function whitelist()
     {
         return $this->hasMany(MinecraftWhitelist::class);
+    }
+
+    public function executionSlot(): MorphOne
+    {
+        return $this->morphOne(
+            ExecutionSlot::class,
+            'server'
+        );
     }
 }
