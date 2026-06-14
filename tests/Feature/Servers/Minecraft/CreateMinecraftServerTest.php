@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Servers\Minecraft;
 
+use App\Jobs\CreateMinecraftInfrastructureJob;
+use App\Models\MinecraftServer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 use App\Models\User;
 
@@ -14,6 +16,8 @@ class CreateMinecraftServerTest extends TestCase
 
 	public function test_authenticated_user_can_create_minecraft_server()
 	{
+		Queue::fake();
+
 		$user = User::factory()->create();
 
 		$response = $this->actingAs($user)->post('/servers/minecraft', [
@@ -26,13 +30,25 @@ class CreateMinecraftServerTest extends TestCase
 
 		$response->assertCreated();
 		$response->assertJson(['message' => 'Minecraft server created successfully']);
+
+		$minecraftServer = MinecraftServer::query()
+			->where('owner_id', $user->id)
+			->where('server_name', 'Test Server')
+			->firstOrFail();
+
 		$this->assertDatabaseHas('minecraft_servers', [
+			'id' => $minecraftServer->id,
+			'owner_id' => $user->id,
 			'server_name' => 'Test Server',
 			'motd' => 'A cool server',
 			'difficulty' => 1,
 			'force_gamemode' => true,
-			'allow_flight' => false
+			'allow_flight' => false,
 		]);
+
+		Queue::assertPushed(CreateMinecraftInfrastructureJob::class, function (CreateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_guest_cannot_create_minecraft_server()
