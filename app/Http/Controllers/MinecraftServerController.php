@@ -2,56 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateMinecraftServerAction;
+use App\Http\Requests\MinecraftServerRequest;
 use App\Models\MinecraftServer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class MinecraftServerController extends Controller
 {   
-    public function create(Request $request)
-    {
-        $validated = $request->validate([
-            'server_name' => ['required', 'string', 'max:255'],
-            'motd' => ['nullable', 'string', 'max:255'],
-            'difficulty' => ['required', 'integer', 'min:0', 'max:3'],  
-            'force_gamemode' => ['boolean'],
-            'allow_flight' => ['boolean']    
-        ]);
+    public function create(
+        MinecraftServerRequest $request,
+        CreateMinecraftServerAction $action
+    ) {
+        $validated = $request->validated();
 
         $user = auth()->user();
 
-        $motd = $validated['motd'] ?? "{$user->name}'s minecraft server";
-
-        $force_gamemode = $validated['force_gamemode'] ?? true;
-
-        $allow_flight = $validated['allow_flight'] ?? true;
-
-        $user->ownedMinecraftServers()->create([
-            'server_name' => $validated['server_name'],
-            'motd' => $motd,
-            'difficulty' => $validated['difficulty'],
-            'force_gamemode' => $force_gamemode,
-            'allow_flight' => $allow_flight
-        ]);
+        $action->execute($user, $validated);
         
         return response()->json(['message' => 'Minecraft server created successfully'], 201);
 
     }
 
-    public function update(Request $request, MinecraftServer $minecraftServer)
+    public function update(MinecraftServerRequest $request, MinecraftServer $minecraftServer)
     {
         if ($request->user()->cannot('update', $minecraftServer)) {
             abort(403);
         }
 
-        $validated = $request->validate([
-            'server_name' => ['required', 'string', 'max:255'],
-            'motd' => ['nullable', 'string', 'max:255'],
-            'difficulty' => ['required', 'integer', 'min:0', 'max:3'],  
-            'force_gamemode' => ['boolean'],
-            'allow_flight' => ['boolean']    
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
 

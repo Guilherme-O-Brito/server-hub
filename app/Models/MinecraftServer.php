@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\MinecraftServerStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -27,6 +28,7 @@ class MinecraftServer extends Model
         'force_gamemode' => 'boolean',
         'allow_flight' => 'boolean',
         'difficulty' => 'integer',
+        'status' => MinecraftServerStatus::class
     ];
 
     public function owner() 
