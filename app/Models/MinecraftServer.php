@@ -20,6 +20,8 @@ class MinecraftServer extends Model
         'difficulty',
         'force_gamemode',
         'allow_flight',
+        'status',
+        'last_error'
     ];
     
     protected $guarded = ['id', 'owner_id'];

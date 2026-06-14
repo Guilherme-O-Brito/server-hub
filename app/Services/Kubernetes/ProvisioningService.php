@@ -15,7 +15,7 @@ class ProvisioningService
 
         $this->client->createPvc($this->builder->pvc($server));
 
-        $this->client->createDeployment($this->builder->statefulSet($server));
+        $this->client->createDeployment($this->builder->deployment($server));
 
         $server->update([
             'status' => 'stopped'

@@ -63,7 +63,7 @@ public function pvc(MinecraftServer $minecraftServer): array
         ];
     }
 
-    public function statefulSet(MinecraftServer $minecraftServer): array
+    public function deployment(MinecraftServer $minecraftServer): array
     {
         return [
             'apiVersion' => 'apps/v1',
