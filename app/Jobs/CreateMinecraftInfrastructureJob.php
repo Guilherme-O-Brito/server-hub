@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,7 +36,7 @@ class CreateMinecraftInfrastructureJob implements ShouldQueue
 
         if ($server) {
             $server->update([
-                'status' => 'failed',
+                'status' => MinecraftServerStatus::Failed,
                 'last_error' => $exception->getMessage(),
             ]);
         }

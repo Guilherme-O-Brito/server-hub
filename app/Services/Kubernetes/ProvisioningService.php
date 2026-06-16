@@ -2,6 +2,7 @@
 
 namespace App\Services\Kubernetes;
 
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 
 class ProvisioningService
@@ -18,7 +19,7 @@ class ProvisioningService
         $this->client->createDeployment($this->builder->deployment($server));
 
         $server->update([
-            'status' => 'stopped'
+            'status' => MinecraftServerStatus::Stopped
         ]);
     }
 }
