@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-worker
+  namespace: server-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel-worker
+  template:
+    metadata:
+      labels:
+        app: laravel-worker
+    spec:
+      serviceAccountName: laravel-worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+            
+      containers:
+        - name: laravel
+          image: server_hub:0.0.1
+          command:
+            - php
+          args:
+            - artisan
+            - queue:work
+          envFrom:
+            - configMapRef:
+                name: laravel-env
+            - secretRef:
+                name: laravel-secret
+          volumeMounts:
+            - name: laravel-data
+              mountPath: /app/storage
+            - name: bootstrap-cache
+              mountPath: /app/bootstrap/cache
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+      volumes:
+        - name: laravel-data
+          persistentVolumeClaim:
+            claimName: laravel-data-claim
+        - name: bootstrap-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
