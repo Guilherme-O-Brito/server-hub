@@ -52,4 +52,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
         });
     });
+    Route::get('/servers/minecraft/create', function () {
+        return view('server_form');
+    });
 });
