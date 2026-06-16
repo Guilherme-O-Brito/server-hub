@@ -35,19 +35,19 @@ class MinecraftManifestBuilderTest extends TestCase
 
         $pvc = $builder->pvc($minecraftServer);
         $configMap = $builder->server_env($minecraftServer);
-            $deployment = $builder->deployment($minecraftServer);
+        $deployment = $builder->deployment($minecraftServer);
 
-        $this->assertSame("{$minecraftServer->id}-minecraft-data-claim", $pvc['metadata']['name']);
+        $this->assertSame("minecraft-data-claim-{$minecraftServer->id}", $pvc['metadata']['name']);
         $this->assertSame('games', $pvc['metadata']['namespace']);
         $this->assertSame('local-path', $pvc['spec']['storageClassName']);
         $this->assertSame(['ReadWriteOnce'], $pvc['spec']['accessModes']);
         $this->assertSame('5Gi', $pvc['spec']['resources']['requests']['storage']);
 
-        $this->assertSame("{$minecraftServer->id}-minecraft-env", $configMap['metadata']['name']);
+        $this->assertSame("minecraft-env-{$minecraftServer->id}", $configMap['metadata']['name']);
         $this->assertSame('games', $configMap['metadata']['namespace']);
         $this->assertSame('Builder Server', $configMap['data']['SERVER_NAME']);
         $this->assertSame('Builder motd', $configMap['data']['MOTD']);
-        $this->assertSame(2, $configMap['data']['DIFFICULTY']);
+        $this->assertSame('2', $configMap['data']['DIFFICULTY']);
         $this->assertSame('false', $configMap['data']['FORCE_GAMEMODE']);
         $this->assertSame('true', $configMap['data']['ALLOW_FLIGHT']);
         $this->assertSame('Steve_01,Alex_02', $configMap['data']['WHITELIST']);
