@@ -63,6 +63,24 @@ class KubernetesClientTest extends TestCase
         });
     }
 
+    public function test_update_config_map_sends_expected_put_request(): void
+    {
+        Http::fake([
+            '*' => Http::response(['ok' => true], 200),
+        ]);
+
+        $client = $this->newClient();
+        $manifest = ['kind' => 'ConfigMap'];
+
+        $client->updateConfigMap('minecraft-env-1', $manifest);
+
+        Http::assertSent(function (HttpRequest $request) use ($manifest) {
+            return $request->method() === 'PUT'
+                && $request->url() === 'https://kubernetes.default.svc/api/v1/namespaces/games/configmaps/minecraft-env-1'
+                && $request->data() === $manifest;
+        });
+    }
+
     public function test_get_pod_sends_expected_get_request(): void
     {
         Http::fake([

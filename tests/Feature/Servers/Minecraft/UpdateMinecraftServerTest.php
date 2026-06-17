@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Servers\Minecraft;
 
+use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UpdateMinecraftServerTest extends TestCase
@@ -12,6 +15,8 @@ class UpdateMinecraftServerTest extends TestCase
 
     public function test_owner_can_update_minecraft_server()
     {
+        Queue::fake();
+
         $owner = User::factory()->create();
 
         $minecraftServer = $owner->ownedMinecraftServers()->create([
@@ -33,8 +38,10 @@ class UpdateMinecraftServerTest extends TestCase
         $response->assertOk();
         $response->assertJson(['message' => 'Minecraft server successfully modified']);
 
+        $updatedServer = MinecraftServer::query()->findOrFail($minecraftServer->id);
+
         $this->assertDatabaseHas('minecraft_servers', [
-            'id' => $minecraftServer->id,
+            'id' => $updatedServer->id,
             'owner_id' => $owner->id,
             'server_name' => 'Updated Server',
             'motd' => 'Updated motd',
@@ -42,6 +49,10 @@ class UpdateMinecraftServerTest extends TestCase
             'force_gamemode' => false,
             'allow_flight' => true,
         ]);
+
+        Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($updatedServer) {
+            return $job->serverId === $updatedServer->id;
+        });
     }
 
     public function test_guest_cannot_update_minecraft_server()

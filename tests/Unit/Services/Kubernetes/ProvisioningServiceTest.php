@@ -70,5 +70,45 @@ class ProvisioningServiceTest extends TestCase
         $service = new ProvisioningService($builder, $client);
 
         $service->provisionMinecraftServer($minecraftServer);
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+    }
+
+    public function test_update_minecraft_server_updates_existing_config_map_and_marks_server_stopped(): void
+    {
+        $owner = User::factory()->create();
+
+        $minecraftServer = $owner->ownedMinecraftServers()->create([
+            'server_name' => 'Updated Server',
+            'motd' => 'Updated motd',
+            'difficulty' => 2,
+            'force_gamemode' => false,
+            'allow_flight' => true,
+        ]);
+
+        $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $configMapManifest = ['kind' => 'ConfigMap'];
+
+        $builder->expects($this->once())
+            ->method('server_env')
+            ->with($minecraftServer)
+            ->willReturn($configMapManifest);
+
+        $client->expects($this->once())
+            ->method('updateConfigMap')
+            ->with("minecraft-env-{$minecraftServer->id}", $configMapManifest)
+            ->willReturn([]);
+
+        $service = new ProvisioningService($builder, $client);
+
+        $service->updateMinecraftServer($minecraftServer);
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
     }
 }
