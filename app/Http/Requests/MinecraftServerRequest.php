@@ -27,8 +27,8 @@ class MinecraftServerRequest extends FormRequest
             'server_name' => ['required', 'string', 'max:255'],
             'motd' => ['nullable', 'string', 'max:255'],
             'difficulty' => ['required', 'integer', 'min:0', 'max:3'],  
-            'force_gamemode' => ['boolean'],
-            'allow_flight' => ['boolean']    
+            'force_gamemode' => ['boolean', 'required'],
+            'allow_flight' => ['boolean', 'required']    
         ];
     }
 }

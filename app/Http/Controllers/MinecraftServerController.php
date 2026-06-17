@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateMinecraftServerAction;
+use App\Actions\UpdateMinecraftServerAction;
 use App\Http\Requests\MinecraftServerRequest;
 use App\Models\MinecraftServer;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class MinecraftServerController extends Controller
 
     }
 
-    public function update(MinecraftServerRequest $request, MinecraftServer $minecraftServer)
+    public function update(MinecraftServerRequest $request, MinecraftServer $minecraftServer, UpdateMinecraftServerAction $action)
     {
         if ($request->user()->cannot('update', $minecraftServer)) {
             abort(403);
@@ -33,13 +34,7 @@ class MinecraftServerController extends Controller
 
         $user = $request->user();
 
-        $minecraftServer->server_name = $validated['server_name'];
-        $minecraftServer->motd = $validated['motd'] ?? "{$user->name}'s minecraft server";
-        $minecraftServer->difficulty = $validated['difficulty'];
-        $minecraftServer->force_gamemode = $validated['force_gamemode'] ?? true;
-        $minecraftServer->allow_flight = $validated['allow_flight'] ?? true;
-
-        $minecraftServer->save();
+        $action->execute($user, $minecraftServer, $validated);
         
         return response()->json(['message' => 'Minecraft server successfully modified']);
     }

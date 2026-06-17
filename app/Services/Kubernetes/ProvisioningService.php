@@ -22,4 +22,13 @@ class ProvisioningService
             'status' => MinecraftServerStatus::Stopped
         ]);
     }
+
+    public function updateMinecraftServer(MinecraftServer $server): void
+    {   
+        $this->client->updateConfigMap("minecraft-env-{$server->id}", $this->builder->server_env($server));
+
+        $server->update([
+            'status' => MinecraftServerStatus::Stopped
+        ]);
+    }
 }

@@ -13,9 +13,9 @@ class CreateMinecraftServerAction
     {
         $motd = $data['motd'] ?? "{$user->name}'s minecraft server";
 
-        $force_gamemode = $data['force_gamemode'] ?? true;
+        $force_gamemode = $data['force_gamemode'];
 
-        $allow_flight = $data['allow_flight'] ?? true;
+        $allow_flight = $data['allow_flight'];
 
         $server = $user->ownedMinecraftServers()->create([
             'server_name' => $data['server_name'],

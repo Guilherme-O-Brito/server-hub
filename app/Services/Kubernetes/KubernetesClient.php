@@ -57,6 +57,13 @@ class KubernetesClient
         return $this->handleResponse($response, $manifest);
     }
 
+    public function updateConfigMap(string $name, array $manifest): array
+    {
+        $response = $this->client()->put("{$this->baseUrl}/api/v1/namespaces/games/configmaps/{$name}", $manifest);
+
+        return $this->handleResponse($response, $manifest);
+    }
+
     public function getPod(string $name): array
     {
         $response = $this->client()->get("{$this->baseUrl}/api/v1/namespaces/games/pods/{$name}");
