@@ -28,6 +28,8 @@ class CreateMinecraftServerActionTest extends TestCase
         $result = $action->execute($user, [
             'server_name' => 'Action Server',
             'difficulty' => 2,
+            'force_gamemode' => true,
+            'allow_flight' => true,
         ]);
 
         $this->assertNull($result);

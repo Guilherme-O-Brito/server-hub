@@ -101,6 +101,32 @@ class CreateMinecraftServerTest extends TestCase
 		$response->assertSessionHasErrors(['force_gamemode', 'allow_flight']);
 	}
 
+	public function test_force_gamemode_is_required()
+	{
+		$user = User::factory()->create();
+
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
+			'server_name' => 'Test',
+			'difficulty' => 1,
+			'allow_flight' => true,
+		]);
+
+		$response->assertSessionHasErrors('force_gamemode');
+	}
+
+	public function test_allow_flight_is_required()
+	{
+		$user = User::factory()->create();
+
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
+			'server_name' => 'Test',
+			'difficulty' => 1,
+			'force_gamemode' => true,
+		]);
+
+		$response->assertSessionHasErrors('allow_flight');
+	}
+
 	public function test_motd_max_length()
 	{
 		$user = User::factory()->create();

@@ -35,6 +35,8 @@ class UpdateMinecraftServerActionTest extends TestCase
         $action->execute($user, $minecraftServer, [
             'server_name' => 'Updated Server',
             'difficulty' => 2,
+            'force_gamemode' => true,
+            'allow_flight' => true,
         ]);
 
         $minecraftServer->refresh();

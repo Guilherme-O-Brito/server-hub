@@ -169,6 +169,48 @@ class UpdateMinecraftServerTest extends TestCase
         $response->assertSessionHasErrors(['force_gamemode', 'allow_flight']);
     }
 
+    public function test_force_gamemode_is_required_on_update()
+    {
+        $owner = User::factory()->create();
+
+        $minecraftServer = $owner->ownedMinecraftServers()->create([
+            'server_name' => 'Test Server',
+            'motd' => 'Test motd',
+            'difficulty' => 1,
+            'force_gamemode' => true,
+            'allow_flight' => true,
+        ]);
+
+        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
+            'server_name' => 'Updated Server',
+            'difficulty' => 2,
+            'allow_flight' => true,
+        ]);
+
+        $response->assertSessionHasErrors('force_gamemode');
+    }
+
+    public function test_allow_flight_is_required_on_update()
+    {
+        $owner = User::factory()->create();
+
+        $minecraftServer = $owner->ownedMinecraftServers()->create([
+            'server_name' => 'Test Server',
+            'motd' => 'Test motd',
+            'difficulty' => 1,
+            'force_gamemode' => true,
+            'allow_flight' => true,
+        ]);
+
+        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
+            'server_name' => 'Updated Server',
+            'difficulty' => 2,
+            'force_gamemode' => true,
+        ]);
+
+        $response->assertSessionHasErrors('allow_flight');
+    }
+
     public function test_motd_max_length_on_update()
     {
         $owner = User::factory()->create();
