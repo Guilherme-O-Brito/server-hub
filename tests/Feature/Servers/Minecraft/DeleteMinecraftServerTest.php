@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Servers\Minecraft;
 
+use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteMinecraftServerTest extends TestCase
@@ -12,6 +14,8 @@ class DeleteMinecraftServerTest extends TestCase
 
 	public function test_owner_can_delete_minecraft_server()
 	{
+		Queue::fake();
+
 		$owner = User::factory()->create();
 
 		$minecraftServer = $owner->ownedMinecraftServers()->create([
@@ -27,9 +31,15 @@ class DeleteMinecraftServerTest extends TestCase
 		$response->assertOk();
 		$response->assertJson(['message' => 'Server successfully deleted']);
 
-		$this->assertDatabaseMissing('minecraft_servers', [
+		$this->assertDatabaseHas('minecraft_servers', [
 			'id' => $minecraftServer->id,
+			'owner_id' => $owner->id,
+			'status' => 'deleting',
 		]);
+
+		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_guest_cannot_delete_minecraft_server()

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Servers\Minecraft\Whitelist;
 
+use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CreateMinecraftWhitelistTest extends TestCase
@@ -152,6 +154,7 @@ class CreateMinecraftWhitelistTest extends TestCase
 	{
 		$user = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($user);
+		Queue::fake();
 
 		$this->actingAs($user)->post("/servers/minecraft/{$minecraftServer->id}/whitelist", [
 			'nickname' => 'Steve_01',
@@ -160,10 +163,21 @@ class CreateMinecraftWhitelistTest extends TestCase
 		$this->actingAs($user)->delete("/servers/minecraft/{$minecraftServer->id}")
 			->assertOk();
 
-		$this->assertDatabaseMissing('minecraft_whitelists', [
+		$minecraftServer->refresh();
+
+		$this->assertDatabaseHas('minecraft_servers', [
+			'id' => $minecraftServer->id,
+			'status' => 'deleting',
+		]);
+
+		$this->assertDatabaseHas('minecraft_whitelists', [
 			'minecraft_server_id' => $minecraftServer->id,
 			'nickname' => 'Steve_01',
 		]);
+
+		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_whitelist_relationship_is_working(): void
@@ -179,7 +193,10 @@ class CreateMinecraftWhitelistTest extends TestCase
 
 		$this->assertSame(1, $minecraftServer->whitelist()->count());
 		$this->assertSame('Steve_01', $minecraftServer->whitelist()->first()->nickname);
-		$this->assertTrue($minecraftServer->whitelist()->where('nickname', 'Steve_01')->exists());
+		$this->assertDatabaseHas('minecraft_whitelists', [
+			'minecraft_server_id' => $minecraftServer->id,
+			'nickname' => 'Steve_01',
+		]);
 	}
 
 	public function test_nickname_must_have_maximum_16_characters(): void

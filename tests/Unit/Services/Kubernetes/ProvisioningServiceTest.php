@@ -76,6 +76,38 @@ class ProvisioningServiceTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
     }
 
+    public function test_delete_minecraft_server_uses_delete_calls_for_all_resources(): void
+    {
+        $owner = User::factory()->create();
+
+        $minecraftServer = $owner->ownedMinecraftServers()->create([
+            'server_name' => 'Delete Server',
+            'motd' => 'Delete motd',
+            'difficulty' => 1,
+            'force_gamemode' => true,
+            'allow_flight' => false,
+        ]);
+
+        $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $client->expects($this->once())
+            ->method('deleteDeployment')
+            ->with("minecraft-{$minecraftServer->id}");
+
+        $client->expects($this->once())
+            ->method('deletePvc')
+            ->with("minecraft-data-claim-{$minecraftServer->id}");
+
+        $client->expects($this->once())
+            ->method('deleteConfigMap')
+            ->with("minecraft-env-{$minecraftServer->id}");
+
+        $service = new ProvisioningService($builder, $client);
+
+        $service->deleteMinecraftServer($minecraftServer);
+    }
+
     public function test_update_minecraft_server_updates_existing_config_map_and_marks_server_stopped(): void
     {
         $owner = User::factory()->create();
