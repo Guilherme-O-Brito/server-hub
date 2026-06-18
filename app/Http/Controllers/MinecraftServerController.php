@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateMinecraftServerAction;
+use App\Actions\DeleteMinecraftServerAction;
 use App\Actions\UpdateMinecraftServerAction;
 use App\Http\Requests\MinecraftServerRequest;
 use App\Models\MinecraftServer;
@@ -39,13 +40,13 @@ class MinecraftServerController extends Controller
         return response()->json(['message' => 'Minecraft server successfully modified']);
     }
 
-    public function delete(Request $request, MinecraftServer $minecraftServer) 
+    public function delete(Request $request, MinecraftServer $minecraftServer, DeleteMinecraftServerAction $action) 
     {
         if ($request->user()->cannot('delete', $minecraftServer)) {
             abort(403);
         }
 
-        $minecraftServer->delete();
+        $action->execute($minecraftServer);
 
         return response()->json(['message' => 'Server successfully deleted']);
     }

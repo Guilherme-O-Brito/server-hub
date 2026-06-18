@@ -31,4 +31,13 @@ class ProvisioningService
             'status' => MinecraftServerStatus::Stopped
         ]);
     }
+
+    public function deleteMinecraftServer(MinecraftServer $server): void
+    {
+        $this->client->deleteDeployment("minecraft-{$server->id}");
+
+        $this->client->deletePvc("minecraft-data-claim-{$server->id}");
+
+        $this->client->deleteConfigMap("minecraft-env-{$server->id}");
+    }
 }

@@ -43,11 +43,33 @@ class KubernetesClient
         return $this->handleResponse($response, $manifest);
     }
 
+    public function deleteDeployment(string $name): void
+    {
+        $response = $this->client()->delete("{$this->baseUrl}/apis/apps/v1/namespaces/games/deployments/{$name}");
+        
+        if ($response->status() === 404) {
+            return;
+        }
+
+        $this->handleResponse($response, []);
+    }
+
     public function createPvc(array $manifest): array
     {
         $response = $this->client()->post("{$this->baseUrl}/api/v1/namespaces/games/persistentvolumeclaims", $manifest);
 
         return $this->handleResponse($response, $manifest);
+    }
+
+    public function deletePvc(string $name): void
+    {
+        $response = $this->client()->delete("{$this->baseUrl}/api/v1/namespaces/games/persistentvolumeclaims/{$name}");
+        
+        if ($response->status() === 404) {
+            return;
+        }
+
+        $this->handleResponse($response, []);
     }
 
     public function createConfigMap(array $manifest): array
@@ -62,6 +84,17 @@ class KubernetesClient
         $response = $this->client()->put("{$this->baseUrl}/api/v1/namespaces/games/configmaps/{$name}", $manifest);
 
         return $this->handleResponse($response, $manifest);
+    }
+
+    public function deleteConfigMap(string $name): void
+    {
+        $response = $this->client()->delete("{$this->baseUrl}/api/v1/namespaces/games/configmaps/{$name}");
+        
+        if ($response->status() === 404) {
+            return;
+        }
+
+        $this->handleResponse($response, []);
     }
 
     public function getPod(string $name): array

@@ -19,4 +19,6 @@ enum MinecraftServerStatus: string
     case Failed = 'failed';
 
     case Deleting = 'deleting';
+
+    case DeleteFailed = 'delete_failed';
 }
