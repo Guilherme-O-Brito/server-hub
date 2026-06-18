@@ -38,7 +38,7 @@ class DeleteMinecraftinfrastructureJob implements ShouldQueue
 
         if ($server) {
             $server->update([
-                'status' => MinecraftServerStatus::Failed,
+                'status' => MinecraftServerStatus::DeleteFailed,
                 'last_error' => $exception->getMessage(),
             ]);
         }
