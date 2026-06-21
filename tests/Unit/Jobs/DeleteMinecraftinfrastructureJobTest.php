@@ -61,7 +61,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
         $minecraftServer->refresh();
 
-        $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->status);
+        $this->assertSame(MinecraftServerStatus::DeleteFailed, $minecraftServer->status);
         $this->assertSame('Delete failed', $minecraftServer->last_error);
     }
 }
