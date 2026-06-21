@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
 use Illuminate\Http\Request;
@@ -40,6 +41,8 @@ class MinecraftWhitelistController extends Controller
             'nickname' => $validated['nickname']
         ]);
 
+        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+
         return response()->json(['message' => 'User added to this minecraft server successfully'], 201);
     }
 
@@ -54,6 +57,8 @@ class MinecraftWhitelistController extends Controller
         }
 
         $minecraftWhitelist->delete();
+
+        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
 
         return response()->json(['message' => 'Nickname successfully deleted from the whitelist']);
     }
