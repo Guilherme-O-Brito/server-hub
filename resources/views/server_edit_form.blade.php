@@ -4,17 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Minecraft Server</title>
+    <title>Edit Minecraft Server</title>
 </head>
 <body style="margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;">
 
 
-<form method="POST" action="{{ route('create.minecraftServer') }}"
+<form method="POST" action="{{ route('update.minecraftServer', $minecraftServer) }}"
       style="display:flex; flex-direction:column; gap:12px; min-width:300px;">
 
     @csrf
+    @method('PUT')
 
-    <h2>Create Minecraft Server</h2>
+    <h2>Edit Minecraft Server</h2>
 
     <div>
         <label for="server_name">Server Name</label><br>
@@ -22,7 +23,7 @@
             type="text"
             id="server_name"
             name="server_name"
-            value="{{ old('server_name') }}"
+            value="{{ old('server_name', $minecraftServer->server_name) }}"
             required
         >
     </div>
@@ -33,17 +34,17 @@
             type="text"
             id="motd"
             name="motd"
-            value="{{ old('motd') }}"
+            value="{{ old('motd', $minecraftServer->motd) }}"
         >
     </div>
 
     <div>
         <label for="difficulty">Difficulty</label><br>
         <select id="difficulty" name="difficulty" required>
-            <option value="0">Peaceful</option>
-            <option value="1">Easy</option>
-            <option value="2">Normal</option>
-            <option value="3">Hard</option>
+            <option value="0" @selected((int) old('difficulty', $minecraftServer->difficulty) === 0)>Peaceful</option>
+            <option value="1" @selected((int) old('difficulty', $minecraftServer->difficulty) === 1)>Easy</option>
+            <option value="2" @selected((int) old('difficulty', $minecraftServer->difficulty) === 2)>Normal</option>
+            <option value="3" @selected((int) old('difficulty', $minecraftServer->difficulty) === 3)>Hard</option>
         </select>
     </div>
 
@@ -53,7 +54,7 @@
             type="checkbox"
             name="force_gamemode"
             value="1"
-            checked
+            @checked((bool) old('force_gamemode', $minecraftServer->force_gamemode))
         >
         Force Gamemode
     </label>
@@ -64,13 +65,13 @@
             type="checkbox"
             name="allow_flight"
             value="1"
-            checked
+            @checked((bool) old('allow_flight', $minecraftServer->allow_flight))
         >
         Allow Flight
     </label>
 
     <button type="submit">
-        Create Server
+        Save Changes
     </button>
 
 </form>

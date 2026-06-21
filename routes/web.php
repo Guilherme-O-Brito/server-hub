@@ -55,4 +55,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/servers/minecraft/create', function () {
         return view('server_form');
     });
+
+    Route::get('/servers/minecraft/update/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('server_edit_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/delete/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('server_delete_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/{minecraftServer}/whitelist/create', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('whitelist_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/{minecraftServer}/whitelist/delete/{minecraftWhitelist}', function (\App\Models\MinecraftServer $minecraftServer, \App\Models\MinecraftWhitelist $minecraftWhitelist) {
+        if ($minecraftWhitelist->minecraft_server_id !== $minecraftServer->id) {
+            abort(404);
+        }
+
+        return view('whitelist_delete_form', compact('minecraftServer', 'minecraftWhitelist'));
+    });
+
 });
