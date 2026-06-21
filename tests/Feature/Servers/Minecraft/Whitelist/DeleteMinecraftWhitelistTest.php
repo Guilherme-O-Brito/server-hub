@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Servers\Minecraft\Whitelist;
 
+use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteMinecraftWhitelistTest extends TestCase
@@ -13,6 +15,8 @@ class DeleteMinecraftWhitelistTest extends TestCase
 
 	public function test_authenticated_user_can_delete_whitelist_entry(): void
 	{
+		Queue::fake();
+
 		$user = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($user);
 
@@ -28,10 +32,16 @@ class DeleteMinecraftWhitelistTest extends TestCase
 		$this->assertDatabaseMissing('minecraft_whitelists', [
 			'id' => $minecraftWhitelist->id,
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_server_owner_can_delete_whitelist_entry(): void
 	{
+		Queue::fake();
+
 		$owner = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($owner);
 
@@ -45,10 +55,16 @@ class DeleteMinecraftWhitelistTest extends TestCase
 		$this->assertDatabaseMissing('minecraft_whitelists', [
 			'id' => $minecraftWhitelist->id,
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_server_admin_can_delete_whitelist_entry(): void
 	{
+		Queue::fake();
+
 		$owner = User::factory()->create();
 		$admin = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($owner);
@@ -65,6 +81,10 @@ class DeleteMinecraftWhitelistTest extends TestCase
 		$this->assertDatabaseMissing('minecraft_whitelists', [
 			'id' => $minecraftWhitelist->id,
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_guest_cannot_delete_whitelist_entry(): void

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Servers\Minecraft\Whitelist;
 
 use App\Jobs\DeleteMinecraftinfrastructureJob;
+use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +16,8 @@ class CreateMinecraftWhitelistTest extends TestCase
 
 	public function test_authenticated_user_can_create_whitelist_entry(): void
 	{
+		Queue::fake();
+
 		$user = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($user);
 
@@ -29,10 +32,16 @@ class CreateMinecraftWhitelistTest extends TestCase
 			'minecraft_server_id' => $minecraftServer->id,
 			'nickname' => 'Steve_01',
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_server_owner_can_add_nickname_to_whitelist(): void
 	{
+		Queue::fake();
+
 		$owner = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($owner);
 
@@ -45,10 +54,16 @@ class CreateMinecraftWhitelistTest extends TestCase
 			'minecraft_server_id' => $minecraftServer->id,
 			'nickname' => 'OwnerNick',
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_server_admin_can_add_nickname_to_whitelist(): void
 	{
+		Queue::fake();
+
 		$owner = User::factory()->create();
 		$admin = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($owner);
@@ -64,6 +79,10 @@ class CreateMinecraftWhitelistTest extends TestCase
 			'minecraft_server_id' => $minecraftServer->id,
 			'nickname' => 'AdminNick',
 		]);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_user_without_ownership_or_admin_access_cannot_add_nickname_to_whitelist(): void
@@ -105,6 +124,8 @@ class CreateMinecraftWhitelistTest extends TestCase
 
 	public function test_duplicate_nickname_is_not_allowed_in_the_same_server(): void
 	{
+		Queue::fake();
+
 		$user = User::factory()->create();
 		$minecraftServer = $this->createMinecraftServer($user);
 
@@ -122,6 +143,8 @@ class CreateMinecraftWhitelistTest extends TestCase
 
 	public function test_same_nickname_can_be_used_in_different_servers(): void
 	{
+		Queue::fake();
+
 		$user = User::factory()->create();
 		$firstServer = $this->createMinecraftServer($user, ['server_name' => 'First Server']);
 		$secondServer = $this->createMinecraftServer($user, ['server_name' => 'Second Server']);
@@ -148,6 +171,14 @@ class CreateMinecraftWhitelistTest extends TestCase
 		]);
 
 		$this->assertDatabaseCount('minecraft_whitelists', 2);
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($firstServer) {
+			return $job->serverId === $firstServer->id;
+		});
+
+		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($secondServer) {
+			return $job->serverId === $secondServer->id;
+		});
 	}
 
 	public function test_deleting_server_cascades_whitelist_entries(): void
