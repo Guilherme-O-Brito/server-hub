@@ -69,6 +69,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'service_name' => 'server-service-2',
 			'server_id' => 10,
 			'server_type' => 'minecraft_server',
+			'status' => ExecutionSlot::STATUS_ALLOCATED,
 		]);
 
 		$response = $this->actingAs($admin)->delete('/execution-slot');
@@ -79,6 +80,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'slot_number' => 2,
 			'external_port' => 30001,
 			'server_id' => 10,
+			'status' => ExecutionSlot::STATUS_ALLOCATED,
 		]);
 		$this->assertDatabaseCount('execution_slots', 2);
 	}

@@ -23,8 +23,7 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
-			'status' => ExecutionSlot::STATUS_STOPPED,
-			'game_name' => null,
+			'status' => ExecutionSlot::STATUS_FREE,
 			'server_id' => null,
 			'server_type' => null,
 		]);
@@ -52,7 +51,7 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 4,
 			'external_port' => 30003,
 			'service_name' => 'server-service-4',
-			'status' => ExecutionSlot::STATUS_STOPPED,
+			'status' => ExecutionSlot::STATUS_FREE,
 		]);
 		$this->assertDatabaseCount('execution_slots', 3);
 	}

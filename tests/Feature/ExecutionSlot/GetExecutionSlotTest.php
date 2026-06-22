@@ -34,13 +34,13 @@ class GetExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
-			'status' => ExecutionSlot::STATUS_STOPPED,
+			'status' => ExecutionSlot::STATUS_FREE,
 		]);
 		$response->assertJsonFragment([
 			'slot_number' => 2,
 			'external_port' => 30001,
 			'service_name' => 'server-service-2',
-			'status' => ExecutionSlot::STATUS_STOPPED,
+			'status' => ExecutionSlot::STATUS_FREE,
 		]);
 	}
 
