@@ -16,7 +16,6 @@ return new class extends Migration
             $table->integer('slot_number')->unique();
             $table->integer('external_port')->unique();
             $table->string('service_name')->unique();
-            $table->string('game_name')->nullable();
             $table->string('status');
             $table->nullableMorphs('server');
             $table->timestamps();

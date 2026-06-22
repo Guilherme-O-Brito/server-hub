@@ -24,8 +24,7 @@ class ExecutionSlotFactory extends Factory
             'slot_number' => $slot_number,
             'external_port' => $this->faker->unique()->numberBetween(30000,31000),
             'service_name' => 'server-service-'.$slot_number,
-            'game_name' => null,
-            'status' => ExecutionSlot::STATUS_STOPPED,
+            'status' => ExecutionSlot::STATUS_FREE,
             'server_id' => null,
             'server_type' => null
         ];
@@ -36,6 +35,7 @@ class ExecutionSlotFactory extends Factory
         return $this->state(fn () => [
             'server_type' => $server->getMorphClass(),
             'server_id' => $server->id,
+            'status' => ExecutionSlot::STATUS_ALLOCATED,
         ]);
     }
 }

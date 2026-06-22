@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ExecutionSlot\CreateExecutionSlotAction;
+use App\Actions\ExecutionSlot\DeleteExecutionSlotAction;
 use App\Models\ExecutionSlot;
 use Illuminate\Http\Request;
 
@@ -14,24 +16,14 @@ class ExecutionSlotController extends Controller
         return response()->json($execution_slots);
     }
 
-    public function create_one(Request $request)
+    public function create_one(Request $request, CreateExecutionSlotAction $action)
     {   
-        $last_execution_slot = ExecutionSlot::orderByDesc('slot_number')->first();
-        $slot_number = ($last_execution_slot?->slot_number + 1) ?? 1;
-        $external_port = ($last_execution_slot?->external_port ?? 29999) + 1;
-        $service_name = 'server-service-'.$slot_number;
-
-        ExecutionSlot::create([
-            'slot_number' => $slot_number,
-            'external_port' => $external_port,
-            'service_name' => $service_name,
-            'status' => ExecutionSlot::STATUS_STOPPED
-        ]);
+        $action->execute();
 
         return response()->json(['message' => 'Execution slot created successfully'], 201);
     }
 
-    public function delete_last(Request $request)
+    public function delete_last(Request $request, DeleteExecutionSlotAction $action)
     {
         $last_execution_slot = ExecutionSlot::orderByDesc('slot_number')->firstOrFail();
         
@@ -39,7 +31,7 @@ class ExecutionSlotController extends Controller
             return response()->json(['message' => 'Cannot delete occupied slot'], 409);
         }
 
-        $last_execution_slot->delete();
+        $action->execute($last_execution_slot);
 
         return response()->json(['message' => 'Execution slot successfully deleted']);
     }

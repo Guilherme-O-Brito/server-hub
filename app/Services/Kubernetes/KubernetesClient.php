@@ -103,5 +103,30 @@ class KubernetesClient
 
         return $this->handleResponse($response, []);
     }
+
+    public function createService(array $manifest): array
+    {
+        $response = $this->client()->post("{$this->baseUrl}/api/v1/namespaces/games/services", $manifest);
+
+        return $this->handleResponse($response, $manifest);
+    }
+
+    public function updateService(string $name, array $manifest): array
+    {
+        $response = $this->client()->put("{$this->baseUrl}/api/v1/namespaces/games/services/{$name}", $manifest);
+    
+        return $this->handleResponse($response, $manifest);    
+    }
+
+    public function deleteService(string $name): void
+    {
+        $response = $this->client()->delete("{$this->baseUrl}/api/v1/namespaces/games/services/{$name}");
+
+        if ($response->status() === 404) {
+            return;
+        }
+
+        $this->handleResponse($response, []);
+    }
     
 }
