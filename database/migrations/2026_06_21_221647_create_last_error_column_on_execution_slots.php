@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('execution_slots', function (Blueprint $table) {
-            $table->string('last_error')->nullable();
+            $table->longText('last_error')->nullable();
         });
     }
 

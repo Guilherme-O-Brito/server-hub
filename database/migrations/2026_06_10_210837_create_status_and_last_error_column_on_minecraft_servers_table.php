@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('minecraft_servers', function (Blueprint $table) {
             $table->string('status')->nullable();
-            $table->string('last_error')->nullable();
+            $table->longText('last_error')->nullable();
         });
     }
 

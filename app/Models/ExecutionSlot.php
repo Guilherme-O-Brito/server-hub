@@ -30,6 +30,11 @@ class ExecutionSlot extends Model
         'last_error',
     ];
 
+    protected $casts = [
+        'slot_number' => 'integer',
+        'external_port' => 'integer',
+    ];
+
     public function server(): MorphTo
     {
         return $this->morphTo();

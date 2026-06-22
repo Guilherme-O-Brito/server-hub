@@ -36,9 +36,9 @@ class ExecutionSlotManifestBuilder
                 'ports' => [
                     [
                         'protocol' => 'TCP',
-                        'port' => '25565',
-                        'targetPort' => '25565',
-                        'nodePort' => "{$executionSlot->external_port}"
+                        'port' => 25565,
+                        'targetPort' => 25565,
+                        'nodePort' => $executionSlot->external_port
                     ]
                 ]
             ]
