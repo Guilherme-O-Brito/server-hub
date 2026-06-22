@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\ExecutionSlot;
 
+use App\Jobs\ExecutionSlot\CreateExecutionSlotServiceJob;
 use App\Models\ExecutionSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CreateExecutionSlotTest extends TestCase
@@ -13,6 +15,8 @@ class CreateExecutionSlotTest extends TestCase
 
 	public function test_admin_can_create_execution_slot_with_initial_values()
 	{
+		Queue::fake();
+
 		$admin = User::factory()->create(['is_admin' => true]);
 
 		$response = $this->actingAs($admin)->post('/execution-slot', []);
@@ -23,14 +27,24 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
-			'status' => ExecutionSlot::STATUS_FREE,
+			'status' => ExecutionSlot::STATUS_PROVISIONING,
 			'server_id' => null,
 			'server_type' => null,
 		]);
+
+		$executionSlot = ExecutionSlot::query()
+			->where('slot_number', 1)
+			->firstOrFail();
+
+		Queue::assertPushed(CreateExecutionSlotServiceJob::class, function (CreateExecutionSlotServiceJob $job) use ($executionSlot) {
+			return $job->slotId === $executionSlot->id;
+		});
 	}
 
 	public function test_admin_create_execution_slot_continues_from_last_slot()
 	{
+		Queue::fake();
+
 		$admin = User::factory()->create(['is_admin' => true]);
 
 		ExecutionSlot::factory()->create([
@@ -51,9 +65,17 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 4,
 			'external_port' => 30003,
 			'service_name' => 'server-service-4',
-			'status' => ExecutionSlot::STATUS_FREE,
+			'status' => ExecutionSlot::STATUS_PROVISIONING,
 		]);
 		$this->assertDatabaseCount('execution_slots', 3);
+
+		$executionSlot = ExecutionSlot::query()
+			->where('slot_number', 4)
+			->firstOrFail();
+
+		Queue::assertPushed(CreateExecutionSlotServiceJob::class, function (CreateExecutionSlotServiceJob $job) use ($executionSlot) {
+			return $job->slotId === $executionSlot->id;
+		});
 	}
 
 	public function test_non_admin_cannot_create_execution_slot()

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\ExecutionSlot;
 
+use App\Jobs\ExecutionSlot\DeleteExecutionSlotServiceJob;
 use App\Models\ExecutionSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteExecutionSlotTest extends TestCase
@@ -13,6 +15,8 @@ class DeleteExecutionSlotTest extends TestCase
 
 	public function test_admin_can_delete_only_the_last_execution_slot()
 	{
+		Queue::fake();
+
 		$admin = User::factory()->create(['is_admin' => true]);
 
 		ExecutionSlot::factory()->create([
@@ -25,7 +29,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'external_port' => 30001,
 			'service_name' => 'server-service-2',
 		]);
-		ExecutionSlot::factory()->create([
+		$lastSlot = ExecutionSlot::factory()->create([
 			'slot_number' => 3,
 			'external_port' => 30002,
 			'service_name' => 'server-service-3',
@@ -35,13 +39,18 @@ class DeleteExecutionSlotTest extends TestCase
 
 		$response->assertOk();
 		$response->assertJson(['message' => 'Execution slot successfully deleted']);
-		$this->assertDatabaseMissing('execution_slots', [
+		$this->assertDatabaseHas('execution_slots', [
 			'slot_number' => 3,
 			'external_port' => 30002,
+			'status' => ExecutionSlot::STATUS_DELETING,
 		]);
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 1]);
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 2]);
-		$this->assertDatabaseCount('execution_slots', 2);
+		$this->assertDatabaseCount('execution_slots', 3);
+
+		Queue::assertPushed(DeleteExecutionSlotServiceJob::class, function (DeleteExecutionSlotServiceJob $job) use ($lastSlot) {
+			return $job->slotId === $lastSlot->id;
+		});
 	}
 
 	public function test_admin_cannot_delete_execution_slot_when_none_exist()

@@ -3,7 +3,9 @@
 namespace Tests\Unit\Services\Kubernetes;
 
 use App\MinecraftServerStatus;
+use App\Models\ExecutionSlot;
 use App\Models\User;
+use App\Services\Kubernetes\ExecutionSlotManifestBuilder;
 use App\Services\Kubernetes\KubernetesClient;
 use App\Services\Kubernetes\MinecraftManifestBuilder;
 use App\Services\Kubernetes\ProvisioningService;
@@ -31,6 +33,7 @@ class ProvisioningServiceTest extends TestCase
         ]);
 
         $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
         $client = $this->createMock(KubernetesClient::class);
 
         $configMapManifest = ['kind' => 'ConfigMap'];
@@ -67,7 +70,7 @@ class ProvisioningServiceTest extends TestCase
             ->with($deploymentManifest)
             ->willReturn([]);
 
-        $service = new ProvisioningService($builder, $client);
+        $service = new ProvisioningService($builder, $slotBuilder, $client);
 
         $service->provisionMinecraftServer($minecraftServer);
 
@@ -89,6 +92,7 @@ class ProvisioningServiceTest extends TestCase
         ]);
 
         $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
         $client = $this->createMock(KubernetesClient::class);
 
         $client->expects($this->once())
@@ -103,7 +107,7 @@ class ProvisioningServiceTest extends TestCase
             ->method('deleteConfigMap')
             ->with("minecraft-env-{$minecraftServer->id}");
 
-        $service = new ProvisioningService($builder, $client);
+        $service = new ProvisioningService($builder, $slotBuilder, $client);
 
         $service->deleteMinecraftServer($minecraftServer);
     }
@@ -121,6 +125,7 @@ class ProvisioningServiceTest extends TestCase
         ]);
 
         $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
         $client = $this->createMock(KubernetesClient::class);
 
         $configMapManifest = ['kind' => 'ConfigMap'];
@@ -135,12 +140,102 @@ class ProvisioningServiceTest extends TestCase
             ->with("minecraft-env-{$minecraftServer->id}", $configMapManifest)
             ->willReturn([]);
 
-        $service = new ProvisioningService($builder, $client);
+        $service = new ProvisioningService($builder, $slotBuilder, $client);
 
         $service->updateMinecraftServer($minecraftServer);
 
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+    }
+
+    public function test_provision_execution_slot_uses_builder_and_client_and_marks_slot_free(): void
+    {
+        $executionSlot = ExecutionSlot::factory()->create([
+            'slot_number' => 1,
+            'external_port' => 30000,
+            'service_name' => 'server-service-1',
+            'status' => ExecutionSlot::STATUS_PROVISIONING,
+        ]);
+
+        $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $serviceManifest = ['kind' => 'Service'];
+
+        $slotBuilder->expects($this->once())
+            ->method('service')
+            ->with($executionSlot)
+            ->willReturn($serviceManifest);
+
+        $client->expects($this->once())
+            ->method('createService')
+            ->with($serviceManifest)
+            ->willReturn([]);
+
+        $service = new ProvisioningService($minecraftBuilder, $slotBuilder, $client);
+
+        $service->provisionExecutionSlotService($executionSlot);
+
+        $executionSlot->refresh();
+
+        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+    }
+
+    public function test_update_execution_slot_updates_existing_service_and_marks_slot_free(): void
+    {
+        $executionSlot = ExecutionSlot::factory()->create([
+            'slot_number' => 1,
+            'external_port' => 30000,
+            'service_name' => 'server-service-1',
+            'status' => ExecutionSlot::STATUS_ALLOCATED,
+        ]);
+
+        $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $serviceManifest = ['kind' => 'Service'];
+
+        $slotBuilder->expects($this->once())
+            ->method('service')
+            ->with($executionSlot)
+            ->willReturn($serviceManifest);
+
+        $client->expects($this->once())
+            ->method('updateService')
+            ->with('server-service-1', $serviceManifest)
+            ->willReturn([]);
+
+        $service = new ProvisioningService($minecraftBuilder, $slotBuilder, $client);
+
+        $service->updateExecutionSlotService($executionSlot);
+
+        $executionSlot->refresh();
+
+        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+    }
+
+    public function test_delete_execution_slot_uses_delete_service_call(): void
+    {
+        $executionSlot = ExecutionSlot::factory()->create([
+            'slot_number' => 1,
+            'external_port' => 30000,
+            'service_name' => 'server-service-1',
+            'status' => ExecutionSlot::STATUS_DELETING,
+        ]);
+
+        $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $client->expects($this->once())
+            ->method('deleteService')
+            ->with('server-service-1');
+
+        $service = new ProvisioningService($minecraftBuilder, $slotBuilder, $client);
+
+        $service->deleteExecutionSlotService($executionSlot);
     }
 }
