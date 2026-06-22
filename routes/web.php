@@ -76,4 +76,12 @@ Route::middleware('auth')->group(function () {
         return view('whitelist_delete_form', compact('minecraftServer', 'minecraftWhitelist'));
     });
 
+    Route::get('/execution-slot/create', function () {
+        return view('execution_slot_form');
+    });
+
+    Route::get('/execution-slot/delete', function () {
+        return view('execution_slot_delete_form');
+    });
+
 });
