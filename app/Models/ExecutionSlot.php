@@ -46,7 +46,7 @@ class ExecutionSlot extends Model
 
     public function isAvailable(): bool
     {
-        return $this->server_id === ExecutionSlot::STATUS_FREE;
+        return $this->status === ExecutionSlot::STATUS_FREE;
     }
 
     public function allocate($server) {
