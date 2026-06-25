@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\ExecutionSlot\CreateExecutionSlotAction;
 use App\Actions\ExecutionSlot\DeleteExecutionSlotAction;
+use App\Exceptions\ExecutionSlotStateException;
 use App\Models\ExecutionSlot;
 use Illuminate\Http\Request;
 
@@ -24,14 +25,13 @@ class ExecutionSlotController extends Controller
     }
 
     public function delete_last(Request $request, DeleteExecutionSlotAction $action)
-    {
-        $last_execution_slot = ExecutionSlot::orderByDesc('slot_number')->firstOrFail();
+    {   
         
-        if ($last_execution_slot->isOccupied()) {
-            return response()->json(['message' => 'Cannot delete occupied slot'], 409);
+        try {
+            $action->execute();
+        } catch (ExecutionSlotStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
         }
-
-        $action->execute($last_execution_slot);
 
         return response()->json(['message' => 'Execution slot successfully deleted']);
     }

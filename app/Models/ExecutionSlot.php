@@ -13,7 +13,6 @@ class ExecutionSlot extends Model
 
     public const string STATUS_FREE = 'free';
     public const string STATUS_PROVISIONING = 'provisioning';
-
     public const string STATUS_DELETING = 'deleting';
     public const string STATUS_ALLOCATED = 'allocated';
     public const string STATUS_FAILED = 'failed';
@@ -42,12 +41,12 @@ class ExecutionSlot extends Model
 
     public function isOccupied(): bool
     {
-        return $this->server_id !== null;
+        return $this->status !== ExecutionSlot::STATUS_FREE;
     }
 
     public function isAvailable(): bool
     {
-        return $this->server_id === null;
+        return $this->server_id === ExecutionSlot::STATUS_FREE;
     }
 
     public function allocate($server) {
