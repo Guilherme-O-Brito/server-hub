@@ -65,6 +65,8 @@ class DeleteExecutionSlotTest extends TestCase
 
 	public function test_admin_cannot_delete_occupied_last_execution_slot()
 	{
+		Queue::fake();
+
 		$admin = User::factory()->create(['is_admin' => true]);
 
 		ExecutionSlot::factory()->create([
@@ -92,6 +94,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'status' => ExecutionSlot::STATUS_ALLOCATED,
 		]);
 		$this->assertDatabaseCount('execution_slots', 2);
+		Queue::assertNothingPushed();
 	}
 
 	public function test_non_admin_cannot_delete_execution_slot()
