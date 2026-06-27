@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Exceptions\ExecutionSlotStateException;
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -49,11 +51,22 @@ class ExecutionSlot extends Model
         return $this->status === ExecutionSlot::STATUS_FREE;
     }
 
-    public function allocate($server) {
-
-    }
-
     public function release() {
         
+        DB::transaction(function () {
+            $slot = self::query()->lockForUpdate()->findOrFail($this->id);
+
+            if ($slot->status !== self::STATUS_ALLOCATED) {
+                throw new ExecutionSlotStateException('Execution slot is not allocated.');
+            }
+
+            $slot->server()->dissociate();
+
+            $slot->status = self::STATUS_FREE;
+
+            $slot->save();
+
+        });
+
     }
 }
