@@ -101,7 +101,7 @@ class ProvisioningServiceTest extends TestCase
 
         $client->expects($this->once())
             ->method('deletePvc')
-            ->with("minecraft-data-claim-{$minecraftServer->id}");
+            ->with("minecraft-{$minecraftServer->id}-storage");
 
         $client->expects($this->once())
             ->method('deleteConfigMap')

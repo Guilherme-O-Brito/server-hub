@@ -37,7 +37,7 @@ class MinecraftManifestBuilderTest extends TestCase
         $configMap = $builder->server_env($minecraftServer);
         $deployment = $builder->deployment($minecraftServer);
 
-        $this->assertSame("minecraft-data-claim-{$minecraftServer->id}", $pvc['metadata']['name']);
+        $this->assertSame("minecraft-{$minecraftServer->id}-storage", $pvc['metadata']['name']);
         $this->assertSame('games', $pvc['metadata']['namespace']);
         $this->assertSame('local-path', $pvc['spec']['storageClassName']);
         $this->assertSame(['ReadWriteOnce'], $pvc['spec']['accessModes']);
@@ -59,7 +59,7 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['selector']['matchLabels']['app']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['template']['metadata']['labels']['app']);
         $this->assertSame("minecraft-env-{$minecraftServer->id}", $deployment['spec']['template']['spec']['containers'][0]['envFrom'][0]['configMapRef']['name']);
-        $this->assertSame("minecraft-data-claim-{$minecraftServer->id}", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
+        $this->assertSame("minecraft-{$minecraftServer->id}-storage", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
         $this->assertSame(25565, $deployment['spec']['template']['spec']['containers'][0]['ports'][0]['containerPort']);
         $this->assertSame('itzg/minecraft-server:latest', $deployment['spec']['template']['spec']['containers'][0]['image']);
     }
