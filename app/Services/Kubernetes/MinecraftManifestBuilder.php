@@ -13,7 +13,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'apiVersion' => 'v1',
             'kind' => 'PersistentVolumeClaim',
             'metadata' => [
-                'name' => "minecraft-data-claim-{$minecraftServer->id}",
+                'name' => "minecraft-{$minecraftServer->id}-storage",
                 'namespace' => 'games',
             ],
             'spec' => [
@@ -159,7 +159,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                                 'name' => 'minecraft-data',
 
                                 'persistentVolumeClaim' => [
-                                    'claimName' => "minecraft-data-claim-{$minecraftServer->id}",
+                                    'claimName' => "minecraft-{$minecraftServer->id}-storage",
                                 ],
                             ],
 

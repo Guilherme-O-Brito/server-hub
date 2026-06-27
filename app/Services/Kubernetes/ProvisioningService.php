@@ -37,7 +37,7 @@ class ProvisioningService
     {
         $this->client->deleteDeployment("minecraft-{$server->id}");
 
-        $this->client->deletePvc("minecraft-data-claim-{$server->id}");
+        $this->client->deletePvc("minecraft-{$server->id}-storage");
 
         $this->client->deleteConfigMap("minecraft-env-{$server->id}");
     }
