@@ -58,8 +58,8 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame(0, $deployment['spec']['replicas']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['selector']['matchLabels']['app']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['template']['metadata']['labels']['app']);
-        $this->assertSame("{$minecraftServer->id}-minecraft-env", $deployment['spec']['template']['spec']['containers'][0]['envFrom'][0]['configMapRef']['name']);
-        $this->assertSame("{$minecraftServer->id}-minecraft-data-claim", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
+        $this->assertSame("minecraft-env-{$minecraftServer->id}", $deployment['spec']['template']['spec']['containers'][0]['envFrom'][0]['configMapRef']['name']);
+        $this->assertSame("minecraft-data-claim-{$minecraftServer->id}", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
         $this->assertSame(25565, $deployment['spec']['template']['spec']['containers'][0]['ports'][0]['containerPort']);
         $this->assertSame('itzg/minecraft-server:latest', $deployment['spec']['template']['spec']['containers'][0]['image']);
     }
