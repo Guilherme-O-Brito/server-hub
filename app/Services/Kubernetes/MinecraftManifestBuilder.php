@@ -116,7 +116,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                                 'envFrom' => [
                                     [
                                         'configMapRef' => [
-                                            'name' => "{$minecraftServer->id}-minecraft-env",
+                                            'name' => "minecraft-env-{$minecraftServer->id}",
                                         ],
                                     ],
                                 ],
@@ -159,7 +159,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                                 'name' => 'minecraft-data',
 
                                 'persistentVolumeClaim' => [
-                                    'claimName' => "{$minecraftServer->id}-minecraft-data-claim",
+                                    'claimName' => "minecraft-data-claim-{$minecraftServer->id}",
                                 ],
                             ],
 
