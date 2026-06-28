@@ -10,9 +10,10 @@ use DB;
 
 class StopMinecraftServerAction
 {
-    public function execute(MinecraftServer $server)
+    public function execute(MinecraftServer $minecraftServer)
     {
-        DB::transaction(function () use ($server){
+        DB::transaction(function () use ($minecraftServer){
+            $server = MinecraftServer::query()->lockForUpdate()->find($minecraftServer->id);
             if ($server->status !== MinecraftServerStatus::Running) {
                 throw new MinecraftServerStateException(
                     'Minecraft server is not running.'
