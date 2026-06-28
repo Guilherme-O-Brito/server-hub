@@ -42,6 +42,14 @@ class ProvisioningService
         $this->client->deleteConfigMap($server->getEnvName());
     }
 
+    public function startMinecraftServer(MinecraftServer $server): void
+    {
+        $manifest = $this->minecraftBuilder->deployment($server);
+        $manifest['spec']['replicas'] = 1;
+
+        $this->client->updateDeployment($server->getDeployName(), $manifest);
+    }
+
     public function provisionExecutionSlotService(ExecutionSlot $slot): void
     {
         $this->client->createService($this->slotBuilder->service($slot));
@@ -54,10 +62,6 @@ class ProvisioningService
     public function updateExecutionSlotService(ExecutionSlot $slot):void
     {
         $this->client->updateService($slot->service_name, $this->slotBuilder->service($slot));
-
-        $slot->update([
-            'status' => ExecutionSlot::STATUS_FREE,
-        ]);
     }
 
     public function deleteExecutionSlotService(ExecutionSlot $slot): void

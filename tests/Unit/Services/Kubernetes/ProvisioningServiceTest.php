@@ -183,7 +183,7 @@ class ProvisioningServiceTest extends TestCase
         $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
     }
 
-    public function test_update_execution_slot_updates_existing_service_and_marks_slot_free(): void
+    public function test_update_execution_slot_updates_existing_service_and_marks_slot_allocated(): void
     {
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
@@ -214,7 +214,7 @@ class ProvisioningServiceTest extends TestCase
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
     }
 
     public function test_delete_execution_slot_uses_delete_service_call(): void

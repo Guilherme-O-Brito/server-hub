@@ -43,6 +43,13 @@ class KubernetesClient
         return $this->handleResponse($response, $manifest);
     }
 
+    public function updateDeployment(string $name, array $manifest): array
+    {
+        $response = $this->client()->put("{$this->baseUrl}/apis/apps/v1/namespaces/games/deployments/{$name}", $manifest);
+        
+        return $this->handleResponse($response, $manifest);
+    }
+
     public function deleteDeployment(string $name): void
     {
         $response = $this->client()->delete("{$this->baseUrl}/apis/apps/v1/namespaces/games/deployments/{$name}");

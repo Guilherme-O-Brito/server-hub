@@ -51,22 +51,18 @@ class ExecutionSlot extends Model
         return $this->status === ExecutionSlot::STATUS_FREE;
     }
 
-    public function release() {
-        
-        DB::transaction(function () {
-            $slot = self::query()->lockForUpdate()->findOrFail($this->id);
+    public function release() // this method must run inside a db transaction with lockForUpdate
+    {
 
-            if ($slot->status !== self::STATUS_ALLOCATED) {
-                throw new ExecutionSlotStateException('Execution slot is not allocated.');
-            }
+        if ($this->status !== self::STATUS_ALLOCATED) {
+            throw new ExecutionSlotStateException('Execution slot is not allocated.');
+        }
 
-            $slot->server()->dissociate();
+        $this->server()->dissociate();
 
-            $slot->status = self::STATUS_FREE;
+        $this->status = self::STATUS_FREE;
 
-            $slot->save();
-
-        });
+        $this->save();
 
     }
 }
