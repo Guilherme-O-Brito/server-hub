@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateMinecraftServerAction;
 use App\Actions\DeleteMinecraftServerAction;
 use App\Actions\StartMinecraftServerAction;
+use App\Actions\StopMinecraftServerAction;
 use App\Actions\UpdateMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
@@ -67,6 +68,20 @@ class MinecraftServerController extends Controller
             return response()->json(['message' => $e->getMessage()], $e->statusCode());
         }
 
+    }
+
+    public function stop(Request $request, MinecraftServer $minecraftServer, StopMinecraftServerAction $action)
+    {
+        if ($request->user()->cannot('stop', $minecraftServer)) {
+            abort(403);
+        }
+
+        try {
+            $action->execute($minecraftServer);
+            return response()->json(['message' => 'Minecraft server is stopping']);
+        } catch (MinecraftServerStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+        }
     }
 
 }

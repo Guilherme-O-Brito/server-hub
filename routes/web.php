@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
         Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
         Route::post('/{minecraftServer}/start', [MinecraftServerController::class, 'start'])->name('start.minecraftServer');
+        Route::post('/{minecraftServer}/stop', [MinecraftServerController::class, 'stop'])->name('stop.minecraftServer');
         Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->name('store.minecraftServer.admin');
         Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->name('delete.minecraftServer.admin');
         Route::prefix('/{minecraftServer}/whitelist')->group(function () {

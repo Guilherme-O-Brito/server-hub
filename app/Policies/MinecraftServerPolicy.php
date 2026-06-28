@@ -72,4 +72,9 @@ class MinecraftServerPolicy
     {
         return $minecraftServer->owner_id === $user->id || $minecraftServer->admins()->where('users.id', $user->id)->exists();
     }
+
+    public function stop(User $user, MinecraftServer $minecraftServer): bool
+    {
+        return $minecraftServer->owner_id === $user->id || $minecraftServer->admins()->where('users.id', $user->id)->exists();
+    }
 }

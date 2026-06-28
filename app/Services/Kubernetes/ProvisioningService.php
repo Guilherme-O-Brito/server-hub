@@ -50,6 +50,14 @@ class ProvisioningService
         $this->client->updateDeployment($server->getDeployName(), $manifest);
     }
 
+    public function stopMinecraftServer(MinecraftServer $server): void
+    {
+        $manifest = $this->minecraftBuilder->deployment($server);
+        $manifest['spec']['replicas'] = 0;
+
+        $this->client->updateDeployment($server->getDeployName(), $manifest);
+    }
+
     public function provisionExecutionSlotService(ExecutionSlot $slot): void
     {
         $this->client->createService($this->slotBuilder->service($slot));
