@@ -149,6 +149,48 @@ class ProvisioningServiceTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
     }
 
+    public function test_start_minecraft_server_updates_deployment_with_one_replica(): void
+    {
+        $owner = User::factory()->create();
+
+        $minecraftServer = $owner->ownedMinecraftServers()->create([
+            'server_name' => 'Start Server',
+            'motd' => 'Start motd',
+            'difficulty' => 2,
+            'force_gamemode' => false,
+            'allow_flight' => true,
+            'status' => MinecraftServerStatus::Starting,
+        ]);
+
+        $builder = $this->createMock(MinecraftManifestBuilder::class);
+        $slotBuilder = $this->createMock(ExecutionSlotManifestBuilder::class);
+        $client = $this->createMock(KubernetesClient::class);
+
+        $deploymentManifest = [
+            'kind' => 'Deployment',
+            'spec' => [
+                'replicas' => 0,
+                'template' => [],
+            ],
+        ];
+        $expectedManifest = $deploymentManifest;
+        $expectedManifest['spec']['replicas'] = 1;
+
+        $builder->expects($this->once())
+            ->method('deployment')
+            ->with($minecraftServer)
+            ->willReturn($deploymentManifest);
+
+        $client->expects($this->once())
+            ->method('updateDeployment')
+            ->with("minecraft-{$minecraftServer->id}", $expectedManifest)
+            ->willReturn([]);
+
+        $service = new ProvisioningService($builder, $slotBuilder, $client);
+
+        $service->startMinecraftServer($minecraftServer);
+    }
+
     public function test_provision_execution_slot_uses_builder_and_client_and_marks_slot_free(): void
     {
         $executionSlot = ExecutionSlot::factory()->create([
