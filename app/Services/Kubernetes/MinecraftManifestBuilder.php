@@ -13,7 +13,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'apiVersion' => 'v1',
             'kind' => 'PersistentVolumeClaim',
             'metadata' => [
-                'name' => "minecraft-{$minecraftServer->id}-storage",
+                'name' => $minecraftServer->getStorageName(),
                 'namespace' => 'games',
             ],
             'spec' => [
@@ -36,7 +36,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'apiVersion' => 'v1',
             'kind' => 'ConfigMap',
             'metadata' => [
-                'name' => "minecraft-env-{$minecraftServer->id}",
+                'name' => $minecraftServer->getEnvName(),
                 'namespace' => 'games'
             ],
             'data' => [
@@ -70,7 +70,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'kind' => 'Deployment',
 
             'metadata' => [
-                'name' => "minecraft-{$minecraftServer->id}",
+                'name' => $minecraftServer->getDeployName(),
                 'namespace' => 'games',
             ],
 
@@ -79,14 +79,14 @@ public function pvc(MinecraftServer $minecraftServer): array
 
                 'selector' => [
                     'matchLabels' => [
-                        'app' => "minecraft-{$minecraftServer->id}",
+                        'app' => $minecraftServer->getDeployName(),
                     ],
                 ],
 
                 'template' => [
                     'metadata' => [
                         'labels' => [
-                            'app' => "minecraft-{$minecraftServer->id}",
+                            'app' => $minecraftServer->getDeployName(),
                         ],
                     ],
 
@@ -116,7 +116,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                                 'envFrom' => [
                                     [
                                         'configMapRef' => [
-                                            'name' => "minecraft-env-{$minecraftServer->id}",
+                                            'name' => $minecraftServer->getEnvName(),
                                         ],
                                     ],
                                 ],
@@ -159,7 +159,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                                 'name' => 'minecraft-data',
 
                                 'persistentVolumeClaim' => [
-                                    'claimName' => "minecraft-{$minecraftServer->id}-storage",
+                                    'claimName' => $minecraftServer->getStorageName(),
                                 ],
                             ],
 

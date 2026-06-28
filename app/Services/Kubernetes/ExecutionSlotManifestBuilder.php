@@ -9,15 +9,14 @@ class ExecutionSlotManifestBuilder
 {
     protected function getAppName(ExecutionSlot $executionSlot): string
     {
-        $server_type = $executionSlot->server_type;
         $server = $executionSlot->server;
 
-        switch ($server_type) {
-            case MinecraftServer::MORPH_TYPE:
-                return "minecraft-{$server->id}";
-            default:
-                return 'no-allocated';
+        if ($server) {
+            return $server->getDeployName();
+        } else {
+            return 'no-allocated';
         }
+
     }
     public function service(ExecutionSlot $executionSlot): array
     {

@@ -55,4 +55,19 @@ class MinecraftServer extends Model
             'server'
         );
     }
+
+    public function getDeployName(): string
+    {
+        return "minecraft-{$this->id}";
+    }
+
+    public function getEnvName(): string
+    {
+        return "minecraft-env-{$this->id}";
+    }
+    
+    public function getStorageName(): string
+    {
+        return "minecraft-{$this->id}-storage";
+    }
 }

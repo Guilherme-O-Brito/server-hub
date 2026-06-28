@@ -26,7 +26,7 @@ class ProvisioningService
 
     public function updateMinecraftServer(MinecraftServer $server): void
     {   
-        $this->client->updateConfigMap("minecraft-env-{$server->id}", $this->minecraftBuilder->server_env($server));
+        $this->client->updateConfigMap($server->getEnvName(), $this->minecraftBuilder->server_env($server));
 
         $server->update([
             'status' => MinecraftServerStatus::Stopped
@@ -35,11 +35,11 @@ class ProvisioningService
 
     public function deleteMinecraftServer(MinecraftServer $server): void
     {
-        $this->client->deleteDeployment("minecraft-{$server->id}");
+        $this->client->deleteDeployment($server->getDeployName());
 
-        $this->client->deletePvc("minecraft-{$server->id}-storage");
+        $this->client->deletePvc($server->getStorageName());
 
-        $this->client->deleteConfigMap("minecraft-env-{$server->id}");
+        $this->client->deleteConfigMap($server->getEnvName());
     }
 
     public function provisionExecutionSlotService(ExecutionSlot $slot): void
