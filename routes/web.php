@@ -13,48 +13,50 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware('guest')->group(function (){
-    Route::get('/login', [LoginController::class, 'LoginView'])->name('login');
-    Route::post('/login', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
+Route::prefix('/login')->middleware('guest')->group(function () {
+    Route::get('/', [LoginController::class, 'LoginView'])->name('login');
+    Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-// authenticated admin routes
-Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+// authentication and admin only
+Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD
-    Route::prefix('/user')->group(function () {
-        Route::post('/', [UserController::class, 'create'])->name('register.user');
-        Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
-        Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
-        //Route::get('/', [UserController::class, 'index']);
-    });
-    // execution slot create and delete
-    Route::prefix('/execution-slot')->group(function () {
-        Route::post('/', [ExecutionSlotController::class, 'create_one'])->name('create_one.execution_slot');
-        Route::delete('/', [ExecutionSlotController::class, 'delete_last'])->name('delete_last.execution_slot');
-    });
+    Route::post('/', [UserController::class, 'create'])->name('register.user');
+    Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
+    Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
 });
 
-Route::middleware('auth')->group(function () {
-    // get execution slots
-    Route::get('/execution-slot', [ExecutionSlotController::class, 'index'])->name('get.execution_slot');
-    // servers crud
-    Route::prefix('/servers/minecraft')->group(function () {
+Route::prefix('/execution-slot')->middleware('auth')->group(function () {
+    Route::post('/', [ExecutionSlotController::class, 'create_one'])->middleware(EnsureUserIsAdmin::class)->name('create_one.execution_slot');
+    Route::delete('/', [ExecutionSlotController::class, 'delete_last'])->middleware(EnsureUserIsAdmin::class)->name('delete_last.execution_slot');
+    Route::get('/', [ExecutionSlotController::class, 'index'])->name('get.execution_slot');
+});
+
+Route::prefix('/servers')->group(function () {
+    Route::prefix('/minecraft')->middleware('auth')->group(function () {
+        // minecraft CRUD
         Route::post('/', [MinecraftServerController::class, 'create'])->name('create.minecraftServer');
         Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
         Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
+        // minecraft start and stop
         Route::post('/{minecraftServer}/start', [MinecraftServerController::class, 'start'])->name('start.minecraftServer');
         Route::post('/{minecraftServer}/stop', [MinecraftServerController::class, 'stop'])->name('stop.minecraftServer');
+        // minecraft server admin create and delete
         Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->name('store.minecraftServer.admin');
         Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->name('delete.minecraftServer.admin');
+        // minecraft server whitelist CRUD
         Route::prefix('/{minecraftServer}/whitelist')->group(function () {
             Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
             Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->name('delete.minecraftServer.whitelist');
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
         });
     });
-    // temporary test routes
+});
+
+// temporary test routes
+Route::middleware('auth')->group(function () {
     Route::get('/servers/minecraft/create', function () {
         return view('server_form');
     });
