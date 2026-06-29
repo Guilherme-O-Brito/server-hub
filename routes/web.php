@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
         });
     });
+    // temporary test routes
     Route::get('/servers/minecraft/create', function () {
         return view('server_form');
     });
@@ -64,6 +65,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/servers/minecraft/delete/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
         return view('server_delete_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/start/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('server_start_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/stop/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('server_stop_form', compact('minecraftServer'));
     });
 
     Route::get('/servers/minecraft/{minecraftServer}/whitelist/create', function (\App\Models\MinecraftServer $minecraftServer) {
