@@ -8,6 +8,17 @@ use Illuminate\Http\Request;
 
 class MinecraftServerAdminController extends Controller
 {
+    public function index(Request $request, MinecraftServer $minecraftServer)
+    {
+        if ($request->user()->cannot('update', $minecraftServer)) {
+            abort(403);
+        }
+
+        $admins = $minecraftServer->admins()->orderBy('name')->get();
+
+        return response()->json($admins);
+    }
+
     public function store(Request $request, MinecraftServer $minecraftServer, User $user)
     {
         if ($request->user()->cannot('update', $minecraftServer)) {

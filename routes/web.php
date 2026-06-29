@@ -46,6 +46,7 @@ Route::prefix('/servers')->group(function () {
         // minecraft server admin create and delete
         Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->name('store.minecraftServer.admin');
         Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->name('delete.minecraftServer.admin');
+        Route::get('/{minecraftServer}/admins', [MinecraftServerAdminController::class, 'index'])->name('get.minecraftServer.admin');
         // minecraft server whitelist CRUD
         Route::prefix('/{minecraftServer}/whitelist')->group(function () {
             Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
