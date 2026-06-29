@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\MinecraftWhitelist\CreateMinecraftWhitelistAction;
+use App\Actions\MinecraftWhitelist\DeleteMinecraftWhitelistAction;
+use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
@@ -21,7 +24,7 @@ class MinecraftWhitelistController extends Controller
         return response()->json($whitelist);
     }
 
-    public function create(Request $request, MinecraftServer $minecraftServer)
+    public function create(Request $request, MinecraftServer $minecraftServer, CreateMinecraftWhitelistAction $action)
     {
         if ($request->user()->cannot('manageWhitelist', $minecraftServer)) {
             abort(403);
@@ -37,16 +40,16 @@ class MinecraftWhitelistController extends Controller
             ]
         ]);
 
-        $minecraftServer->whitelist()->create([
-            'nickname' => $validated['nickname']
-        ]);
-
-        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+        try {
+            $action->execute($minecraftServer, $validated);
+        } catch (MinecraftServerStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+        }
 
         return response()->json(['message' => 'User added to this minecraft server successfully'], 201);
     }
 
-    public function delete(Request $request, MinecraftServer $minecraftServer, MinecraftWhitelist $minecraftWhitelist)
+    public function delete(Request $request, MinecraftServer $minecraftServer, MinecraftWhitelist $minecraftWhitelist, DeleteMinecraftWhitelistAction $action)
     {
         if ($request->user()->cannot('manageWhitelist', $minecraftServer)) {
             abort(403);
@@ -56,9 +59,11 @@ class MinecraftWhitelistController extends Controller
             abort(404);
         }
 
-        $minecraftWhitelist->delete();
-
-        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+        try {
+            $action->execute($minecraftServer, $minecraftWhitelist);
+        } catch (MinecraftServerStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+        }
 
         return response()->json(['message' => 'Nickname successfully deleted from the whitelist']);
     }
