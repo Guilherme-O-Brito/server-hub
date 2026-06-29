@@ -3,11 +3,14 @@
 namespace Tests\Unit\Actions;
 
 use App\Actions\UpdateMinecraftServerAction;
+use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UpdateMinecraftServerActionTest extends TestCase
@@ -28,6 +31,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'difficulty' => 0,
             'force_gamemode' => true,
             'allow_flight' => false,
+            'status' => MinecraftServerStatus::Stopped,
         ]);
 
         $action = new UpdateMinecraftServerAction();
@@ -50,5 +54,62 @@ class UpdateMinecraftServerActionTest extends TestCase
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id;
         });
+    }
+
+    #[DataProvider('invalidServerStatuses')]
+    public function test_execute_rejects_non_stopped_servers_without_updating_or_dispatching_job(?MinecraftServerStatus $status): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create([
+            'name' => 'Alice',
+        ]);
+
+        $minecraftServer = $user->ownedMinecraftServers()->create([
+            'server_name' => 'Old Server',
+            'motd' => 'Old motd',
+            'difficulty' => 0,
+            'force_gamemode' => true,
+            'allow_flight' => false,
+            'status' => $status,
+        ]);
+
+        try {
+            (new UpdateMinecraftServerAction())->execute($user, $minecraftServer, [
+                'server_name' => 'Updated Server',
+                'difficulty' => 2,
+                'force_gamemode' => false,
+                'allow_flight' => true,
+            ]);
+            $this->fail('Expected MinecraftServerStateException to be thrown.');
+        } catch (MinecraftServerStateException $exception) {
+            $this->assertSame('Minecraft server is not stopped.', $exception->getMessage());
+            $this->assertSame(409, $exception->statusCode());
+        }
+
+        $minecraftServer->refresh();
+
+        $this->assertSame('Old Server', $minecraftServer->server_name);
+        $this->assertSame('Old motd', $minecraftServer->motd);
+        $this->assertSame(0, $minecraftServer->difficulty);
+        $this->assertTrue($minecraftServer->force_gamemode);
+        $this->assertFalse($minecraftServer->allow_flight);
+        $this->assertSame($status, $minecraftServer->status);
+        Queue::assertNothingPushed();
+    }
+
+    public static function invalidServerStatuses(): array
+    {
+        return [
+            'running' => [MinecraftServerStatus::Running],
+            'starting' => [MinecraftServerStatus::Starting],
+            'stopping' => [MinecraftServerStatus::Stopping],
+            'failed' => [MinecraftServerStatus::Failed],
+            'deleting' => [MinecraftServerStatus::Deleting],
+            'provisioning' => [MinecraftServerStatus::Provisioning],
+            'restarting' => [MinecraftServerStatus::Restarting],
+            'delete failed' => [MinecraftServerStatus::DeleteFailed],
+            'null status' => [null],
+        ];
     }
 }

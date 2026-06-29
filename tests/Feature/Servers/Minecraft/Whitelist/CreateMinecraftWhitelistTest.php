@@ -4,6 +4,7 @@ namespace Tests\Feature\Servers\Minecraft\Whitelist;
 
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -184,7 +185,9 @@ class CreateMinecraftWhitelistTest extends TestCase
 	public function test_deleting_server_cascades_whitelist_entries(): void
 	{
 		$user = User::factory()->create();
-		$minecraftServer = $this->createMinecraftServer($user);
+		$minecraftServer = $this->createMinecraftServer($user, [
+			'status' => MinecraftServerStatus::Stopped,
+		]);
 		Queue::fake();
 
 		$this->actingAs($user)->post("/servers/minecraft/{$minecraftServer->id}/whitelist", [
