@@ -3,10 +3,12 @@
 namespace Tests\Feature\Servers\Minecraft\Whitelist;
 
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DeleteMinecraftWhitelistTest extends TestCase
@@ -161,6 +163,35 @@ class DeleteMinecraftWhitelistTest extends TestCase
 		]);
 	}
 
+	#[DataProvider('invalidServerStatuses')]
+	public function test_cannot_delete_whitelist_entry_when_server_is_not_stopped(?MinecraftServerStatus $status): void
+	{
+		Queue::fake();
+
+		$user = User::factory()->create();
+		$minecraftServer = $this->createMinecraftServer($user, [
+			'status' => $status,
+		]);
+		$minecraftWhitelist = $minecraftServer->whitelist()->create([
+			'nickname' => 'BlockedNick',
+		]);
+
+		$response = $this->actingAs($user)->delete("/servers/minecraft/{$minecraftServer->id}/whitelist/{$minecraftWhitelist->id}");
+
+		$response->assertStatus(409);
+		$response->assertJson(['message' => 'Minecraft server is not stopped.']);
+
+		$minecraftServer->refresh();
+
+		$this->assertSame($status, $minecraftServer->status);
+		$this->assertDatabaseHas('minecraft_whitelists', [
+			'id' => $minecraftWhitelist->id,
+			'minecraft_server_id' => $minecraftServer->id,
+			'nickname' => 'BlockedNick',
+		]);
+		Queue::assertNothingPushed();
+	}
+
 	private function createMinecraftServer(User $user, array $attributes = []): MinecraftServer
 	{
 		return $user->ownedMinecraftServers()->create(array_merge([
@@ -169,6 +200,22 @@ class DeleteMinecraftWhitelistTest extends TestCase
 			'difficulty' => 1,
 			'force_gamemode' => true,
 			'allow_flight' => false,
+			'status' => MinecraftServerStatus::Stopped,
 		], $attributes));
+	}
+
+	public static function invalidServerStatuses(): array
+	{
+		return [
+			'running' => [MinecraftServerStatus::Running],
+			'starting' => [MinecraftServerStatus::Starting],
+			'stopping' => [MinecraftServerStatus::Stopping],
+			'failed' => [MinecraftServerStatus::Failed],
+			'deleting' => [MinecraftServerStatus::Deleting],
+			'provisioning' => [MinecraftServerStatus::Provisioning],
+			'restarting' => [MinecraftServerStatus::Restarting],
+			'delete failed' => [MinecraftServerStatus::DeleteFailed],
+			'null status' => [null],
+		];
 	}
 }

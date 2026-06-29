@@ -9,6 +9,7 @@ use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CreateMinecraftWhitelistTest extends TestCase
@@ -182,6 +183,33 @@ class CreateMinecraftWhitelistTest extends TestCase
 		});
 	}
 
+	#[DataProvider('invalidServerStatuses')]
+	public function test_cannot_create_whitelist_entry_when_server_is_not_stopped(?MinecraftServerStatus $status): void
+	{
+		Queue::fake();
+
+		$user = User::factory()->create();
+		$minecraftServer = $this->createMinecraftServer($user, [
+			'status' => $status,
+		]);
+
+		$response = $this->actingAs($user)->post("/servers/minecraft/{$minecraftServer->id}/whitelist", [
+			'nickname' => 'BlockedNick',
+		]);
+
+		$response->assertStatus(409);
+		$response->assertJson(['message' => 'Minecraft server is not stopped.']);
+
+		$minecraftServer->refresh();
+
+		$this->assertSame($status, $minecraftServer->status);
+		$this->assertDatabaseMissing('minecraft_whitelists', [
+			'minecraft_server_id' => $minecraftServer->id,
+			'nickname' => 'BlockedNick',
+		]);
+		Queue::assertNothingPushed();
+	}
+
 	public function test_deleting_server_cascades_whitelist_entries(): void
 	{
 		$user = User::factory()->create();
@@ -273,6 +301,22 @@ class CreateMinecraftWhitelistTest extends TestCase
 			'difficulty' => 1,
 			'force_gamemode' => true,
 			'allow_flight' => false,
+			'status' => MinecraftServerStatus::Stopped,
 		], $attributes));
+	}
+
+	public static function invalidServerStatuses(): array
+	{
+		return [
+			'running' => [MinecraftServerStatus::Running],
+			'starting' => [MinecraftServerStatus::Starting],
+			'stopping' => [MinecraftServerStatus::Stopping],
+			'failed' => [MinecraftServerStatus::Failed],
+			'deleting' => [MinecraftServerStatus::Deleting],
+			'provisioning' => [MinecraftServerStatus::Provisioning],
+			'restarting' => [MinecraftServerStatus::Restarting],
+			'delete failed' => [MinecraftServerStatus::DeleteFailed],
+			'null status' => [null],
+		];
 	}
 }
