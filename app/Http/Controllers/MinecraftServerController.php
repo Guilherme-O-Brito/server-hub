@@ -38,8 +38,11 @@ class MinecraftServerController extends Controller
         $validated = $request->validated();
 
         $user = $request->user();
-
-        $action->execute($user, $minecraftServer, $validated);
+        try {
+            $action->execute($user, $minecraftServer, $validated);
+        } catch (MinecraftServerStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+        }
         
         return response()->json(['message' => 'Minecraft server successfully modified']);
     }
@@ -49,8 +52,11 @@ class MinecraftServerController extends Controller
         if ($request->user()->cannot('delete', $minecraftServer)) {
             abort(403);
         }
-
-        $action->execute($minecraftServer);
+        try {
+            $action->execute($minecraftServer);
+        } catch (MinecraftServerStateException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->statusCode());
+        }
 
         return response()->json(['message' => 'Server successfully deleted']);
     }
