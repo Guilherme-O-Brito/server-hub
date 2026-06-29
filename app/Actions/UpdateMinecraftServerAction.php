@@ -2,7 +2,9 @@
 
 namespace App\Actions;
 
+use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 
@@ -10,6 +12,12 @@ class UpdateMinecraftServerAction
 {
     public function execute(User $user, MinecraftServer $server, array $data)
     {   
+        if ($server->status !== MinecraftServerStatus::Stopped) {
+            throw new MinecraftServerStateException(
+                'Minecraft server is not stopped.'
+            );
+        }
+
         $server->server_name = $data['server_name'];
         $server->motd = $data['motd'] ?? "{$user->name}'s minecraft server";
         $server->difficulty = $data['difficulty'];
