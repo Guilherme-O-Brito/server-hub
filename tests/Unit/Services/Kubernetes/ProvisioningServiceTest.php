@@ -4,6 +4,7 @@ namespace Tests\Unit\Services\Kubernetes;
 
 use App\MinecraftServerStatus;
 use App\Models\ExecutionSlot;
+use App\Models\MinecraftServer;
 use App\Models\User;
 use App\Services\Kubernetes\ExecutionSlotManifestBuilder;
 use App\Services\Kubernetes\KubernetesClient;
@@ -20,7 +21,7 @@ class ProvisioningServiceTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Provisioned Server',
             'motd' => 'Provisioning motd',
             'difficulty' => 3,
@@ -83,7 +84,7 @@ class ProvisioningServiceTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Delete Server',
             'motd' => 'Delete motd',
             'difficulty' => 1,
@@ -116,7 +117,7 @@ class ProvisioningServiceTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Updated Server',
             'motd' => 'Updated motd',
             'difficulty' => 2,
@@ -153,7 +154,7 @@ class ProvisioningServiceTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Start Server',
             'motd' => 'Start motd',
             'difficulty' => 2,
@@ -195,7 +196,7 @@ class ProvisioningServiceTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Stop Server',
             'motd' => 'Stop motd',
             'difficulty' => 2,

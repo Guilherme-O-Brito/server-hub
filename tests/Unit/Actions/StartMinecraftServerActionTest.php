@@ -171,7 +171,7 @@ class StartMinecraftServerActionTest extends TestCase
 
     private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
     {
-        return $owner->ownedMinecraftServers()->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Action Start Server',
             'motd' => 'Action start motd',
             'difficulty' => 1,

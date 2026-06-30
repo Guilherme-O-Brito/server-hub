@@ -175,7 +175,7 @@ class AllocateExecutionSlotActionTest extends TestCase
 
     private function createMinecraftServer(User $owner): MinecraftServer
     {
-        return $owner->ownedMinecraftServers()->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Allocated Server',
             'motd' => 'Allocated motd',
             'difficulty' => 1,

@@ -6,6 +6,7 @@ use App\Actions\CreateMinecraftServerAction;
 use App\Jobs\CreateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
+use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -22,12 +23,14 @@ class CreateMinecraftServerActionTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Alice',
         ]);
+        $minecraftVersion = MinecraftVersion::factory()->enabled()->create();
 
         $action = new CreateMinecraftServerAction();
 
         $result = $action->execute($user, [
             'server_name' => 'Action Server',
             'difficulty' => 2,
+            'minecraft_version_id' => $minecraftVersion->id,
             'force_gamemode' => true,
             'allow_flight' => true,
         ]);
@@ -45,6 +48,7 @@ class CreateMinecraftServerActionTest extends TestCase
             'server_name' => 'Action Server',
             'motd' => "{$user->name}'s minecraft server",
             'difficulty' => 2,
+            'minecraft_version_id' => $minecraftVersion->id,
             'force_gamemode' => true,
             'allow_flight' => true,
         ]);

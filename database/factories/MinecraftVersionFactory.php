@@ -18,18 +18,8 @@ class MinecraftVersionFactory extends Factory
     public function definition(): array
     {
         return [
-            'version' => fake()->unique()->randomElement([
-                '1.8.9',
-                '1.12.2',
-                '1.16.5',
-                '1.18.2',
-                '1.19.4',
-                '1.20.1',
-                '1.20.4',
-                '1.21.1',
-                '1.21.4',
-            ]),
-            'is_enabled' => fake()->boolean()
+            'version' => fake()->unique()->numerify('##.#'),
+            'is_enabled' => true
         ];
 
     }

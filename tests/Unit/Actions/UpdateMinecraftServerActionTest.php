@@ -7,6 +7,7 @@ use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
+use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -24,11 +25,14 @@ class UpdateMinecraftServerActionTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Alice',
         ]);
+        $currentVersion = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
 
         $minecraftServer = $user->ownedMinecraftServers()->create([
             'server_name' => 'Old Server',
             'motd' => 'Old motd',
             'difficulty' => 0,
+            'minecraft_version_id' => $currentVersion->id,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => MinecraftServerStatus::Stopped,
@@ -39,6 +43,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $action->execute($user, $minecraftServer, [
             'server_name' => 'Updated Server',
             'difficulty' => 2,
+            'minecraft_version_id' => $newVersion->id,
             'force_gamemode' => true,
             'allow_flight' => true,
         ]);
@@ -48,6 +53,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertSame('Updated Server', $minecraftServer->server_name);
         $this->assertSame("{$user->name}'s minecraft server", $minecraftServer->motd);
         $this->assertSame(2, $minecraftServer->difficulty);
+        $this->assertSame($newVersion->id, $minecraftServer->minecraft_version_id);
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertTrue($minecraftServer->allow_flight);
 
@@ -64,11 +70,14 @@ class UpdateMinecraftServerActionTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Alice',
         ]);
+        $currentVersion = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
 
         $minecraftServer = $user->ownedMinecraftServers()->create([
             'server_name' => 'Old Server',
             'motd' => 'Old motd',
             'difficulty' => 0,
+            'minecraft_version_id' => $currentVersion->id,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
@@ -78,6 +87,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             (new UpdateMinecraftServerAction())->execute($user, $minecraftServer, [
                 'server_name' => 'Updated Server',
                 'difficulty' => 2,
+                'minecraft_version_id' => $newVersion->id,
                 'force_gamemode' => false,
                 'allow_flight' => true,
             ]);
@@ -92,6 +102,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertSame('Old Server', $minecraftServer->server_name);
         $this->assertSame('Old motd', $minecraftServer->motd);
         $this->assertSame(0, $minecraftServer->difficulty);
+        $this->assertSame($currentVersion->id, $minecraftServer->minecraft_version_id);
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertFalse($minecraftServer->allow_flight);
         $this->assertSame($status, $minecraftServer->status);

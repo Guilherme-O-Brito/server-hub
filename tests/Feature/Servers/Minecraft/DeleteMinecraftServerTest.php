@@ -4,6 +4,7 @@ namespace Tests\Feature\Servers\Minecraft;
 
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\MinecraftServerStatus;
+use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -20,7 +21,7 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$owner = User::factory()->create();
 
-		$minecraftServer = $owner->ownedMinecraftServers()->create([
+		$minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
 			'server_name' => 'Test Server',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
@@ -52,7 +53,7 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$owner = User::factory()->create();
 
-		$minecraftServer = $owner->ownedMinecraftServers()->create([
+		$minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
 			'server_name' => 'Test Server',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
@@ -81,7 +82,7 @@ class DeleteMinecraftServerTest extends TestCase
 	{
 		$owner = User::factory()->create();
 
-		$minecraftServer = $owner->ownedMinecraftServers()->create([
+		$minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
 			'server_name' => 'Test Server',
 			'motd' => 'Test motd',
 			'difficulty' => 1,
@@ -99,7 +100,7 @@ class DeleteMinecraftServerTest extends TestCase
 		$owner = User::factory()->create();
 		$otherUser = User::factory()->create();
 
-		$minecraftServer = $owner->ownedMinecraftServers()->create([
+		$minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
 			'server_name' => 'Test Server',
 			'motd' => 'Test motd',
 			'difficulty' => 1,

@@ -101,7 +101,7 @@ class GetMinecraftServerAdminTest extends TestCase
 
     private function createMinecraftServer(User $owner, array $attributes = []): MinecraftServer
     {
-        return $owner->ownedMinecraftServers()->create(array_merge([
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,

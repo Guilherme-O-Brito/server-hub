@@ -102,7 +102,7 @@ class GetMinecraftWhitelistTest extends TestCase
 
 	private function createMinecraftServer(User $user, array $attributes = []): MinecraftServer
 	{
-		return $user->ownedMinecraftServers()->create(array_merge([
+		return MinecraftServer::factory()->for($user, 'owner')->create(array_merge([
 			'server_name' => 'Test Server',
 			'motd' => 'A cool server',
 			'difficulty' => 1,

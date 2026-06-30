@@ -5,6 +5,7 @@ namespace Tests\Feature\Servers\Minecraft;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
+use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -20,23 +21,23 @@ class UpdateMinecraftServerTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
+        $currentVersion = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = $this->createMinecraftServer($owner, [
             'server_name' => 'Old Server',
             'motd' => 'Old motd',
             'difficulty' => 0,
+            'minecraft_version_id' => $currentVersion->id,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => MinecraftServerStatus::Stopped,
         ]);
 
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'motd' => 'Updated motd',
-            'difficulty' => 2,
-            'force_gamemode' => false,
-            'allow_flight' => true,
-        ]);
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion)
+        );
 
         $response->assertOk();
         $response->assertJson(['message' => 'Minecraft server successfully modified']);
@@ -49,9 +50,11 @@ class UpdateMinecraftServerTest extends TestCase
             'server_name' => 'Updated Server',
             'motd' => 'Updated motd',
             'difficulty' => 2,
+            'minecraft_version_id' => $newVersion->id,
             'force_gamemode' => false,
             'allow_flight' => true,
         ]);
+        $this->assertTrue($updatedServer->version->is($newVersion));
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($updatedServer) {
             return $job->serverId === $updatedServer->id;
@@ -64,23 +67,23 @@ class UpdateMinecraftServerTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
+        $currentVersion = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = $this->createMinecraftServer($owner, [
             'server_name' => 'Old Server',
             'motd' => 'Old motd',
             'difficulty' => 0,
+            'minecraft_version_id' => $currentVersion->id,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
         ]);
 
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'motd' => 'Updated motd',
-            'difficulty' => 2,
-            'force_gamemode' => false,
-            'allow_flight' => true,
-        ]);
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion)
+        );
 
         $response->assertStatus(409);
         $response->assertJson(['message' => 'Minecraft server is not stopped.']);
@@ -90,6 +93,7 @@ class UpdateMinecraftServerTest extends TestCase
         $this->assertSame('Old Server', $minecraftServer->server_name);
         $this->assertSame('Old motd', $minecraftServer->motd);
         $this->assertSame(0, $minecraftServer->difficulty);
+        $this->assertSame($currentVersion->id, $minecraftServer->minecraft_version_id);
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertFalse($minecraftServer->allow_flight);
         $this->assertSame($status, $minecraftServer->status);
@@ -99,22 +103,13 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_guest_cannot_update_minecraft_server()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'motd' => 'Updated motd',
-            'difficulty' => 2,
-            'force_gamemode' => false,
-            'allow_flight' => true,
-        ]);
+        $response = $this->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion)
+        );
 
         $response->assertRedirect('/login');
     }
@@ -123,22 +118,13 @@ class UpdateMinecraftServerTest extends TestCase
     {
         $owner = User::factory()->create();
         $otherUser = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($otherUser)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'motd' => 'Updated motd',
-            'difficulty' => 2,
-            'force_gamemode' => false,
-            'allow_flight' => true,
-        ]);
+        $response = $this->actingAs($otherUser)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion)
+        );
 
         $response->assertStatus(403);
     }
@@ -146,19 +132,13 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_server_name_is_required_on_update()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => '',
-            'difficulty' => 2,
-        ]);
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion, ['server_name' => ''])
+        );
 
         $response->assertSessionHasErrors('server_name');
     }
@@ -166,23 +146,19 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_difficulty_is_required_and_in_range_on_update()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+        $missingDifficultyPayload = $this->validUpdatePayload($newVersion);
+        unset($missingDifficultyPayload['difficulty']);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $missingDifficultyResponse = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-        ]);
-
-        $invalidDifficultyResponse = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 5,
-        ]);
+        $missingDifficultyResponse = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $missingDifficultyPayload
+        );
+        $invalidDifficultyResponse = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion, ['difficulty' => 5])
+        );
 
         $missingDifficultyResponse->assertSessionHasErrors('difficulty');
         $invalidDifficultyResponse->assertSessionHasErrors('difficulty');
@@ -191,21 +167,16 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_force_gamemode_and_allow_flight_must_be_boolean_on_update()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-            'force_gamemode' => 'notabool',
-            'allow_flight' => 'notabool',
-        ]);
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion, [
+                'force_gamemode' => 'notabool',
+                'allow_flight' => 'notabool',
+            ])
+        );
 
         $response->assertSessionHasErrors(['force_gamemode', 'allow_flight']);
     }
@@ -213,20 +184,12 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_force_gamemode_is_required_on_update()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+        $payload = $this->validUpdatePayload($newVersion);
+        unset($payload['force_gamemode']);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-            'allow_flight' => true,
-        ]);
+        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", $payload);
 
         $response->assertSessionHasErrors('force_gamemode');
     }
@@ -234,20 +197,12 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_allow_flight_is_required_on_update()
     {
         $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+        $payload = $this->validUpdatePayload($newVersion);
+        unset($payload['allow_flight']);
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
-
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-            'force_gamemode' => true,
-        ]);
+        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", $payload);
 
         $response->assertSessionHasErrors('allow_flight');
     }
@@ -255,24 +210,58 @@ class UpdateMinecraftServerTest extends TestCase
     public function test_motd_max_length_on_update()
     {
         $owner = User::factory()->create();
-
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
-            'server_name' => 'Test Server',
-            'motd' => 'Test motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => true,
-        ]);
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
 
         $longMotd = str_repeat('a', 300);
 
-        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", [
-            'server_name' => 'Updated Server',
-            'difficulty' => 2,
-            'motd' => $longMotd,
-        ]);
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion, ['motd' => $longMotd])
+        );
 
         $response->assertSessionHasErrors('motd');
+    }
+
+    public function test_minecraft_version_is_required_on_update(): void
+    {
+        $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+        $payload = $this->validUpdatePayload($newVersion);
+        unset($payload['minecraft_version_id']);
+
+        $response = $this->actingAs($owner)->put("/servers/minecraft/{$minecraftServer->id}", $payload);
+
+        $response->assertSessionHasErrors('minecraft_version_id');
+    }
+
+    public function test_minecraft_version_must_exist_on_update(): void
+    {
+        $owner = User::factory()->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($newVersion, ['minecraft_version_id' => 999])
+        );
+
+        $response->assertSessionHasErrors('minecraft_version_id');
+    }
+
+    public function test_minecraft_version_must_be_enabled_on_update(): void
+    {
+        $owner = User::factory()->create();
+        $minecraftServer = $this->createMinecraftServer($owner);
+        $disabledVersion = MinecraftVersion::factory()->disabled()->create();
+
+        $response = $this->actingAs($owner)->put(
+            "/servers/minecraft/{$minecraftServer->id}",
+            $this->validUpdatePayload($disabledVersion)
+        );
+
+        $response->assertSessionHasErrors('minecraft_version_id');
     }
 
     public static function invalidServerStatuses(): array
@@ -288,5 +277,31 @@ class UpdateMinecraftServerTest extends TestCase
             'delete failed' => [MinecraftServerStatus::DeleteFailed],
             'null status' => [null],
         ];
+    }
+
+    private function createMinecraftServer(User $owner, array $attributes = []): MinecraftServer
+    {
+        return MinecraftServer::factory()
+            ->for($owner, 'owner')
+            ->create(array_merge([
+                'server_name' => 'Test Server',
+                'motd' => 'Test motd',
+                'difficulty' => 1,
+                'force_gamemode' => true,
+                'allow_flight' => true,
+                'status' => MinecraftServerStatus::Stopped,
+            ], $attributes));
+    }
+
+    private function validUpdatePayload(MinecraftVersion $minecraftVersion, array $attributes = []): array
+    {
+        return array_merge([
+            'server_name' => 'Updated Server',
+            'motd' => 'Updated motd',
+            'difficulty' => 2,
+            'minecraft_version_id' => $minecraftVersion->id,
+            'force_gamemode' => false,
+            'allow_flight' => true,
+        ], $attributes);
     }
 }

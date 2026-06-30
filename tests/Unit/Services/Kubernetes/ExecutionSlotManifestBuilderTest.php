@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services\Kubernetes;
 
 use App\Models\ExecutionSlot;
+use App\Models\MinecraftServer;
 use App\Models\User;
 use App\Services\Kubernetes\ExecutionSlotManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,7 @@ class ExecutionSlotManifestBuilderTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Builder Server',
             'motd' => 'Builder motd',
             'difficulty' => 2,

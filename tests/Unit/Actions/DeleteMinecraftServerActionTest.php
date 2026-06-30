@@ -6,6 +6,7 @@ use App\Actions\DeleteMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\MinecraftServerStatus;
+use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -22,7 +23,7 @@ class DeleteMinecraftServerActionTest extends TestCase
 
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Delete Server',
             'motd' => 'Delete motd',
             'difficulty' => 1,
@@ -55,7 +56,7 @@ class DeleteMinecraftServerActionTest extends TestCase
 
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Delete Server',
             'motd' => 'Delete motd',
             'difficulty' => 1,

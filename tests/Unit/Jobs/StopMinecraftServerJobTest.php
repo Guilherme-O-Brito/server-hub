@@ -141,7 +141,7 @@ class StopMinecraftServerJobTest extends TestCase
 
     private function createMinecraftServer(User $owner, array $attributes = []): MinecraftServer
     {
-        return $owner->ownedMinecraftServers()->create(array_merge([
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Job Stop Server',
             'motd' => 'Job stop motd',
             'difficulty' => 1,

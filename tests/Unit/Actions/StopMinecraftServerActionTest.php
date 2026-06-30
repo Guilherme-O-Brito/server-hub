@@ -164,7 +164,7 @@ class StopMinecraftServerActionTest extends TestCase
 
     private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
     {
-        return $owner->ownedMinecraftServers()->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Action Stop Server',
             'motd' => 'Action stop motd',
             'difficulty' => 1,

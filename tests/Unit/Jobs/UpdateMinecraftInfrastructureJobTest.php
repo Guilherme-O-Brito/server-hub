@@ -17,7 +17,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Job Server',
             'motd' => 'Job motd',
             'difficulty' => 1,

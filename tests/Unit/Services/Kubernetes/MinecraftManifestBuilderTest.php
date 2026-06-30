@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Services\Kubernetes;
 
+use App\Models\MinecraftServer;
+use App\Models\MinecraftVersion;
 use App\Models\User;
 use App\Services\Kubernetes\MinecraftManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,11 +16,13 @@ class MinecraftManifestBuilderTest extends TestCase
     public function test_builders_extract_expected_data_from_minecraft_server(): void
     {
         $owner = User::factory()->create();
+        $minecraftVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Builder Server',
             'motd' => 'Builder motd',
             'difficulty' => 2,
+            'minecraft_version_id' => $minecraftVersion->id,
             'force_gamemode' => false,
             'allow_flight' => true,
         ]);
@@ -47,6 +51,7 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame('games', $configMap['metadata']['namespace']);
         $this->assertSame('Builder Server', $configMap['data']['SERVER_NAME']);
         $this->assertSame('Builder motd', $configMap['data']['MOTD']);
+        $this->assertSame('1.20.1', $configMap['data']['VERSION']);
         $this->assertSame('2', $configMap['data']['DIFFICULTY']);
         $this->assertSame('false', $configMap['data']['FORCE_GAMEMODE']);
         $this->assertSame('true', $configMap['data']['ALLOW_FLIGHT']);
