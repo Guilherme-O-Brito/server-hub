@@ -9,9 +9,7 @@ class MinecraftVersion extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['is_enabled'];
-
-    protected $guarded = ['version'];
+    protected $fillable = ['is_enabled', 'version'];
 
     protected $casts = [
         'is_enabled' => 'boolean'
