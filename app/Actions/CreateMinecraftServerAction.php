@@ -21,6 +21,7 @@ class CreateMinecraftServerAction
             'server_name' => $data['server_name'],
             'motd' => $motd,
             'difficulty' => $data['difficulty'],
+            'minecraft_version_id' => $data['minecraft_version_id'],
             'force_gamemode' => $force_gamemode,
             'allow_flight' => $allow_flight,
             'status' => MinecraftServerStatus::Provisioning

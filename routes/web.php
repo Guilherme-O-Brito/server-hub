@@ -4,6 +4,7 @@ use App\Http\Controllers\ExecutionSlotController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MinecraftServerAdminController;
 use App\Http\Controllers\MinecraftServerController;
+use App\Http\Controllers\MinecraftVersionController;
 use App\Http\Controllers\MinecraftWhitelistController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -52,6 +53,13 @@ Route::prefix('/servers')->group(function () {
             Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
             Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->name('delete.minecraftServer.whitelist');
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
+        });
+        // minecraft server versions CRUD
+        Route::prefix('/version')->group(function () {
+            Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');
+            Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->name('toggle.minecraftVersion');
+            Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->name('delete.minecraftVersion');
+            Route::get('/', [MinecraftVersionController::class, 'index'])->name('get.minecraftVersion');
         });
     });
 });

@@ -20,6 +20,7 @@ class UpdateMinecraftServerAction
 
         $server->server_name = $data['server_name'];
         $server->motd = $data['motd'] ?? "{$user->name}'s minecraft server";
+        $server->minecraft_version_id = $data['minecraft_version_id'];
         $server->difficulty = $data['difficulty'];
         $server->force_gamemode = $data['force_gamemode'];
         $server->allow_flight = $data['allow_flight'];

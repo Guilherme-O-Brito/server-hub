@@ -42,7 +42,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'data' => [
                 'EULA' => 'TRUE',
                 'MEMORY' => '4096M',
-                'VERSION' => '26.1.2',
+                'VERSION' => "{$minecraftServer->version->version}",
                 'MAX_PLAYERS' => '10',
                 'MOTD' => "$minecraftServer->motd",
                 'USE_AIKAR_FLAGS' => 'true',

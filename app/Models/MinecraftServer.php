@@ -18,6 +18,7 @@ class MinecraftServer extends Model
         'level_name',
         'motd',
         'difficulty',
+        'minecraft_version_id',
         'force_gamemode',
         'allow_flight',
         'status',
@@ -30,6 +31,7 @@ class MinecraftServer extends Model
         'force_gamemode' => 'boolean',
         'allow_flight' => 'boolean',
         'difficulty' => 'integer',
+        'minecraft_server_id' => 'integer',
         'status' => MinecraftServerStatus::class
     ];
 
@@ -46,6 +48,11 @@ class MinecraftServer extends Model
     public function whitelist()
     {
         return $this->hasMany(MinecraftWhitelist::class);
+    }
+
+    public function version()
+    {
+        return $this->belongsTo(MinecraftVersion::class, 'minecraft_version_id');
     }
 
     public function executionSlot(): MorphOne

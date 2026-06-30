@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use SebastianBergmann\Type\TrueType;
 
 class MinecraftServerRequest extends FormRequest
@@ -26,7 +27,12 @@ class MinecraftServerRequest extends FormRequest
         return [
             'server_name' => ['required', 'string', 'max:255'],
             'motd' => ['nullable', 'string', 'max:255'],
-            'difficulty' => ['required', 'integer', 'min:0', 'max:3'],  
+            'difficulty' => ['required', 'integer', 'min:0', 'max:3'],
+            'minecraft_version_id' => [
+                'required',
+                'integer',
+                Rule::exists('minecraft_versions', 'id')->where('is_enabled', true),
+            ],  
             'force_gamemode' => ['boolean', 'required'],
             'allow_flight' => ['boolean', 'required']    
         ];
