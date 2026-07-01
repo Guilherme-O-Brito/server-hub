@@ -98,6 +98,18 @@ Route::middleware('auth')->group(function () {
         return view('whitelist_delete_form', compact('minecraftServer', 'minecraftWhitelist'));
     });
 
+    Route::get('/servers/minecraft/version/create', function () {
+        return view('minecraft_version_form');
+    });
+
+    Route::get('/servers/minecraft/version/toggle/{minecraftVersion}', function (\App\Models\MinecraftVersion $minecraftVersion) {
+        return view('minecraft_version_toggle_form', compact('minecraftVersion'));
+    });
+
+    Route::get('/servers/minecraft/version/delete/{minecraftVersion}', function (\App\Models\MinecraftVersion $minecraftVersion) {
+        return view('minecraft_version_delete_form', compact('minecraftVersion'));
+    });
+
     Route::get('/execution-slot/create', function () {
         return view('execution_slot_form');
     });
