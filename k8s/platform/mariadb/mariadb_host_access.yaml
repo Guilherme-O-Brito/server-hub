@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-to-host
+  namespace: server-hub
+spec:
+  type: NodePort
+  selector:
+    app: mariadb
+  ports:
+    - name: mariadb
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+      nodePort: 32000
