@@ -47,6 +47,13 @@
         </select>
     </div>
 
+    <div>
+        <label for="minecraft_version_id">Minecraft Version</label><br>
+        <select id="minecraft_version_id" name="minecraft_version_id" required>
+            <option value="">Loading versions...</option>
+        </select>
+    </div>
+
     <label>
         <input type="hidden" name="force_gamemode" value="0">
         <input
@@ -74,6 +81,27 @@
     </button>
 
 </form>
+
+<script>
+    fetch('{{ route('get.minecraftVersion') }}')
+        .then(response => response.json())
+        .then(versions => {
+            const select = document.getElementById('minecraft_version_id');
+            select.innerHTML = '<option value="">Select a version</option>';
+
+            versions.forEach(version => {
+                const option = document.createElement('option');
+                option.value = version.id;
+                option.textContent = version.version;
+
+                if ('{{ old('minecraft_version_id') }}' == version.id) {
+                    option.selected = true;
+                }
+
+                select.appendChild(option);
+            });
+        });
+</script>
 
 
 </body>
