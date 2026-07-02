@@ -21,7 +21,7 @@ class MinecraftServerPolicy
      */
     public function view(User $user, MinecraftServer $minecraftServer): bool
     {
-        return false;
+        return $minecraftServer->owner_id === $user->id || $minecraftServer->admins()->where('users.id', $user->id)->exists();
     }
 
     /**

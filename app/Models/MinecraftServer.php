@@ -6,6 +6,7 @@ use App\MinecraftServerStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Query\Builder;
 
 class MinecraftServer extends Model
 {
@@ -61,6 +62,15 @@ class MinecraftServer extends Model
             ExecutionSlot::class,
             'server'
         );
+    }
+
+    public function scopeVisibleToUser(Builder $query, User $user): Builder
+    {
+        return $query
+            ->where('owner_id', $user->id)
+            ->orWhereHas('admins', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            });
     }
 
     public function getDeployName(): string

@@ -15,6 +15,32 @@ use Illuminate\Http\Request;
 
 class MinecraftServerController extends Controller
 {   
+    public function index(Request $request)
+    {
+        $servers = MinecraftServer::query()
+            ->visibleToUser($request->user())
+            ->with([
+                'version',
+                'executionSlot'
+            ])->get();
+        
+        return response()->json([$servers]);
+    }
+
+    public function get(Request $request, MinecraftServer $minecraftServer)
+    {
+        if ($request->user()->cannot('view', $minecraftServer)) {
+            abort(403);
+        }
+
+        $minecraftServer->load([
+            'version',
+            'executionSlot',
+        ]);
+
+        return response()->json($minecraftServer);
+    }
+
     public function create(
         MinecraftServerRequest $request,
         CreateMinecraftServerAction $action

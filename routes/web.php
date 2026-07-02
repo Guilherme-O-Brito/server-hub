@@ -41,6 +41,8 @@ Route::prefix('/servers')->group(function () {
         Route::post('/', [MinecraftServerController::class, 'create'])->name('create.minecraftServer');
         Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
         Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
+        Route::get('/', [MinecraftServerController::class, 'index'])->name('index.minecraftServer');
+        Route::get('/{minecraftServer}', [MinecraftServerController::class, 'get'])->name('get.minecraftServer');
         // minecraft start and stop
         Route::post('/{minecraftServer}/start', [MinecraftServerController::class, 'start'])->name('start.minecraftServer');
         Route::post('/{minecraftServer}/stop', [MinecraftServerController::class, 'stop'])->name('stop.minecraftServer');
