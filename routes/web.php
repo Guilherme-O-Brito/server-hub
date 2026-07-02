@@ -39,28 +39,28 @@ Route::prefix('/servers')->group(function () {
     Route::prefix('/minecraft')->middleware('auth')->group(function () {
         // minecraft CRUD
         Route::post('/', [MinecraftServerController::class, 'create'])->name('create.minecraftServer');
-        Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->name('update.minecraftServer');
-        Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->name('delete.minecraftServer');
+        Route::put('/{minecraftServer}', [MinecraftServerController::class, 'update'])->whereNumber('minecraftServer')->name('update.minecraftServer');
+        Route::delete('/{minecraftServer}', [MinecraftServerController::class, 'delete'])->whereNumber('minecraftServer')->name('delete.minecraftServer');
         Route::get('/', [MinecraftServerController::class, 'index'])->name('index.minecraftServer');
-        Route::get('/{minecraftServer}', [MinecraftServerController::class, 'get'])->name('get.minecraftServer');
+        Route::get('/{minecraftServer}', [MinecraftServerController::class, 'get'])->whereNumber('minecraftServer')->name('get.minecraftServer');
         // minecraft start and stop
-        Route::post('/{minecraftServer}/start', [MinecraftServerController::class, 'start'])->name('start.minecraftServer');
-        Route::post('/{minecraftServer}/stop', [MinecraftServerController::class, 'stop'])->name('stop.minecraftServer');
+        Route::post('/{minecraftServer}/start', [MinecraftServerController::class, 'start'])->whereNumber('minecraftServer')->name('start.minecraftServer');
+        Route::post('/{minecraftServer}/stop', [MinecraftServerController::class, 'stop'])->whereNumber('minecraftServer')->name('stop.minecraftServer');
         // minecraft server admin create and delete
-        Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->name('store.minecraftServer.admin');
-        Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->name('delete.minecraftServer.admin');
-        Route::get('/{minecraftServer}/admins', [MinecraftServerAdminController::class, 'index'])->name('get.minecraftServer.admin');
+        Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->whereNumber(['minecraftServer', 'user'])->name('store.minecraftServer.admin');
+        Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->whereNumber(['minecraftServer', 'user'])->name('delete.minecraftServer.admin');
+        Route::get('/{minecraftServer}/admins', [MinecraftServerAdminController::class, 'index'])->whereNumber('minecraftServer')->name('get.minecraftServer.admin');
         // minecraft server whitelist CRUD
         Route::prefix('/{minecraftServer}/whitelist')->group(function () {
             Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
-            Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->name('delete.minecraftServer.whitelist');
+            Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->whereNumber('minecraftWhitelist')->name('delete.minecraftServer.whitelist');
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
         });
         // minecraft server versions CRUD
         Route::prefix('/version')->group(function () {
             Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');
-            Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->name('toggle.minecraftVersion');
-            Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->name('delete.minecraftVersion');
+            Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
+            Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
             Route::get('/', [MinecraftVersionController::class, 'index'])->name('get.minecraftVersion');
         });
     });
