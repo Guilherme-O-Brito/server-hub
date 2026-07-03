@@ -84,7 +84,7 @@
 </form>
 
 <script>
-    fetch('{{ route('get.minecraftVersion') }}')
+    fetch('{{ route('index.minecraftVersion') }}')
         .then(response => response.json())
         .then(versions => {
             const select = document.getElementById('minecraft_version_id');

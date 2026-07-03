@@ -9,7 +9,7 @@
 <body style="margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;">
 
 
-<form method="POST" action="{{ route('store.minecraftServer.whitelist', $minecraftServer) }}"
+<form method="POST" action="{{ route('create.minecraftServer.whitelist', $minecraftServer) }}"
       style="display:flex; flex-direction:column; gap:12px; min-width:300px;">
 
     @csrf
