@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,6 +26,7 @@ class MinecraftServerFactory extends Factory
             'minecraft_version_id' => MinecraftVersion::factory()->enabled(),
             'force_gamemode' => fake()->boolean(),
             'allow_flight' => fake()->boolean(),
+            'status' => MinecraftServerStatus::Stopped
         ];
     }
 }

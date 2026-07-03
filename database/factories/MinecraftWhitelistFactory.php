@@ -18,7 +18,7 @@ class MinecraftWhitelistFactory extends Factory
     public function definition(): array
     {
         return [
-            'nickname' => fake()->name()
+            'nickname' => mb_substr(fake()->name(), 0, 16)
         ];
     }
 }
