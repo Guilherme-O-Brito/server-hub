@@ -24,7 +24,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 // authentication and admin only
 Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD
-    Route::post('/', [UserController::class, 'create'])->name('register.user');
+    Route::post('/', [UserController::class, 'create'])->name('create.user');
     Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
     Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
 });
@@ -32,7 +32,7 @@ Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(fu
 Route::prefix('/execution-slot')->middleware('auth')->group(function () {
     Route::post('/', [ExecutionSlotController::class, 'create_one'])->middleware(EnsureUserIsAdmin::class)->name('create_one.execution_slot');
     Route::delete('/', [ExecutionSlotController::class, 'delete_last'])->middleware(EnsureUserIsAdmin::class)->name('delete_last.execution_slot');
-    Route::get('/', [ExecutionSlotController::class, 'index'])->name('get.execution_slot');
+    Route::get('/', [ExecutionSlotController::class, 'index'])->name('index.execution_slot');
 });
 
 Route::prefix('/servers')->group(function () {
@@ -49,19 +49,19 @@ Route::prefix('/servers')->group(function () {
         // minecraft server admin create and delete
         Route::post('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'store'])->whereNumber(['minecraftServer', 'user'])->name('store.minecraftServer.admin');
         Route::delete('/{minecraftServer}/admins/{user}', [MinecraftServerAdminController::class, 'delete'])->whereNumber(['minecraftServer', 'user'])->name('delete.minecraftServer.admin');
-        Route::get('/{minecraftServer}/admins', [MinecraftServerAdminController::class, 'index'])->whereNumber('minecraftServer')->name('get.minecraftServer.admin');
+        Route::get('/{minecraftServer}/admins', [MinecraftServerAdminController::class, 'index'])->whereNumber('minecraftServer')->name('index.minecraftServer.admin');
         // minecraft server whitelist CRUD
         Route::prefix('/{minecraftServer}/whitelist')->group(function () {
-            Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('store.minecraftServer.whitelist');
+            Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('create.minecraftServer.whitelist');
             Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->whereNumber('minecraftWhitelist')->name('delete.minecraftServer.whitelist');
-            Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('get.minecraftServer.whitelist');    
+            Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('index.minecraftServer.whitelist');    
         });
         // minecraft server versions CRUD
         Route::prefix('/version')->group(function () {
             Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');
             Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
             Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
-            Route::get('/', [MinecraftVersionController::class, 'index'])->name('get.minecraftVersion');
+            Route::get('/', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
         });
     });
 });
