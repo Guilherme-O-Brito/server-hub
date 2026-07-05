@@ -19,13 +19,14 @@ class DeleteMinecraftVersionTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $owner = User::factory()->create(['is_admin' => false]);
         $versionToDelete = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
-        $replacementVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
+        $olderReplacementVersion = MinecraftVersion::factory()->enabled()->version('1.8.9')->create();
+        $replacementVersion = MinecraftVersion::factory()->enabled()->version('1.21.2')->create();
         $serverUsingDeletedVersion = MinecraftServer::factory()
             ->for($owner, 'owner')
             ->create(['minecraft_version_id' => $versionToDelete->id]);
         $serverAlreadyUsingReplacement = MinecraftServer::factory()
             ->for($owner, 'owner')
-            ->create(['minecraft_version_id' => $replacementVersion->id]);
+            ->create(['minecraft_version_id' => $olderReplacementVersion->id]);
 
         $response = $this->actingAs($admin)->delete(self::ROUTE."/{$versionToDelete->id}");
 
@@ -35,7 +36,7 @@ class DeleteMinecraftVersionTest extends TestCase
             'id' => $versionToDelete->id,
         ]);
         $this->assertSame($replacementVersion->id, $serverUsingDeletedVersion->refresh()->minecraft_version_id);
-        $this->assertSame($replacementVersion->id, $serverAlreadyUsingReplacement->refresh()->minecraft_version_id);
+        $this->assertSame($olderReplacementVersion->id, $serverAlreadyUsingReplacement->refresh()->minecraft_version_id);
     }
 
     public function test_delete_fails_when_there_is_no_other_enabled_replacement_version(): void

@@ -17,18 +17,10 @@ class DeleteMinecraftVersionActionTest extends TestCase
     public function test_execute_moves_servers_to_latest_enabled_replacement_and_deletes_old_version(): void
     {
         $owner = User::factory()->create();
-        $versionToDelete = MinecraftVersion::factory()->enabled()->version('1.19.4')->create([
-            'created_at' => now()->subDays(3),
-        ]);
-        $olderEnabledReplacement = MinecraftVersion::factory()->enabled()->version('1.18.2')->create([
-            'created_at' => now()->subDays(2),
-        ]);
-        $latestDisabledVersion = MinecraftVersion::factory()->disabled()->version('1.21.1')->create([
-            'created_at' => now(),
-        ]);
-        $latestEnabledReplacement = MinecraftVersion::factory()->enabled()->version('1.20.1')->create([
-            'created_at' => now()->subDay(),
-        ]);
+        $versionToDelete = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $olderEnabledReplacement = MinecraftVersion::factory()->enabled()->version('1.8.9')->create();
+        $latestDisabledVersion = MinecraftVersion::factory()->disabled()->version('1.22.1')->create();
+        $latestEnabledReplacement = MinecraftVersion::factory()->enabled()->version('1.21.2')->create();
         $firstServerUsingDeletedVersion = MinecraftServer::factory()
             ->for($owner, 'owner')
             ->create(['minecraft_version_id' => $versionToDelete->id]);
@@ -52,29 +44,6 @@ class DeleteMinecraftVersionActionTest extends TestCase
         $this->assertSame($latestEnabledReplacement->id, $firstServerUsingDeletedVersion->refresh()->minecraft_version_id);
         $this->assertSame($latestEnabledReplacement->id, $secondServerUsingDeletedVersion->refresh()->minecraft_version_id);
         $this->assertSame($olderEnabledReplacement->id, $serverUsingOtherVersion->refresh()->minecraft_version_id);
-    }
-
-    public function test_execute_uses_highest_id_when_enabled_replacements_have_same_created_at(): void
-    {
-        $owner = User::factory()->create();
-        $createdAt = now();
-        $versionToDelete = MinecraftVersion::factory()->enabled()->version('1.19.4')->create([
-            'created_at' => $createdAt->copy()->subDay(),
-        ]);
-        $firstReplacement = MinecraftVersion::factory()->enabled()->version('1.20.1')->create([
-            'created_at' => $createdAt,
-        ]);
-        $secondReplacement = MinecraftVersion::factory()->enabled()->version('1.21.1')->create([
-            'created_at' => $createdAt,
-        ]);
-        $minecraftServer = MinecraftServer::factory()
-            ->for($owner, 'owner')
-            ->create(['minecraft_version_id' => $versionToDelete->id]);
-
-        (new DeleteMinecraftVersionAction())->execute($versionToDelete);
-
-        $this->assertGreaterThan($firstReplacement->id, $secondReplacement->id);
-        $this->assertSame($secondReplacement->id, $minecraftServer->refresh()->minecraft_version_id);
     }
 
     public function test_execute_throws_when_no_other_enabled_version_exists_and_keeps_database_unchanged(): void
