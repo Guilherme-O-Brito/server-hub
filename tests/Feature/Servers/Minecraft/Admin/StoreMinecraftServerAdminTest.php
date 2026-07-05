@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Servers\Minecraft;
 
+use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +16,7 @@ class StoreMinecraftServerAdminTest extends TestCase
         $owner = User::factory()->create();
         $admin = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,
@@ -39,7 +40,7 @@ class StoreMinecraftServerAdminTest extends TestCase
         $owner = User::factory()->create();
         $admin = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,
@@ -58,7 +59,7 @@ class StoreMinecraftServerAdminTest extends TestCase
         $otherUser = User::factory()->create();
         $admin = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,
@@ -80,7 +81,7 @@ class StoreMinecraftServerAdminTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,
@@ -113,7 +114,7 @@ class StoreMinecraftServerAdminTest extends TestCase
     {
         $owner = User::factory()->create();
 
-        $minecraftServer = $owner->ownedMinecraftServers()->create([
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
             'server_name' => 'Test Server',
             'motd' => 'Test motd',
             'difficulty' => 1,
