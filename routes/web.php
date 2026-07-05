@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExecutionSlotController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\MinecraftOperatorController;
 use App\Http\Controllers\MinecraftServerAdminController;
 use App\Http\Controllers\MinecraftServerController;
 use App\Http\Controllers\MinecraftVersionController;
@@ -58,9 +59,9 @@ Route::prefix('/servers')->group(function () {
         });
         // minecraft server operators crud
         Route::prefix('/{minecraftServer}/operators')->group(function () {
-            Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('create.minecraftServer.operator');
-            Route::delete('/{minecraftOperator}', [MinecraftWhitelistController::class, 'delete'])->whereNumber('minecraftOperator')->name('delete.minecraftServer.operator');
-            Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('index.minecraftServer.operator');    
+            Route::post('/', [MinecraftOperatorController::class, 'create'])->name('create.minecraftServer.operator');
+            Route::delete('/{minecraftOperator}', [MinecraftOperatorController::class, 'delete'])->whereNumber('minecraftOperator')->name('delete.minecraftServer.operator');
+            Route::get('/', [MinecraftOperatorController::class, 'index'])->name('index.minecraftServer.operator');    
         });
         // minecraft server versions CRUD
         Route::prefix('/version')->group(function () {
