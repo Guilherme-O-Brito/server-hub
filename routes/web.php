@@ -107,6 +107,18 @@ Route::middleware('auth')->group(function () {
         return view('whitelist_delete_form', compact('minecraftServer', 'minecraftWhitelist'));
     });
 
+    Route::get('/servers/minecraft/{minecraftServer}/operators/create', function (\App\Models\MinecraftServer $minecraftServer) {
+        return view('operator_form', compact('minecraftServer'));
+    });
+
+    Route::get('/servers/minecraft/{minecraftServer}/operators/delete/{minecraftOperator}', function (\App\Models\MinecraftServer $minecraftServer, \App\Models\MinecraftOperator $minecraftOperator) {
+        if ($minecraftOperator->minecraft_server_id !== $minecraftServer->id) {
+            abort(404);
+        }
+
+        return view('operator_delete_form', compact('minecraftServer', 'minecraftOperator'));
+    });
+
     Route::get('/servers/minecraft/version/create', function () {
         return view('minecraft_version_form');
     });
