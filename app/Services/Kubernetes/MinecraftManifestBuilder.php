@@ -54,6 +54,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                 'VIEW_DISTANCE' => '32',
                 'ENABLE_WHITELIST' => 'true',
                 'WHITELIST' => $minecraftServer->whitelist()->pluck('nickname')->implode(','),
+                'OPS' => $minecraftServer->operators()->pluck('nickname')->implode(','),
                 'PREVENT_PROXY_CONNECTIONS' => 'true',
                 'PLAYER_IDLE_TIMEOUT' => '5',
                 'ALLOW_FLIGHT' => $minecraftServer->allow_flight ? 'true' : 'false',

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\MinecraftOperator;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
 use App\Models\User;
@@ -31,6 +32,10 @@ class MinecraftServerSeeder extends Seeder
             ]);
 
             MinecraftWhitelist::factory()->count(3)->create([
+                'minecraft_server_id' => $server->id
+            ]);
+
+            MinecraftOperator::factory()->count(3)->create([
                 'minecraft_server_id' => $server->id
             ]);
         }

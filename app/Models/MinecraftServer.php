@@ -51,6 +51,11 @@ class MinecraftServer extends Model
         return $this->hasMany(MinecraftWhitelist::class);
     }
 
+    public function operators()
+    {
+        return $this->hasMany(MinecraftOperator::class);
+    }
+
     public function version()
     {
         return $this->belongsTo(MinecraftVersion::class, 'minecraft_version_id');

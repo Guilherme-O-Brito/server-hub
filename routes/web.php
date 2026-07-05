@@ -56,6 +56,12 @@ Route::prefix('/servers')->group(function () {
             Route::delete('/{minecraftWhitelist}', [MinecraftWhitelistController::class, 'delete'])->whereNumber('minecraftWhitelist')->name('delete.minecraftServer.whitelist');
             Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('index.minecraftServer.whitelist');    
         });
+        // minecraft server operators crud
+        Route::prefix('/{minecraftServer}/operators')->group(function () {
+            Route::post('/', [MinecraftWhitelistController::class, 'create'])->name('create.minecraftServer.operator');
+            Route::delete('/{minecraftOperator}', [MinecraftWhitelistController::class, 'delete'])->whereNumber('minecraftOperator')->name('delete.minecraftServer.operator');
+            Route::get('/', [MinecraftWhitelistController::class, 'index'])->name('index.minecraftServer.operator');    
+        });
         // minecraft server versions CRUD
         Route::prefix('/version')->group(function () {
             Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');

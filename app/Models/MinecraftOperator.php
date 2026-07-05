@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class MinecraftOperator extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['nickname'];
+
+    protected $guarded = ['id', 'minecraft_server_id'];
+
+    public function server()
+    {
+        return $this->belongsTo(MinecraftServer::class);
+    }
+}

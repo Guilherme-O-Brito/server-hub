@@ -68,6 +68,11 @@ class MinecraftServerPolicy
         return $minecraftServer->owner_id === $user->id || $minecraftServer->admins()->where('users.id', $user->id)->exists();
     }
 
+    public function manageOperators(User $user, MinecraftServer $minecraftServer): bool
+    {
+        return $minecraftServer->owner_id === $user->id;
+    }
+
     public function start(User $user, MinecraftServer $minecraftServer): bool
     {
         return $minecraftServer->owner_id === $user->id || $minecraftServer->admins()->where('users.id', $user->id)->exists();
