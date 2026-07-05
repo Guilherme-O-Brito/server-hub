@@ -13,10 +13,8 @@ class DeleteMinecraftVersionAction
     {
         DB::transaction(function () use ($minecraftVersion) {
             $replacementVersion = MinecraftVersion::query()
-                ->whereKeyNot($minecraftVersion->id)
-                ->where('is_enabled', true)
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
+                ->enabled()
+                ->orderedDesc()
                 ->lockForUpdate()
                 ->first();
             

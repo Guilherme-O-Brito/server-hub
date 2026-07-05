@@ -12,7 +12,7 @@ class MinecraftVersionController extends Controller
 {
     public function index(Request $request)
     {
-        $versions = MinecraftVersion::query()->where('is_enabled', true)->orderByDesc('created_at')->get();
+        $versions = MinecraftVersion::query()->enabled()->orderedDesc()->get();
 
         return response()->json($versions);
     }
