@@ -19,12 +19,12 @@ class MinecraftServerSeeder extends Seeder
         $admin = User::where('email', 'admin@serverhub.com')->first();
         $user = User::where('email', 'test@serverhub.com')->first();
 
-        $this->createServers($admin);
-        $this->createServers($user);
+        $this->createServers($admin, $user);
+        $this->createServers($user, $admin);
 
     }
 
-    protected function createServers(User $user): void
+    protected function createServers(User $user, User $anotherUser): void
     {
         for ($i = 0; $i < 5; $i++) {
             $server = MinecraftServer::factory()->create([
@@ -38,6 +38,9 @@ class MinecraftServerSeeder extends Seeder
             MinecraftOperator::factory()->count(3)->create([
                 'minecraft_server_id' => $server->id
             ]);
+            
+            $server->admins()->syncWithoutDetaching([$anotherUser->id]);
+            
         }
     }
 }
