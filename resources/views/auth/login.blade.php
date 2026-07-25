@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css'])
     <title>Login</title>
 </head>
-<body class="h-screen w-screen flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-600">
+<body class="h-screen w-screen flex items-center justify-center bg-linear-to-tr from-indigo-600 to-purple-600">
     <div class="">
         <div class="bg-white shadow-xl rounded-md p-20">
             <div class="flex items-center space-x-20">
