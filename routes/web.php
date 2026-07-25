@@ -12,8 +12,8 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('home');
+})->name('home');
 
 Route::prefix('/login')->middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'LoginView'])->name('login');
