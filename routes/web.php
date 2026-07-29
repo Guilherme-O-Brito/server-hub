@@ -22,6 +22,10 @@ Route::prefix('/login')->middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::view('/servidores', 'servidores.index')
+    ->middleware('auth')
+    ->name('servers.view');
+
 // authentication and admin only
 Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD

@@ -3,3 +3,26 @@ import './bootstrap';
 import { createApp } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { Ziggy } from './ziggy';
+import axios from 'axios';
+import ServersPage from './components/servers/ServersPage.vue';
+
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common.Accept = 'application/json';
+
+const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute('content');
+
+if (csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+}
+
+window.axios = axios;
+
+const serversAppElement = document.getElementById('servers-app');
+
+if (serversAppElement) {
+    createApp(ServersPage)
+        .use(ZiggyVue, Ziggy)
+        .mount(serversAppElement);
+}
