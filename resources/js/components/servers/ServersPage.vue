@@ -63,7 +63,7 @@
                     <button 
                         type="button"
                         class="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-purple-700 px-4 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2"
-                        @click=""    
+                        @click="isCreateModalOpen = true"
                     >
                         Criar servidor
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -126,10 +126,17 @@
             <div class="h-96 animate-pulse rounded-2xl bg-gray-200"></div>
         </div>
     </main>
+
+    <CreateServerModal
+        :open="isCreateModalOpen"
+        @close="isCreateModalOpen = false"
+        @created="handleServerCreated"
+    />
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import CreateServerModal from './components/CreateServerModal.vue';
 import ExecutionSlotCard from './components/ExecutionSlotCard.vue';
 import PaginationControls from './components/PaginationControls.vue';
 import ServerCard from './components/ServerCard.vue';
@@ -146,6 +153,7 @@ const accessFilter = ref('all');
 const currentPage = ref(1);
 const isLoading = ref(true);
 const loadError = ref(false);
+const isCreateModalOpen = ref(false);
 
 const gameOptions = computed(() => {
     const gamesByKey = new Map();
@@ -194,6 +202,10 @@ const handleManage = (server) => {
     if (managementUrl) {
         window.location.assign(managementUrl);
     }
+};
+
+const handleServerCreated = () => {
+    window.location.reload();
 };
 
 onMounted(async () => {

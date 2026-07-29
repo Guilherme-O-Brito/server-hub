@@ -59,6 +59,19 @@ export const fetchServerPageData = async () => {
     };
 };
 
+export const fetchMinecraftVersions = async () => {
+    const response = await axios.get(
+        route('index.minecraftVersion', undefined, undefined, Ziggy),
+    );
+
+    return Array.isArray(response.data) ? response.data : [];
+};
+
+export const createMinecraftServer = (payload) => axios.post(
+    route('create.minecraftServer', undefined, undefined, Ziggy),
+    payload,
+);
+
 export const getManagementUrl = (server) => {
     if (server.game.key !== 'minecraft') {
         return null;
