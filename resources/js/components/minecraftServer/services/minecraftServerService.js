@@ -2,11 +2,6 @@ import axios from 'axios';
 import { route } from 'ziggy-js';
 import { Ziggy } from '../../../ziggy';
 
-const csrfPayload = (payload = {}) => ({
-    _token: document.querySelector('input[name="_token"]')?.value ?? '',
-    ...payload,
-});
-
 const normalizeServer = (server) => ({
     id: Number(server.id),
     name: server.server_name,
@@ -50,7 +45,7 @@ export const updateMinecraftServer = (serverId, payload) => axios.put(
         undefined,
         Ziggy,
     ),
-    csrfPayload(payload),
+    payload,
 );
 
 export const deleteMinecraftServer = (serverId) => axios.delete(
@@ -60,7 +55,6 @@ export const deleteMinecraftServer = (serverId) => axios.delete(
         undefined,
         Ziggy,
     ),
-    { data: csrfPayload() },
 );
 
 export const startMinecraftServer = (serverId) => axios.post(
@@ -70,7 +64,6 @@ export const startMinecraftServer = (serverId) => axios.post(
         undefined,
         Ziggy,
     ),
-    csrfPayload(),
 );
 
 export const stopMinecraftServer = (serverId) => axios.post(
@@ -80,7 +73,6 @@ export const stopMinecraftServer = (serverId) => axios.post(
         undefined,
         Ziggy,
     ),
-    csrfPayload(),
 );
 
 export const fetchWhitelist = async (serverId) => {
@@ -103,7 +95,7 @@ export const addWhitelistNickname = (serverId, nickname) => axios.post(
         undefined,
         Ziggy,
     ),
-    csrfPayload({ nickname }),
+    { nickname },
 );
 
 export const deleteWhitelistNickname = (serverId, whitelistId) => axios.delete(
@@ -116,7 +108,6 @@ export const deleteWhitelistNickname = (serverId, whitelistId) => axios.delete(
         undefined,
         Ziggy,
     ),
-    { data: csrfPayload() },
 );
 
 export const fetchOperators = async (serverId) => {
@@ -139,7 +130,7 @@ export const addOperatorNickname = (serverId, nickname) => axios.post(
         undefined,
         Ziggy,
     ),
-    csrfPayload({ nickname }),
+    { nickname },
 );
 
 export const deleteOperatorNickname = (serverId, operatorId) => axios.delete(
@@ -152,5 +143,4 @@ export const deleteOperatorNickname = (serverId, operatorId) => axios.delete(
         undefined,
         Ziggy,
     ),
-    { data: csrfPayload() },
 );

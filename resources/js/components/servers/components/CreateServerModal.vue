@@ -423,7 +423,6 @@ const requestClose = () => {
 };
 
 const submitMinecraft = () => createMinecraftServer({
-    _token: document.querySelector('input[name="_token"]')?.value ?? '',
     server_name: form.serverName,
     motd: form.motd || null,
     difficulty: Number(form.difficulty),
