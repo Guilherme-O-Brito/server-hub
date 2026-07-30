@@ -23,12 +23,5 @@
     </div>
 @endguest
 
-@auth
-<div class="container mx-auto mt-10 text-center text-gray-700">
-    <h1 class="text-purple-600 font-bold text-5xl">Bem Vindo ao Server-Hub {{ Auth::user()->name }}! </h1>
-    <p class="text-xl">Acesse a pagina <span class="text-purple-600 font-semibold">Servidores</span> para começar a jogar.</p> 
-</div>
-@endauth
-
 <!-- container entrar -->
 @endsection

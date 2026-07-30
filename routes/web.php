@@ -11,25 +11,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-})->name('home');
-
 Route::prefix('/login')->middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'LoginView'])->name('login');
     Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
-
-Route::view('/servidores', 'servidores.index')
-    ->middleware('auth')
-    ->name('servers.view');
-
-Route::view('/servidores/minecraft/{minecraftServer}', 'servidores.index')
-    ->whereNumber('minecraftServer')
-    ->middleware('auth')
-    ->name('servers.minecraft.view');
 
 // authentication and admin only
 Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
@@ -81,6 +68,20 @@ Route::prefix('/servers')->group(function () {
         });
     });
 });
+
+// view routes
+Route::view('/servidores', 'servidores.index')
+    ->middleware('auth')
+    ->name('servers.view');
+
+Route::view('/servidores/minecraft/{minecraftServer}', 'servidores.index')
+    ->whereNumber('minecraftServer')
+    ->middleware('auth')
+    ->name('servers.minecraft.view');
+
+Route::get('/', function () {
+    return Auth::check() ? redirect()->route('servers.view') : view('home');
+})->name('home');
 
 // temporary test routes
 Route::middleware('auth')->group(function () {
