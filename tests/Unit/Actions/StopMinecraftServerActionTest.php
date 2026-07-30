@@ -42,8 +42,8 @@ class StopMinecraftServerActionTest extends TestCase
         });
     }
 
-    #[DataProvider('invalidServerStatuses')]
-    public function test_execute_rejects_non_running_servers_without_dispatching_job(?MinecraftServerStatus $status): void
+    #[DataProvider('stoppableNonRunningServerStatuses')]
+    public function test_execute_accepts_non_running_servers_and_dispatches_job(?MinecraftServerStatus $status): void
     {
         Queue::fake();
 
@@ -54,21 +54,19 @@ class StopMinecraftServerActionTest extends TestCase
             'status' => ExecutionSlot::STATUS_ALLOCATED,
         ]);
 
-        try {
-            (new StopMinecraftServerAction())->execute($minecraftServer);
-            $this->fail('Expected MinecraftServerStateException to be thrown.');
-        } catch (MinecraftServerStateException $exception) {
-            $this->assertSame('Minecraft server is not running.', $exception->getMessage());
-            $this->assertSame(409, $exception->statusCode());
-        }
+        $result = (new StopMinecraftServerAction())->execute($minecraftServer);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
-        $this->assertSame($status, $minecraftServer->status);
+        $this->assertNull($result);
+        $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
-        Queue::assertNothingPushed();
+        Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
+            return $job->serverId === $minecraftServer->id
+                && $job->slotId === $executionSlot->id;
+        });
     }
 
     public function test_execute_requires_associated_execution_slot_without_dispatching_job(): void
@@ -90,21 +88,33 @@ class StopMinecraftServerActionTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public function test_execute_does_not_release_execution_slot_directly(): void
+    public function test_execute_rejects_server_that_is_already_stopping_without_dispatching_job(): void
     {
         Queue::fake();
 
         $owner = User::factory()->create();
-        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopping);
+        $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
+            'slot_number' => 1,
+            'status' => ExecutionSlot::STATUS_ALLOCATED,
+        ]);
 
-        (new StopMinecraftServerAction())->execute($minecraftServer);
+        try {
+            (new StopMinecraftServerAction())->execute($minecraftServer);
+            $this->fail('Expected MinecraftServerStateException to be thrown.');
+        } catch (MinecraftServerStateException $exception) {
+            $this->assertSame('Minecraft server is already stopping.', $exception->getMessage());
+            $this->assertSame(409, $exception->statusCode());
+        }
 
+        $minecraftServer->refresh();
         $executionSlot->refresh();
 
+        $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertSame($minecraftServer->id, $executionSlot->server_id);
         $this->assertSame($minecraftServer->getMorphClass(), $executionSlot->server_type);
-        Queue::assertPushed(StopMinecraftServerJob::class, 1);
+        Queue::assertNothingPushed();
     }
 
     public function test_execute_rolls_back_status_change_when_transaction_fails_before_commit(): void
@@ -136,12 +146,11 @@ class StopMinecraftServerActionTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public static function invalidServerStatuses(): array
+    public static function stoppableNonRunningServerStatuses(): array
     {
         return [
             'stopped' => [MinecraftServerStatus::Stopped],
             'starting' => [MinecraftServerStatus::Starting],
-            'stopping' => [MinecraftServerStatus::Stopping],
             'failed' => [MinecraftServerStatus::Failed],
             'deleting' => [MinecraftServerStatus::Deleting],
             'provisioning' => [MinecraftServerStatus::Provisioning],
