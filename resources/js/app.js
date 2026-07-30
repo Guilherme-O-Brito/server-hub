@@ -4,7 +4,8 @@ import { createApp } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { Ziggy } from './ziggy';
 import axios from 'axios';
-import ServersPage from './components/servers/ServersPage.vue';
+import App from './components/App.vue';
+import router from './router';
 
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common.Accept = 'application/json';
@@ -22,7 +23,8 @@ window.axios = axios;
 const serversAppElement = document.getElementById('servers-app');
 
 if (serversAppElement) {
-    createApp(ServersPage)
+    createApp(App)
         .use(ZiggyVue, Ziggy)
+        .use(router)
         .mount(serversAppElement);
 }

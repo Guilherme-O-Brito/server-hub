@@ -1,3 +1,7 @@
 <template>
-    <h2>Isso veio do Vue</h2>
+    <RouterView />
 </template>
+
+<script setup>
+import { RouterView } from 'vue-router';
+</script>

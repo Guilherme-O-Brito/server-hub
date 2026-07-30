@@ -71,16 +71,3 @@ export const createMinecraftServer = (payload) => axios.post(
     route('create.minecraftServer', undefined, undefined, Ziggy),
     payload,
 );
-
-export const getManagementUrl = (server) => {
-    if (server.game.key !== 'minecraft') {
-        return null;
-    }
-
-    return route(
-        'get.minecraftServer',
-        { minecraftServer: server.id },
-        undefined,
-        Ziggy,
-    );
-};

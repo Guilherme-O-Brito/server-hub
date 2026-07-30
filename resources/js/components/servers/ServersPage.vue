@@ -136,14 +136,16 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import CreateServerModal from './components/CreateServerModal.vue';
 import ExecutionSlotCard from './components/ExecutionSlotCard.vue';
 import PaginationControls from './components/PaginationControls.vue';
 import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
-import { fetchServerPageData, getManagementUrl} from './services/serverPageService';
+import { fetchServerPageData } from './services/serverPageService';
 
 const SERVERS_PER_PAGE = 8;
+const router = useRouter();
 
 const servers = ref([]);
 const executionSlots = ref([]);
@@ -197,10 +199,11 @@ watch([searchQuery, gameFilter, accessFilter], () => {
 });
 
 const handleManage = (server) => {
-    const managementUrl = getManagementUrl(server);
-
-    if (managementUrl) {
-        window.location.assign(managementUrl);
+    if (server.game.key === 'minecraft') {
+        router.push({
+            name: 'servers.minecraft.show',
+            params: { serverId: server.id },
+        });
     }
 };
 

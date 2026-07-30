@@ -26,6 +26,11 @@ Route::view('/servidores', 'servidores.index')
     ->middleware('auth')
     ->name('servers.view');
 
+Route::view('/servidores/minecraft/{minecraftServer}', 'servidores.index')
+    ->whereNumber('minecraftServer')
+    ->middleware('auth')
+    ->name('servers.minecraft.view');
+
 // authentication and admin only
 Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     // user CRUD
