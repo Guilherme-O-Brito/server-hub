@@ -14,9 +14,9 @@ class StopMinecraftServerAction
     {
         DB::transaction(function () use ($minecraftServer){
             $server = MinecraftServer::query()->lockForUpdate()->find($minecraftServer->id);
-            if ($server->status !== MinecraftServerStatus::Running) {
+            if ($server->status === MinecraftServerStatus::Stopping) {
                 throw new MinecraftServerStateException(
-                    'Minecraft server is not running.'
+                    'Minecraft server is already stopping.'
                 );
             }
 

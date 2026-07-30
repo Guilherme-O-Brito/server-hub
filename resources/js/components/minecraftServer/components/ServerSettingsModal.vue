@@ -192,7 +192,7 @@
                         <button
                             type="button"
                             class="h-11 cursor-pointer rounded-xl bg-red-700 px-5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="server?.status !== 'stopped' || isSubmitting"
+                            :disabled="isSubmitting"
                             :title="server?.status === 'stopped' ? 'Excluir servidor' : 'O servidor deve estar parado'"
                             @click="$emit('request-delete')"
                         >

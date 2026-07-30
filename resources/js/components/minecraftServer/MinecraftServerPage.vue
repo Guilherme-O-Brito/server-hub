@@ -312,7 +312,7 @@ const handleSettingsUpdated = async () => {
 };
 
 const openServerDeletion = async () => {
-    if (!server.value || server.value.status !== 'stopped') {
+    if (!server.value) {
         return;
     }
 

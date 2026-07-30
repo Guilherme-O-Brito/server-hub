@@ -28,7 +28,7 @@
             <button
                 type="button"
                 class="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-                :disabled="busy || status !== 'running'"
+                :disabled="busy"
                 @click="$emit('stop')"
             >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
