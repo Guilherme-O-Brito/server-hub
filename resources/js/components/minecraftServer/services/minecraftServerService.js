@@ -53,6 +53,16 @@ export const updateMinecraftServer = (serverId, payload) => axios.put(
     csrfPayload(payload),
 );
 
+export const deleteMinecraftServer = (serverId) => axios.delete(
+    route(
+        'delete.minecraftServer',
+        { minecraftServer: serverId },
+        undefined,
+        Ziggy,
+    ),
+    { data: csrfPayload() },
+);
+
 export const startMinecraftServer = (serverId) => axios.post(
     route(
         'start.minecraftServer',
@@ -96,6 +106,19 @@ export const addWhitelistNickname = (serverId, nickname) => axios.post(
     csrfPayload({ nickname }),
 );
 
+export const deleteWhitelistNickname = (serverId, whitelistId) => axios.delete(
+    route(
+        'delete.minecraftServer.whitelist',
+        {
+            minecraftServer: serverId,
+            minecraftWhitelist: whitelistId,
+        },
+        undefined,
+        Ziggy,
+    ),
+    { data: csrfPayload() },
+);
+
 export const fetchOperators = async (serverId) => {
     const response = await axios.get(
         route(
@@ -117,4 +140,17 @@ export const addOperatorNickname = (serverId, nickname) => axios.post(
         Ziggy,
     ),
     csrfPayload({ nickname }),
+);
+
+export const deleteOperatorNickname = (serverId, operatorId) => axios.delete(
+    route(
+        'delete.minecraftServer.operator',
+        {
+            minecraftServer: serverId,
+            minecraftOperator: operatorId,
+        },
+        undefined,
+        Ziggy,
+    ),
+    { data: csrfPayload() },
 );

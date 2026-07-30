@@ -50,6 +50,10 @@
                     <button 
                         type="button"
                         class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-red-700 text-sm font-semibold text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="!canDelete || loading"
+                        :title="canDelete ? `Excluir ${entry.nickname}` : 'O servidor deve estar parado'"
+                        :aria-label="`Excluir ${entry.nickname} de ${title}`"
+                        @click="$emit('delete-entry', entry)"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
@@ -87,6 +91,10 @@ defineProps({
         type: Boolean,
         default: false,
     },
+    canDelete: {
+        type: Boolean,
+        default: false,
+    },
     loading: {
         type: Boolean,
         default: false,
@@ -97,5 +105,5 @@ defineProps({
     },
 });
 
-defineEmits(['add']);
+defineEmits(['add', 'delete-entry']);
 </script>

@@ -80,18 +80,22 @@
                     description="Nicknames autorizados a entrar no servidor."
                     :entries="whitelist"
                     :can-add="server.status === 'stopped'"
+                    :can-delete="server.status === 'stopped'"
                     :loading="isWhitelistLoading"
                     :error="whitelistError"
                     @add="openNicknameModal('whitelist')"
+                    @delete-entry="openAccessDeletion('whitelist', $event)"
                 />
                 <AccessListCard
                     title="Operators"
                     description="Nicknames com permissões de operator."
                     :entries="operators"
                     :can-add="server.status === 'stopped'"
+                    :can-delete="server.status === 'stopped'"
                     :loading="isOperatorsLoading"
                     :error="operatorsError"
                     @add="openNicknameModal('operators')"
+                    @delete-entry="openAccessDeletion('operators', $event)"
                 />
             </section>
 
@@ -104,6 +108,7 @@
         :server="server"
         @close="isSettingsOpen = false"
         @updated="handleSettingsUpdated"
+        @request-delete="openServerDeletion"
     />
 
     <NicknameModal
@@ -114,16 +119,30 @@
         @close="closeNicknameModal"
         @submit="handleNicknameSubmit"
     />
+
+    <DeleteConfirmationModal
+        :open="Boolean(deletionTarget)"
+        :resource-label="deletionTarget?.resourceLabel ?? 'recurso'"
+        :resource-name="deletionTarget?.resourceName ?? ''"
+        :detail="deletionTarget?.detail ?? ''"
+        :submitting="isDeleting"
+        :error="deletionError"
+        @close="closeDeletionModal"
+        @confirm="handleDelete"
+    />
 </template>
 
 <script setup>
 import {
+    nextTick,
     onBeforeUnmount,
     ref,
     watch,
 } from 'vue';
+import { useRouter } from 'vue-router';
 import StatusBadge from '../servers/components/StatusBadge.vue';
 import AccessListCard from './components/AccessListCard.vue';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal.vue';
 import NicknameModal from './components/NicknameModal.vue';
 import PlayersSummaryCard from './components/PlayersSummaryCard.vue';
 import ResourcesSummaryCard from './components/ResourcesSummaryCard.vue';
@@ -133,6 +152,9 @@ import ServerSettingsModal from './components/ServerSettingsModal.vue';
 import {
     addOperatorNickname,
     addWhitelistNickname,
+    deleteMinecraftServer,
+    deleteOperatorNickname,
+    deleteWhitelistNickname,
     fetchMinecraftServer,
     fetchOperators,
     fetchWhitelist,
@@ -147,6 +169,7 @@ const props = defineProps({
     },
 });
 
+const router = useRouter();
 const STATUS_REFRESH_INTERVAL = 5000;
 
 const server = ref(null);
@@ -164,6 +187,9 @@ const isSettingsOpen = ref(false);
 const nicknameTarget = ref(null);
 const nicknameError = ref('');
 const isAddingNickname = ref(false);
+const deletionTarget = ref(null);
+const deletionError = ref('');
+const isDeleting = ref(false);
 let statusRefreshTimer = null;
 
 const errorMessage = (error, fallback) => (
@@ -283,6 +309,82 @@ const handleStop = async () => {
 const handleSettingsUpdated = async () => {
     isSettingsOpen.value = false;
     await refreshAfterControl();
+};
+
+const openServerDeletion = async () => {
+    if (!server.value || server.value.status !== 'stopped') {
+        return;
+    }
+
+    isSettingsOpen.value = false;
+    await nextTick();
+    deletionError.value = '';
+    deletionTarget.value = {
+        type: 'server',
+        id: server.value.id,
+        resourceLabel: 'servidor',
+        resourceName: server.value.name,
+        detail: `Minecraft ${server.value.version?.version ?? ''}`.trim(),
+    };
+};
+
+const openAccessDeletion = (type, entry) => {
+    if (!server.value || server.value.status !== 'stopped') {
+        return;
+    }
+
+    deletionError.value = '';
+    deletionTarget.value = {
+        type,
+        id: entry.id,
+        resourceLabel: type === 'operators' ? 'operator' : 'nickname da whitelist',
+        resourceName: entry.nickname,
+        detail: `Servidor: ${server.value.name}`,
+    };
+};
+
+const closeDeletionModal = () => {
+    if (!isDeleting.value) {
+        deletionTarget.value = null;
+        deletionError.value = '';
+    }
+};
+
+const handleDelete = async () => {
+    const target = deletionTarget.value;
+
+    if (!target || isDeleting.value) {
+        return;
+    }
+
+    isDeleting.value = true;
+    deletionError.value = '';
+
+    try {
+        if (target.type === 'server') {
+            await deleteMinecraftServer(props.serverId);
+            deletionTarget.value = null;
+            await router.push({ name: 'servers.index' });
+            return;
+        }
+
+        if (target.type === 'operators') {
+            await deleteOperatorNickname(props.serverId, target.id);
+            await loadOperators();
+        } else {
+            await deleteWhitelistNickname(props.serverId, target.id);
+            await loadWhitelist();
+        }
+
+        deletionTarget.value = null;
+    } catch (error) {
+        deletionError.value = errorMessage(
+            error,
+            'Não foi possível excluir o recurso.',
+        );
+    } finally {
+        isDeleting.value = false;
+    }
 };
 
 const openNicknameModal = (target) => {

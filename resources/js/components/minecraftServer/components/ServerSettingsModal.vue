@@ -121,6 +121,28 @@
                         </span>
                     </label>
 
+                    <label class="block">
+                        <span class="mb-2 block text-sm font-semibold text-gray-700">
+                            Dificuldade
+                        </span>
+                        <select
+                            v-model.number="form.difficulty"
+                            name="difficulty"
+                            required
+                            class="h-11 w-full cursor-pointer rounded-xl border bg-gray-100 px-3 text-sm text-gray-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-purple-100"
+                            :class="fieldError('difficulty') ? 'border-red-600' : 'border-gray-200 focus:border-purple-600'"
+                            :disabled="isSubmitting"
+                        >
+                            <option :value="0">Pacífico</option>
+                            <option :value="1">Fácil</option>
+                            <option :value="2">Normal</option>
+                            <option :value="3">Difícil</option>
+                        </select>
+                        <span v-if="fieldError('difficulty')" class="mt-1 block text-xs font-medium text-red-600">
+                            {{ fieldError('difficulty') }}
+                        </span>
+                    </label>
+
                     <div class="rounded-xl border border-amber-200 bg-amber-200 p-4">
                         <p class="text-sm font-bold text-yellow-600">Atenção ao alterar a versão</p>
                         <p class="mt-1 text-xs text-yellow-600">
@@ -170,6 +192,9 @@
                         <button
                             type="button"
                             class="h-11 cursor-pointer rounded-xl bg-red-700 px-5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            :disabled="server?.status !== 'stopped' || isSubmitting"
+                            :title="server?.status === 'stopped' ? 'Excluir servidor' : 'O servidor deve estar parado'"
+                            @click="$emit('request-delete')"
                         >
                             Deletar Servidor
                         </button> 
@@ -223,7 +248,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['close', 'updated']);
+const emit = defineEmits(['close', 'updated', 'request-delete']);
 
 const firstInput = ref(null);
 const versions = ref([]);
@@ -238,6 +263,7 @@ const form = reactive({
     serverName: '',
     motd: '',
     minecraftVersionId: '',
+    difficulty: 2,
     forceGamemode: false,
     allowFlight: false,
 });
@@ -263,6 +289,7 @@ const resetForm = () => {
         minecraftVersionId: props.server?.version?.id
             ? String(props.server.version.id)
             : '',
+        difficulty: Number(props.server?.difficulty ?? 2),
         forceGamemode: Boolean(props.server?.forceGamemode),
         allowFlight: Boolean(props.server?.allowFlight),
     });
@@ -314,7 +341,7 @@ const submit = async () => {
         await updateMinecraftServer(props.server.id, {
             server_name: form.serverName,
             motd: form.motd || null,
-            difficulty: props.server.difficulty,
+            difficulty: form.difficulty,
             minecraft_version_id: Number(form.minecraftVersionId),
             force_gamemode: form.forceGamemode,
             allow_flight: form.allowFlight,
