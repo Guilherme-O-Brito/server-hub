@@ -7,7 +7,6 @@
                     Logs e comandos do servidor em tempo real.
                 </p>
             </div>
-            <StatusBadge :status="status ?? 'unknown'" />
         </header>
 
         <div class="bg-gray-900 p-5 font-mono text-sm text-gray-200">
