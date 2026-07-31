@@ -11,18 +11,33 @@ use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
 use App\Http\Requests\MinecraftServerRequest;
 use App\Models\MinecraftServer;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 
 class MinecraftServerController extends Controller
 {   
     public function index(Request $request)
-    {
+    {   
+        $user = $request->user();
+
         $servers = MinecraftServer::query()
-            ->visibleToUser($request->user())
+            ->visibleToUser($user)
             ->with([
                 'version',
-                'executionSlot'
-            ])->get();
+                'executionSlot',
+                'admins' => function (BelongsToMany $query) use ($user) {
+                    $query->where('users.id', $user->id);
+                },
+            ])->paginate(8)->through(function (MinecraftServer $server) use ($user) {
+                $server->setAttribute(
+                'access_role',
+                    $server->accessRoleFor($user)
+                );
+
+                $server->unsetRelation('admins');
+
+                return $server;
+            });
         
         return response()->json([$servers]);
     }
@@ -33,10 +48,20 @@ class MinecraftServerController extends Controller
             abort(403);
         }
 
+        $user = $request->user();
+
         $minecraftServer->load([
             'version',
             'executionSlot',
+            'admins' => fn (BelongsToMany $query) => $query->where('users.id', $user->id),
         ]);
+
+        $minecraftServer->setAttribute(
+            'access_role',
+            $minecraftServer->accessRoleFor($user)
+        );
+
+        $minecraftServer->unsetRelation('admins');
 
         return response()->json($minecraftServer);
     }
