@@ -39,7 +39,7 @@ class MinecraftServerController extends Controller
                 return $server;
             });
         
-        return response()->json([$servers]);
+        return response()->json($servers);
     }
 
     public function get(Request $request, MinecraftServer $minecraftServer)
