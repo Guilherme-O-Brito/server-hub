@@ -10,8 +10,8 @@ const minecraftGame = {
 };
 
 const unwrapServers = (payload) => {
-    if (Array.isArray(payload?.[0])) {
-        return payload[0];
+    if (Array.isArray(payload?.data)) {
+        return payload.data;
     }
 
     return Array.isArray(payload) ? payload : [];
@@ -22,7 +22,7 @@ const normalizeMinecraftServer = (server) => ({
     name: server.server_name,
     game: minecraftGame,
     status: server.status ?? 'stopped',
-    access: server.access ?? 'owner',
+    access: server.access_role ?? 'owner',
     players: {
         online: server.players?.online ?? server.online_players ?? 0,
         limit: server.players?.limit ?? server.max_players ?? 10,
