@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { route } from 'ziggy-js';
-//import { mockExecutionSlots, mockServers } from '../data/mockServerPageData';
 
 // defining game standards
 const minecraftGame = {
