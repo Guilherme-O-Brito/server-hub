@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { route } from 'ziggy-js';
-import { Ziggy } from '../../../ziggy';
 
 const normalizeServer = (server) => ({
     id: Number(server.id),
@@ -22,8 +21,6 @@ export const fetchMinecraftServer = async (serverId) => {
         route(
             'get.minecraftServer',
             { minecraftServer: serverId },
-            undefined,
-            Ziggy,
         ),
     );
 
@@ -32,7 +29,7 @@ export const fetchMinecraftServer = async (serverId) => {
 
 export const fetchMinecraftVersions = async () => {
     const response = await axios.get(
-        route('index.minecraftVersion', undefined, undefined, Ziggy),
+        route('index.minecraftVersion'),
     );
 
     return Array.isArray(response.data) ? response.data : [];
@@ -42,8 +39,6 @@ export const updateMinecraftServer = (serverId, payload) => axios.put(
     route(
         'update.minecraftServer',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
     payload,
 );
@@ -52,8 +47,6 @@ export const deleteMinecraftServer = (serverId) => axios.delete(
     route(
         'delete.minecraftServer',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
 );
 
@@ -61,8 +54,6 @@ export const startMinecraftServer = (serverId) => axios.post(
     route(
         'start.minecraftServer',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
 );
 
@@ -70,8 +61,6 @@ export const stopMinecraftServer = (serverId) => axios.post(
     route(
         'stop.minecraftServer',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
 );
 
@@ -80,8 +69,6 @@ export const fetchWhitelist = async (serverId) => {
         route(
             'index.minecraftServer.whitelist',
             { minecraftServer: serverId },
-            undefined,
-            Ziggy,
         ),
     );
 
@@ -92,8 +79,6 @@ export const addWhitelistNickname = (serverId, nickname) => axios.post(
     route(
         'create.minecraftServer.whitelist',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
     { nickname },
 );
@@ -105,8 +90,6 @@ export const deleteWhitelistNickname = (serverId, whitelistId) => axios.delete(
             minecraftServer: serverId,
             minecraftWhitelist: whitelistId,
         },
-        undefined,
-        Ziggy,
     ),
 );
 
@@ -115,8 +98,6 @@ export const fetchOperators = async (serverId) => {
         route(
             'index.minecraftServer.operator',
             { minecraftServer: serverId },
-            undefined,
-            Ziggy,
         ),
     );
 
@@ -127,8 +108,6 @@ export const addOperatorNickname = (serverId, nickname) => axios.post(
     route(
         'create.minecraftServer.operator',
         { minecraftServer: serverId },
-        undefined,
-        Ziggy,
     ),
     { nickname },
 );
@@ -140,7 +119,5 @@ export const deleteOperatorNickname = (serverId, operatorId) => axios.delete(
             minecraftServer: serverId,
             minecraftOperator: operatorId,
         },
-        undefined,
-        Ziggy,
     ),
 );

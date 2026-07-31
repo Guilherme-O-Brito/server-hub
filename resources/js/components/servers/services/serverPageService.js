@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { route } from 'ziggy-js';
-import { Ziggy } from '../../../ziggy';
 //import { mockExecutionSlots, mockServers } from '../data/mockServerPageData';
 
 // defining game standards
@@ -46,8 +45,8 @@ const normalizeExecutionSlot = (slot, servers) => {
 export const fetchServerPageData = async () => {
     
     const [serverResponse, slotResponse] = await Promise.all([
-        axios.get(route('index.minecraftServer', undefined, undefined, Ziggy)),
-        axios.get(route('index.execution_slot', undefined, undefined, Ziggy)),
+        axios.get(route('index.minecraftServer')),
+        axios.get(route('index.execution_slot')),
     ]);
 
     const servers = unwrapServers(serverResponse.data).map(normalizeMinecraftServer);
@@ -61,13 +60,13 @@ export const fetchServerPageData = async () => {
 
 export const fetchMinecraftVersions = async () => {
     const response = await axios.get(
-        route('index.minecraftVersion', undefined, undefined, Ziggy),
+        route('index.minecraftVersion'),
     );
 
     return Array.isArray(response.data) ? response.data : [];
 };
 
 export const createMinecraftServer = (payload) => axios.post(
-    route('create.minecraftServer', undefined, undefined, Ziggy),
+    route('create.minecraftServer'),
     payload,
 );

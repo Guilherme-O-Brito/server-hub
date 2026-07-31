@@ -2,7 +2,6 @@ import './bootstrap';
 
 import { createApp } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
-import { Ziggy } from './ziggy';
 import axios from 'axios';
 import App from './components/App.vue';
 import router from './router';
@@ -24,7 +23,7 @@ const serversAppElement = document.getElementById('servers-app');
 
 if (serversAppElement) {
     createApp(App)
-        .use(ZiggyVue, Ziggy)
+        .use(ZiggyVue)
         .use(router)
         .mount(serversAppElement);
 }
