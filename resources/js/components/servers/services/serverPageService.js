@@ -41,10 +41,10 @@ const normalizeExecutionSlot = (slot, servers) => {
     };
 };
 
-export const fetchServerPageData = async () => {
+export const fetchServerPageData = async (page = 1) => {
     
     const [serverResponse, slotResponse] = await Promise.all([
-        axios.get(route('index.minecraftServer')),
+        axios.get(route('index.minecraftServer'), { params: { page } }),
         axios.get(route('index.execution_slot')),
     ]);
 
@@ -54,6 +54,10 @@ export const fetchServerPageData = async () => {
     return {
         servers,
         executionSlots: slots.map((slot) => normalizeExecutionSlot(slot, servers)),
+        pagination: {
+            currentPage: Number(serverResponse.data?.current_page) || 1,
+            totalPages: Number(serverResponse.data?.last_page) || 1,
+        },
     };
 };
 

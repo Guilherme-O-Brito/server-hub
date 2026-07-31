@@ -116,7 +116,7 @@
                     class="mt-8"
                     :current-page="currentPage"
                     :total-pages="totalPages"
-                    @change="currentPage = $event"
+                    @change="loadPage"
                 />
             </section>
         </template>
@@ -144,7 +144,6 @@ import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
 import { fetchServerPageData } from './services/serverPageService';
 
-const SERVERS_PER_PAGE = 8;
 const router = useRouter();
 
 const servers = ref([]);
@@ -153,6 +152,7 @@ const searchQuery = ref('');
 const gameFilter = ref('all');
 const accessFilter = ref('all');
 const currentPage = ref(1);
+const totalPages = ref(1);
 const isLoading = ref(true);
 const loadError = ref(false);
 const isCreateModalOpen = ref(false);
@@ -183,19 +183,38 @@ const filteredServers = computed(() => {
     });
 });
 
-const totalPages = computed(() => Math.max(
-    1,
-    Math.ceil(filteredServers.value.length / SERVERS_PER_PAGE),
-));
+const paginatedServers = computed(() => filteredServers.value);
 
-const paginatedServers = computed(() => {
-    const start = (currentPage.value - 1) * SERVERS_PER_PAGE;
+const loadPage = async (page = 1) => {
+    if (
+        page < 1
+        || page > totalPages.value
+        || (page === currentPage.value && !isLoading.value)
+    ) {
+        return;
+    }
 
-    return filteredServers.value.slice(start, start + SERVERS_PER_PAGE);
-});
+    isLoading.value = true;
+    loadError.value = false;
+
+    try {
+        const pageData = await fetchServerPageData(page);
+
+        servers.value = pageData.servers;
+        executionSlots.value = pageData.executionSlots;
+        currentPage.value = pageData.pagination.currentPage;
+        totalPages.value = pageData.pagination.totalPages;
+    } catch {
+        loadError.value = true;
+    } finally {
+        isLoading.value = false;
+    }
+};
 
 watch([searchQuery, gameFilter, accessFilter], () => {
-    currentPage.value = 1;
+    if (currentPage.value !== 1) {
+        loadPage(1);
+    }
 });
 
 const handleManage = (server) => {
@@ -211,16 +230,5 @@ const handleServerCreated = () => {
     window.location.reload();
 };
 
-onMounted(async () => {
-    try {
-        const pageData = await fetchServerPageData();
-
-        servers.value = pageData.servers;
-        executionSlots.value = pageData.executionSlots;
-    } catch {
-        loadError.value = true;
-    } finally {
-        isLoading.value = false;
-    }
-});
+onMounted(() => loadPage());
 </script>
