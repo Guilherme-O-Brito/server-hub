@@ -47,7 +47,7 @@ class IndexMinecraftServerTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(1);
 
-        $servers = $response->json('0');
+        $servers = $response->json('0.data');
         $serverIds = array_column($servers, 'id');
 
         $this->assertCount(2, $servers);
@@ -60,12 +60,14 @@ class IndexMinecraftServerTest extends TestCase
         $this->assertSame($ownedVersion->id, $ownedServerJson['version']['id']);
         $this->assertSame('1.20.1', $ownedServerJson['version']['version']);
         $this->assertSame($ownedSlot->id, $ownedServerJson['execution_slot']['id']);
+        $this->assertSame('owner', $ownedServerJson['access_role']);
 
         $adminServerJson = $this->serverFromResponse($servers, $adminServer->id);
         $this->assertSame('Admin Server', $adminServerJson['server_name']);
         $this->assertSame($adminVersion->id, $adminServerJson['version']['id']);
         $this->assertSame('1.19.4', $adminServerJson['version']['version']);
         $this->assertSame($adminSlot->id, $adminServerJson['execution_slot']['id']);
+        $this->assertSame('admin', $adminServerJson['access_role']);
     }
 
     public function test_guest_cannot_list_minecraft_servers(): void
@@ -84,7 +86,10 @@ class IndexMinecraftServerTest extends TestCase
         $response = $this->actingAs($user)->get(self::ROUTE);
 
         $response->assertOk();
-        $response->assertExactJson([[]]);
+        $response->assertJsonCount(0, '0.data');
+        $response->assertJsonPath('0.current_page', 1);
+        $response->assertJsonPath('0.per_page', 8);
+        $response->assertJsonPath('0.total', 0);
         $response->assertJsonMissing(['id' => $hiddenServer->id]);
     }
 
@@ -98,9 +103,42 @@ class IndexMinecraftServerTest extends TestCase
 
         $response->assertOk();
 
-        $serverIds = array_column($response->json('0'), 'id');
+        $serverIds = array_column($response->json('0.data'), 'id');
 
         $this->assertSame([$server->id], $serverIds);
+    }
+
+    public function test_index_paginates_visible_servers_with_eight_servers_per_page(): void
+    {
+        $user = User::factory()->create();
+        $servers = MinecraftServer::factory()
+            ->count(9)
+            ->for($user, 'owner')
+            ->create();
+
+        $firstPageResponse = $this->actingAs($user)->get(self::ROUTE);
+        $secondPageResponse = $this->actingAs($user)->get(self::ROUTE.'?page=2');
+
+        $firstPageResponse->assertOk();
+        $firstPageResponse->assertJsonCount(8, '0.data');
+        $firstPageResponse->assertJsonPath('0.current_page', 1);
+        $firstPageResponse->assertJsonPath('0.last_page', 2);
+        $firstPageResponse->assertJsonPath('0.per_page', 8);
+        $firstPageResponse->assertJsonPath('0.total', 9);
+
+        $secondPageResponse->assertOk();
+        $secondPageResponse->assertJsonCount(1, '0.data');
+        $secondPageResponse->assertJsonPath('0.current_page', 2);
+        $secondPageResponse->assertJsonPath('0.last_page', 2);
+        $secondPageResponse->assertJsonPath('0.per_page', 8);
+        $secondPageResponse->assertJsonPath('0.total', 9);
+
+        $returnedServerIds = array_merge(
+            array_column($firstPageResponse->json('0.data'), 'id'),
+            array_column($secondPageResponse->json('0.data'), 'id')
+        );
+
+        $this->assertEqualsCanonicalizing($servers->modelKeys(), $returnedServerIds);
     }
 
     public function test_index_returns_null_execution_slot_when_server_has_no_slot(): void
@@ -111,9 +149,9 @@ class IndexMinecraftServerTest extends TestCase
         $response = $this->actingAs($user)->get(self::ROUTE);
 
         $response->assertOk();
-        $response->assertJsonPath('0.0.id', $server->id);
-        $response->assertJsonPath('0.0.execution_slot', null);
-        $response->assertJsonPath('0.0.version.id', $server->minecraft_version_id);
+        $response->assertJsonPath('0.data.0.id', $server->id);
+        $response->assertJsonPath('0.data.0.execution_slot', null);
+        $response->assertJsonPath('0.data.0.version.id', $server->minecraft_version_id);
     }
 
     private function createMinecraftServer(User $owner, array $attributes = []): MinecraftServer
