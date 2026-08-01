@@ -10,6 +10,29 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    
+    public function index(Request $request)
+    {   
+
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'page' => ['nullable', 'integer', 'min:1']
+        ]);
+
+        $users = User::query()
+            ->select(['id', 'name'])
+            ->when(
+                $validated['search'] !== '',
+                fn ($query) => $query->where(
+                    'name',
+                    'like',
+                    '%'.$validated['search'].'%'
+                )
+            )->orderBy('name')->orderBy('id')->paginate(5)->withQueryString();
+
+        return response()->json($users);
+    }
+
     //admin only    
     public function create(Request $request)
     {
