@@ -21,7 +21,7 @@
         </header>
 
         <div class="mt-5 max-h-48 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-gray-100">
-            <div v-if="loading" class="space-y-2 p-4" aria-label="Carregando nicknames">
+            <div v-if="loading" class="space-y-2 p-4" aria-label="Carregando itens">
                 <div class="h-9 animate-pulse rounded-lg bg-gray-200"></div>
                 <div class="h-9 animate-pulse rounded-lg bg-gray-200"></div>
             </div>
@@ -44,15 +44,15 @@
                             </svg>
                         </div>
                         <span class="truncate text-sm font-semibold text-gray-900">
-                            {{ entry.nickname }}
+                            {{ entry[entryLabelKey] }}
                         </span>
                     </div>
                     <button 
                         type="button"
                         class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-red-700 text-sm font-semibold text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canDelete || loading"
-                        :title="canDelete ? `Excluir ${entry.nickname}` : disabledReason"
-                        :aria-label="`Excluir ${entry.nickname} de ${title}`"
+                        :title="canDelete ? `Excluir ${entry[entryLabelKey]}` : disabledReason"
+                        :aria-label="`Excluir ${entry[entryLabelKey]} de ${title}`"
                         @click="$emit('delete-entry', entry)"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
@@ -63,7 +63,7 @@
             </ul>
 
             <p v-else class="px-4 py-10 text-center text-sm text-gray-500">
-                Nenhum nickname cadastrado.
+                {{ emptyMessage }}
             </p>
         </div>
 
@@ -86,6 +86,14 @@ defineProps({
     entries: {
         type: Array,
         default: () => [],
+    },
+    entryLabelKey: {
+        type: String,
+        default: 'nickname',
+    },
+    emptyMessage: {
+        type: String,
+        default: 'Nenhum nickname cadastrado.',
     },
     canAdd: {
         type: Boolean,

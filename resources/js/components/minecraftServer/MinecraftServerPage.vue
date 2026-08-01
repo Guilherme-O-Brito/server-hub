@@ -65,7 +65,7 @@
                 />
             </section>
 
-            <section class="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="Permissões do servidor">
+            <section class="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3" aria-label="Permissões do servidor">
                 <AccessListCard
                     title="Whitelist"
                     description="Nicknames autorizados a entrar no servidor."
@@ -91,6 +91,20 @@
                     @add="openNicknameModal('operators')"
                     @delete-entry="openAccessDeletion('operators', $event)"
                 />
+                <AccessListCard
+                    title="Administradores"
+                    description="Usuários com acesso administrativo ao servidor."
+                    :entries="admins"
+                    entry-label-key="name"
+                    empty-message="Nenhum administrador cadastrado."
+                    :can-add="server.accessRole === 'owner'"
+                    :can-delete="server.accessRole === 'owner'"
+                    disabled-reason="Apenas o dono pode gerenciar administradores"
+                    :loading="isAdminsLoading"
+                    :error="adminsError"
+                    @add="openAdminModal"
+                    @delete-entry="openAccessDeletion('admins', $event)"
+                />
             </section>
 
             <ServerConsole class="mt-8" :status="server.status" />
@@ -112,6 +126,15 @@
         :error="nicknameError"
         @close="closeNicknameModal"
         @submit="handleNicknameSubmit"
+    />
+
+    <AdminUserSearchModal
+        :open="isAdminModalOpen"
+        :server-id="serverId"
+        :owner-id="server?.ownerId ?? null"
+        :admins="admins"
+        @close="isAdminModalOpen = false"
+        @admin-added="loadAdmins"
     />
 
     <DeleteConfirmationModal
@@ -138,6 +161,7 @@ import { useRouter } from 'vue-router';
 import ConnectedUserCard from '../ConnectedUserCard.vue';
 import StatusBadge from '../servers/components/StatusBadge.vue';
 import AccessListCard from './components/AccessListCard.vue';
+import AdminUserSearchModal from './components/AdminUserSearchModal.vue';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal.vue';
 import NicknameModal from './components/NicknameModal.vue';
 import PlayersSummaryCard from './components/PlayersSummaryCard.vue';
@@ -148,10 +172,12 @@ import ServerSettingsModal from './components/ServerSettingsModal.vue';
 import {
     addOperatorNickname,
     addWhitelistNickname,
+    deleteMinecraftServerAdmin,
     deleteMinecraftServer,
     deleteOperatorNickname,
     deleteWhitelistNickname,
     fetchMinecraftServer,
+    fetchMinecraftServerAdmins,
     fetchOperators,
     fetchWhitelist,
     startMinecraftServer,
@@ -172,18 +198,22 @@ const STATUS_REFRESH_INTERVAL = 5000;
 const server = ref(null);
 const whitelist = ref([]);
 const operators = ref([]);
+const admins = ref([]);
 const isLoading = ref(true);
 const pageError = ref(null);
 const isWhitelistLoading = ref(false);
 const isOperatorsLoading = ref(false);
+const isAdminsLoading = ref(false);
 const whitelistError = ref('');
 const operatorsError = ref('');
+const adminsError = ref('');
 const isControlBusy = ref(false);
 const controlError = ref('');
 const isSettingsOpen = ref(false);
 const nicknameTarget = ref(null);
 const nicknameError = ref('');
 const isAddingNickname = ref(false);
+const isAdminModalOpen = ref(false);
 const deletionTarget = ref(null);
 const deletionError = ref('');
 const isDeleting = ref(false);
@@ -227,6 +257,22 @@ const loadOperators = async () => {
     }
 };
 
+const loadAdmins = async () => {
+    isAdminsLoading.value = true;
+    adminsError.value = '';
+
+    try {
+        admins.value = await fetchMinecraftServerAdmins(props.serverId);
+    } catch (error) {
+        adminsError.value = errorMessage(
+            error,
+            'Não foi possível carregar os administradores.',
+        );
+    } finally {
+        isAdminsLoading.value = false;
+    }
+};
+
 const refreshServer = async () => {
     server.value = await fetchMinecraftServer(props.serverId);
 };
@@ -238,7 +284,7 @@ const loadDashboard = async () => {
 
     try {
         await refreshServer();
-        await Promise.all([loadWhitelist(), loadOperators()]);
+        await Promise.all([loadWhitelist(), loadOperators(), loadAdmins()]);
     } catch (error) {
         if (error.response?.status === 403) {
             pageError.value = {
@@ -326,7 +372,27 @@ const openServerDeletion = async () => {
 };
 
 const openAccessDeletion = (type, entry) => {
-    if (!server.value || server.value.status !== 'stopped') {
+    if (!server.value) {
+        return;
+    }
+
+    if (type === 'admins') {
+        if (server.value.accessRole !== 'owner') {
+            return;
+        }
+
+        deletionError.value = '';
+        deletionTarget.value = {
+            type,
+            id: entry.id,
+            resourceLabel: 'administrador',
+            resourceName: entry.name,
+            detail: `Servidor: ${server.value.name}`,
+        };
+        return;
+    }
+
+    if (server.value.status !== 'stopped') {
         return;
     }
 
@@ -365,7 +431,10 @@ const handleDelete = async () => {
             return;
         }
 
-        if (target.type === 'operators') {
+        if (target.type === 'admins') {
+            await deleteMinecraftServerAdmin(props.serverId, target.id);
+            await loadAdmins();
+        } else if (target.type === 'operators') {
             await deleteOperatorNickname(props.serverId, target.id);
             await loadOperators();
         } else {
@@ -381,6 +450,12 @@ const handleDelete = async () => {
         );
     } finally {
         isDeleting.value = false;
+    }
+};
+
+const openAdminModal = () => {
+    if (server.value?.accessRole === 'owner') {
+        isAdminModalOpen.value = true;
     }
 };
 
