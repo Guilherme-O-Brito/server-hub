@@ -1,23 +1,26 @@
 <template>
     <main class="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <header class="mb-10 flex items-start gap-4">
-            <div
-                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-600 to-purple-600 text-white shadow-lg"
-                aria-hidden="true"
-            >
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Zm-3 6h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Z" />
-                </svg>
+        <header class="mb-10 flex justify-between">
+            <div class="flex items-start gap-4">
+                <div
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-600 to-purple-600 text-white shadow-lg"
+                    aria-hidden="true"
+                >
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Zm-3 6h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Z" />
+                    </svg>
 
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">
+                        Meus servidores
+                    </h1>
+                    <p class="mt-2 max-w-2xl text-base text-gray-500">
+                        Visualize os servidores que você possui e aqueles que administra.
+                    </p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">
-                    Meus servidores
-                </h1>
-                <p class="mt-2 max-w-2xl text-base text-gray-500">
-                    Visualize os servidores que você possui e aqueles que administra.
-                </p>
-            </div>
+            <ConectedUserCard :user="auth.user"/>
         </header>
 
         <div
@@ -135,13 +138,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import CreateServerModal from './components/CreateServerModal.vue';
 import ExecutionSlotCard from './components/ExecutionSlotCard.vue';
 import PaginationControls from './components/PaginationControls.vue';
 import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
+import ConectedUserCard from '../ConectedUserCard.vue';
 import { fetchServerPageData } from './services/serverPageService';
 
 const router = useRouter();
@@ -156,6 +160,7 @@ const totalPages = ref(1);
 const isLoading = ref(true);
 const loadError = ref(false);
 const isCreateModalOpen = ref(false);
+const auth = inject('auth');
 
 const gameOptions = computed(() => {
     const gamesByKey = new Map();

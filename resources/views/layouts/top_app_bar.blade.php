@@ -7,6 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     @routes
+    @auth
+        <div id="authUser" data-auth-user=@json([
+                "id" => Auth::user()->id,
+                "name" => Auth::user()->name,
+                "email" => Auth::user()->email
+            ], JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)>
+        </div>
+    @endauth
     @vite(['resources/css/app.css'])
     <title>Server Hub</title>
 </head>
