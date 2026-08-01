@@ -81,8 +81,11 @@
                     title="Operators"
                     description="Nicknames com permissões de operator."
                     :entries="operators"
-                    :can-add="server.status === 'stopped'"
-                    :can-delete="server.status === 'stopped'"
+                    :can-add="server.status === 'stopped' && server.accessRole === 'owner'"
+                    :can-delete="server.status === 'stopped' && server.accessRole === 'owner'"
+                    :disabled-reason="server.accessRole !== 'owner'
+                        ? 'Apenas o dono pode gerenciar operators'
+                        : 'O servidor deve estar parado'"
                     :loading="isOperatorsLoading"
                     :error="operatorsError"
                     @add="openNicknameModal('operators')"

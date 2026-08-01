@@ -10,7 +10,7 @@
                 type="button"
                 class="flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-purple-700 px-3 text-sm font-semibold text-white transition hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                 :disabled="!canAdd || loading"
-                :title="canAdd ? `Adicionar em ${title}` : 'O servidor deve estar parado'"
+                :title="canAdd ? `Adicionar em ${title}` : disabledReason"
                 @click="$emit('add')"
             >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -51,7 +51,7 @@
                         type="button"
                         class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-red-700 text-sm font-semibold text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canDelete || loading"
-                        :title="canDelete ? `Excluir ${entry.nickname}` : 'O servidor deve estar parado'"
+                        :title="canDelete ? `Excluir ${entry.nickname}` : disabledReason"
                         :aria-label="`Excluir ${entry.nickname} de ${title}`"
                         @click="$emit('delete-entry', entry)"
                     >
@@ -94,6 +94,10 @@ defineProps({
     canDelete: {
         type: Boolean,
         default: false,
+    },
+    disabledReason: {
+        type: String,
+        default: 'O servidor deve estar parado',
     },
     loading: {
         type: Boolean,

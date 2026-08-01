@@ -9,6 +9,7 @@ const normalizeServer = (server) => ({
     version: server.version ?? null,
     forceGamemode: Boolean(server.force_gamemode),
     allowFlight: Boolean(server.allow_flight),
+    accessRole: server.access_role ?? null,
     status: server.status ?? null,
     lastError: server.last_error ?? null,
     executionSlot: server.execution_slot ?? null,
