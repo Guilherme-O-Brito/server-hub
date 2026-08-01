@@ -19,14 +19,16 @@ class UserController extends Controller
             'page' => ['nullable', 'integer', 'min:1']
         ]);
 
+        $search = trim($validated['search'] ?? '');
+
         $users = User::query()
             ->select(['id', 'name'])
             ->when(
-                $validated['search'] !== '',
+                $search !== '',
                 fn ($query) => $query->where(
                     'name',
                     'like',
-                    '%'.$validated['search'].'%'
+                    '%'.$search.'%'
                 )
             )->orderBy('name')->orderBy('id')->paginate(5)->withQueryString();
 
