@@ -10,7 +10,7 @@ class MinecraftServerAdminController extends Controller
 {
     public function index(Request $request, MinecraftServer $minecraftServer)
     {
-        if ($request->user()->cannot('update', $minecraftServer)) {
+        if ($request->user()->cannot('view', $minecraftServer)) {
             abort(403);
         }
 
@@ -27,6 +27,10 @@ class MinecraftServerAdminController extends Controller
 
         if ($minecraftServer->owner_id === $user->id) {
             return response()->json(['message' => 'Owner is already the owner.'], 422);
+        }
+
+        if ($minecraftServer->admins()->whereKey($user->id)->exists()) {
+            return response()->json(['message' => 'This user is already an admin.'], 409);
         }
 
         $minecraftServer->admins()->syncWithoutDetaching([$user->id]);
