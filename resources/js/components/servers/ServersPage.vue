@@ -20,7 +20,7 @@
                     </p>
                 </div>
             </div>
-            <ConectedUserCard :user="auth.user"/>
+            <ConnectedUserCard :user="auth.user"/>
         </header>
 
         <div
@@ -145,7 +145,7 @@ import ExecutionSlotCard from './components/ExecutionSlotCard.vue';
 import PaginationControls from './components/PaginationControls.vue';
 import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
-import ConectedUserCard from '../ConectedUserCard.vue';
+import ConnectedUserCard from '../ConnectedUserCard.vue';
 import { fetchServerPageData } from './services/serverPageService';
 
 const router = useRouter();
