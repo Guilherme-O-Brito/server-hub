@@ -12,7 +12,7 @@ class ExecutionSlotController extends Controller
 {
     public function index(Request $request)
     {
-        $execution_slots = ExecutionSlot::orderBy('slot_number')->get();
+        $execution_slots = ExecutionSlot::orderBy('slot_number')->with('server.owner')->get();
 
         return response()->json($execution_slots);
     }

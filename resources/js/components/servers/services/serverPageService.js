@@ -31,13 +31,13 @@ const normalizeMinecraftServer = (server) => ({
 });
 
 const normalizeExecutionSlot = (slot, servers) => {
-    const linkedServer = servers.find((server) => server.executionSlotId === slot.id);
-
+    //const linkedServer = servers.find((server) => server.executionSlotId === slot.id);
+    console.log(slot.server);
     return {
         id: slot.id,
         name: `Slot ${slot.slot_number}`,
         status: slot.status,
-        server: linkedServer ?? null,
+        server: slot.server ? normalizeMinecraftServer(slot.server) : null,
     };
 };
 
