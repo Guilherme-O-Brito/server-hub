@@ -18,7 +18,15 @@ class MinecraftServerController extends Controller
 {   
     public function index(Request $request)
     {   
+        
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'page' => ['nullable', 'integer', 'min:1']
+        ]);
+        
         $user = $request->user();
+        
+        $search = trim($validated['search'] ?? '');
 
         $servers = MinecraftServer::query()
             ->visibleToUser($user)
@@ -28,7 +36,15 @@ class MinecraftServerController extends Controller
                 'admins' => function (BelongsToMany $query) use ($user) {
                     $query->where('users.id', $user->id);
                 },
-            ])->paginate(8)->through(function (MinecraftServer $server) use ($user) {
+            ])
+            ->when($search !== '',
+                fn ($query) => $query->where(
+                    'server_name',
+                    'like',
+                    '%'.$search.'%'
+                )
+            )->orderBy('server_name')->orderBy('id')
+            ->paginate(8)->withQueryString()->through(function (MinecraftServer $server) use ($user) {
                 $server->setAttribute(
                 'access_role',
                     $server->accessRoleFor($user)
