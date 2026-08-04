@@ -39,10 +39,15 @@ const normalizeExecutionSlot = (slot, servers) => {
     };
 };
 
-export const fetchServerPageData = async (page = 1) => {
+export const fetchServerPageData = async (page = 1, search = '') => {
     
     const [serverResponse, slotResponse] = await Promise.all([
-        axios.get(route('index.minecraftServer'), { params: { page } }),
+        axios.get(route('index.minecraftServer'), {
+            params: {
+                page,
+                search: search || undefined,
+            },
+        }),
         axios.get(route('index.execution_slot')),
     ]);
 

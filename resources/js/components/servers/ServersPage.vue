@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch, inject } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CreateServerModal from './components/CreateServerModal.vue';
 import ExecutionSlotCard from './components/ExecutionSlotCard.vue';
@@ -149,6 +149,7 @@ import ConnectedUserCard from '../ConnectedUserCard.vue';
 import { fetchServerPageData } from './services/serverPageService';
 
 const router = useRouter();
+const SEARCH_DELAY = 350;
 
 const servers = ref([]);
 const executionSlots = ref([]);
@@ -161,6 +162,8 @@ const isLoading = ref(true);
 const loadError = ref(false);
 const isCreateModalOpen = ref(false);
 const auth = inject('auth');
+let searchTimer = null;
+let loadSequence = 0;
 
 const gameOptions = computed(() => {
     const gamesByKey = new Map();
@@ -173,50 +176,61 @@ const gameOptions = computed(() => {
 });
 
 const filteredServers = computed(() => {
-    const normalizedSearch = searchQuery.value.trim().toLocaleLowerCase('pt-BR');
-
     return servers.value.filter((server) => {
-        const matchesSearch = server.name
-            .toLocaleLowerCase('pt-BR')
-            .includes(normalizedSearch);
         const matchesGame = gameFilter.value === 'all'
             || server.game.key === gameFilter.value;
         const matchesAccess = accessFilter.value === 'all'
             || server.access === accessFilter.value;
 
-        return matchesSearch && matchesGame && matchesAccess;
+        return matchesGame && matchesAccess;
     });
 });
 
 const paginatedServers = computed(() => filteredServers.value);
 
-const loadPage = async (page = 1) => {
+const loadPage = async (page = 1, force = false) => {
     if (
         page < 1
         || page > totalPages.value
-        || (page === currentPage.value && !isLoading.value)
+        || (!force && page === currentPage.value && !isLoading.value)
     ) {
         return;
     }
 
-    isLoading.value = true;
+    const requestId = ++loadSequence;
     loadError.value = false;
 
     try {
-        const pageData = await fetchServerPageData(page);
+        const pageData = await fetchServerPageData(
+            page,
+            searchQuery.value.trim(),
+        );
+
+        if (requestId !== loadSequence) {
+            return;
+        }
 
         servers.value = pageData.servers;
         executionSlots.value = pageData.executionSlots;
         currentPage.value = pageData.pagination.currentPage;
         totalPages.value = pageData.pagination.totalPages;
     } catch {
-        loadError.value = true;
+        if (requestId === loadSequence) {
+            loadError.value = true;
+        }
     } finally {
-        isLoading.value = false;
+        if (requestId === loadSequence) {
+            isLoading.value = false;
+        }
     }
 };
 
-watch([searchQuery, gameFilter, accessFilter], () => {
+watch(searchQuery, () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => loadPage(1, true), SEARCH_DELAY);
+});
+
+watch([gameFilter, accessFilter], () => {
     if (currentPage.value !== 1) {
         loadPage(1);
     }
@@ -236,4 +250,9 @@ const handleServerCreated = () => {
 };
 
 onMounted(() => loadPage());
+
+onBeforeUnmount(() => {
+    window.clearTimeout(searchTimer);
+    loadSequence += 1;
+});
 </script>
