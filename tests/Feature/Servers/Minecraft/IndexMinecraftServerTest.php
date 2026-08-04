@@ -51,8 +51,7 @@ class IndexMinecraftServerTest extends TestCase
         $serverIds = array_column($servers, 'id');
 
         $this->assertCount(2, $servers);
-        $this->assertContains($ownedServer->id, $serverIds);
-        $this->assertContains($adminServer->id, $serverIds);
+        $this->assertSame([$adminServer->id, $ownedServer->id], $serverIds);
         $this->assertNotContains($hiddenServer->id, $serverIds);
 
         $ownedServerJson = $this->serverFromResponse($servers, $ownedServer->id);
@@ -111,13 +110,18 @@ class IndexMinecraftServerTest extends TestCase
     public function test_index_paginates_visible_servers_with_eight_servers_per_page(): void
     {
         $user = User::factory()->create();
-        $servers = MinecraftServer::factory()
-            ->count(9)
-            ->for($user, 'owner')
-            ->create();
+        $servers = collect();
 
-        $firstPageResponse = $this->actingAs($user)->get(self::ROUTE);
-        $secondPageResponse = $this->actingAs($user)->get(self::ROUTE.'?page=2');
+        foreach (range(1, 9) as $number) {
+            $servers->push($this->createMinecraftServer($user, [
+                'server_name' => sprintf('Target Server %02d', $number),
+            ]));
+        }
+
+        $firstPageResponse = $this->actingAs($user)
+            ->getJson(self::ROUTE.'?search=Target');
+        $secondPageResponse = $this->actingAs($user)
+            ->getJson(self::ROUTE.'?search=Target&page=2');
 
         $firstPageResponse->assertOk();
         $firstPageResponse->assertJsonCount(8, 'data');
@@ -125,20 +129,176 @@ class IndexMinecraftServerTest extends TestCase
         $firstPageResponse->assertJsonPath('last_page', 2);
         $firstPageResponse->assertJsonPath('per_page', 8);
         $firstPageResponse->assertJsonPath('total', 9);
+        $this->assertSame(
+            $servers->take(8)->pluck('id')->all(),
+            array_column($firstPageResponse->json('data'), 'id')
+        );
+        $this->assertStringContainsString(
+            'search=Target',
+            $firstPageResponse->json('next_page_url')
+        );
 
         $secondPageResponse->assertOk();
         $secondPageResponse->assertJsonCount(1, 'data');
+        $secondPageResponse->assertJsonPath('data.0.id', $servers->last()->id);
         $secondPageResponse->assertJsonPath('current_page', 2);
         $secondPageResponse->assertJsonPath('last_page', 2);
         $secondPageResponse->assertJsonPath('per_page', 8);
         $secondPageResponse->assertJsonPath('total', 9);
+    }
 
-        $returnedServerIds = array_merge(
-            array_column($firstPageResponse->json('data'), 'id'),
-            array_column($secondPageResponse->json('data'), 'id')
+    public function test_index_orders_servers_by_name_and_then_by_id(): void
+    {
+        $user = User::factory()->create();
+        $zuluServer = $this->createMinecraftServer($user, [
+            'server_name' => 'Zulu Server',
+        ]);
+        $firstAlphaServer = $this->createMinecraftServer($user, [
+            'server_name' => 'Alpha Server',
+        ]);
+        $secondAlphaServer = $this->createMinecraftServer($user, [
+            'server_name' => 'Alpha Server',
+        ]);
+        $middleServer = $this->createMinecraftServer($user, [
+            'server_name' => 'Middle Server',
+        ]);
+
+        $response = $this->actingAs($user)->getJson(self::ROUTE);
+
+        $response->assertOk();
+        $this->assertSame(
+            [
+                $firstAlphaServer->id,
+                $secondAlphaServer->id,
+                $middleServer->id,
+                $zuluServer->id,
+            ],
+            array_column($response->json('data'), 'id')
+        );
+    }
+
+    public function test_index_filters_visible_servers_by_partial_server_name(): void
+    {
+        $user = User::factory()->create();
+        $otherOwner = User::factory()->create();
+
+        $ownedMatch = $this->createMinecraftServer($user, [
+            'server_name' => 'Survival Alpha',
+        ]);
+        $adminMatch = $this->createMinecraftServer($otherOwner, [
+            'server_name' => 'Alpha Creative',
+        ]);
+        $adminMatch->admins()->attach($user->id);
+
+        $visibleNameMismatch = $this->createMinecraftServer($user, [
+            'server_name' => 'Beta Server',
+            'motd' => 'Alpha only appears in the motd',
+        ]);
+        $hiddenMatch = $this->createMinecraftServer($otherOwner, [
+            'server_name' => 'Alpha Hidden',
+        ]);
+
+        $response = $this->actingAs($user)->getJson(
+            self::ROUTE.'?search='.urlencode('  Alpha  ')
         );
 
-        $this->assertEqualsCanonicalizing($servers->modelKeys(), $returnedServerIds);
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonPath('total', 2);
+        $returnedServerIds = array_column($response->json('data'), 'id');
+        $this->assertSame(
+            [$adminMatch->id, $ownedMatch->id],
+            $returnedServerIds
+        );
+        $this->assertNotContains($visibleNameMismatch->id, $returnedServerIds);
+        $this->assertNotContains($hiddenMatch->id, $returnedServerIds);
+    }
+
+    public function test_index_returns_empty_paginated_list_when_search_does_not_match(): void
+    {
+        $user = User::factory()->create();
+        $this->createMinecraftServer($user, [
+            'server_name' => 'Survival Server',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(self::ROUTE.'?search=Creative');
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+        $response->assertJsonPath('current_page', 1);
+        $response->assertJsonPath('per_page', 8);
+        $response->assertJsonPath('total', 0);
+    }
+
+    public function test_index_rejects_invalid_search_query_parameters(): void
+    {
+        $user = User::factory()->create();
+        $oversizedSearch = str_repeat('a', 256);
+
+        $oversizedResponse = $this->actingAs($user)->getJson(
+            self::ROUTE.'?search='.$oversizedSearch
+        );
+        $arrayResponse = $this->actingAs($user)
+            ->getJson(self::ROUTE.'?search[]=server');
+
+        $oversizedResponse->assertUnprocessable();
+        $oversizedResponse->assertJsonValidationErrors('search');
+        $arrayResponse->assertUnprocessable();
+        $arrayResponse->assertJsonValidationErrors('search');
+    }
+
+    public function test_index_accepts_search_at_the_maximum_allowed_length(): void
+    {
+        $user = User::factory()->create();
+        $maximumLengthSearch = str_repeat('a', 255);
+
+        $response = $this->actingAs($user)->getJson(
+            self::ROUTE.'?search='.$maximumLengthSearch
+        );
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    }
+
+    public function test_index_rejects_invalid_page_query_parameters(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (['0', '-1', '1.5', 'not-a-number'] as $page) {
+            $response = $this->actingAs($user)->getJson(
+                self::ROUTE.'?page='.urlencode($page)
+            );
+
+            $response->assertUnprocessable();
+            $response->assertJsonValidationErrors('page');
+        }
+
+        $arrayResponse = $this->actingAs($user)
+            ->getJson(self::ROUTE.'?page[]=1');
+
+        $arrayResponse->assertUnprocessable();
+        $arrayResponse->assertJsonValidationErrors('page');
+    }
+
+    public function test_search_treats_sql_injection_payload_as_plain_text(): void
+    {
+        $user = User::factory()->create();
+        $this->createMinecraftServer($user, [
+            'server_name' => 'Alpha Server',
+        ]);
+        $this->createMinecraftServer($user, [
+            'server_name' => 'Beta Server',
+        ]);
+        $payload = "' OR 1=1 --";
+
+        $response = $this->actingAs($user)->getJson(
+            self::ROUTE.'?search='.urlencode($payload)
+        );
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+        $response->assertJsonPath('total', 0);
     }
 
     public function test_index_returns_null_execution_slot_when_server_has_no_slot(): void
