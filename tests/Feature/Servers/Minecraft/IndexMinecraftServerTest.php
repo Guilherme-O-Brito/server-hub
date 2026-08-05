@@ -28,13 +28,17 @@ class IndexMinecraftServerTest extends TestCase
             'server_name' => 'Owned Server',
             'minecraft_version_id' => $ownedVersion->id,
         ]);
-        $ownedSlot = ExecutionSlot::factory()->occupied($ownedServer)->create();
+        $ownedSlot = ExecutionSlot::factory()->occupied($ownedServer)->create([
+            'hostname' => 'sv1.server-hub.test',
+        ]);
 
         $adminServer = $this->createMinecraftServer($otherOwner, [
             'server_name' => 'Admin Server',
             'minecraft_version_id' => $adminVersion->id,
         ]);
-        $adminSlot = ExecutionSlot::factory()->occupied($adminServer)->create();
+        $adminSlot = ExecutionSlot::factory()->occupied($adminServer)->create([
+            'hostname' => 'sv2.server-hub.test',
+        ]);
         $adminServer->admins()->attach($user->id);
 
         $hiddenServer = $this->createMinecraftServer($otherOwner, [
@@ -59,6 +63,7 @@ class IndexMinecraftServerTest extends TestCase
         $this->assertSame($ownedVersion->id, $ownedServerJson['version']['id']);
         $this->assertSame('1.20.1', $ownedServerJson['version']['version']);
         $this->assertSame($ownedSlot->id, $ownedServerJson['execution_slot']['id']);
+        $this->assertSame('sv1.server-hub.test', $ownedServerJson['execution_slot']['hostname']);
         $this->assertSame('owner', $ownedServerJson['access_role']);
 
         $adminServerJson = $this->serverFromResponse($servers, $adminServer->id);
@@ -66,6 +71,7 @@ class IndexMinecraftServerTest extends TestCase
         $this->assertSame($adminVersion->id, $adminServerJson['version']['id']);
         $this->assertSame('1.19.4', $adminServerJson['version']['version']);
         $this->assertSame($adminSlot->id, $adminServerJson['execution_slot']['id']);
+        $this->assertSame('sv2.server-hub.test', $adminServerJson['execution_slot']['hostname']);
         $this->assertSame('admin', $adminServerJson['access_role']);
     }
 

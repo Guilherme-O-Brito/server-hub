@@ -21,7 +21,9 @@ class GetMinecraftServerTest extends TestCase
             'server_name' => 'Owned Server',
             'minecraft_version_id' => $version->id,
         ]);
-        $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
+        $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
+            'hostname' => 'sv1.server-hub.test',
+        ]);
 
         $response = $this->actingAs($owner)->get("/servers/minecraft/{$minecraftServer->id}");
 
@@ -31,6 +33,7 @@ class GetMinecraftServerTest extends TestCase
         $response->assertJsonPath('version.id', $version->id);
         $response->assertJsonPath('version.version', '1.20.1');
         $response->assertJsonPath('execution_slot.id', $executionSlot->id);
+        $response->assertJsonPath('execution_slot.hostname', 'sv1.server-hub.test');
         $this->assertIsInt($response->json('id'));
     }
 
@@ -43,7 +46,9 @@ class GetMinecraftServerTest extends TestCase
             'server_name' => 'Admin Visible Server',
             'minecraft_version_id' => $version->id,
         ]);
-        $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
+        $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
+            'hostname' => 'sv2.server-hub.test',
+        ]);
         $minecraftServer->admins()->attach($admin->id);
 
         $response = $this->actingAs($admin)->get("/servers/minecraft/{$minecraftServer->id}");
@@ -53,6 +58,7 @@ class GetMinecraftServerTest extends TestCase
         $response->assertJsonPath('server_name', 'Admin Visible Server');
         $response->assertJsonPath('version.id', $version->id);
         $response->assertJsonPath('execution_slot.id', $executionSlot->id);
+        $response->assertJsonPath('execution_slot.hostname', 'sv2.server-hub.test');
     }
 
     public function test_authenticated_user_without_permission_cannot_get_minecraft_server(): void
