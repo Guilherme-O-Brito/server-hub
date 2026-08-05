@@ -30,7 +30,7 @@
                 @auth
                 @if (Auth::user()->is_admin)    
                 <li>
-                    <a href="" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
+                    <a href="{{ route('admin.view') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
                 </li>
                 @endif
                 @endauth

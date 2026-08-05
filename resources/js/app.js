@@ -4,6 +4,7 @@ import { createApp, reactive } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import axios from 'axios';
 import App from './components/App.vue';
+import AdminPage from './components/adminPage/AdminPage.vue';
 import router from './router';
 
 axios.defaults.withCredentials = true;
@@ -47,4 +48,13 @@ if (serversAppElement) {
         .use(router)
         .provide('auth', auth)
         .mount(serversAppElement);
+}
+
+const adminAppElement = document.getElementById('admin-app');
+
+if (adminAppElement) {
+    createApp(AdminPage)
+        .use(ZiggyVue)
+        .provide('auth', auth)
+        .mount(adminAppElement);
 }

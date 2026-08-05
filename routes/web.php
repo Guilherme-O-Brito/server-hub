@@ -74,6 +74,10 @@ Route::prefix('/servers')->group(function () {
 });
 
 // view routes
+Route::view('/admin', 'admin.index')
+    ->middleware(['auth', EnsureUserIsAdmin::class])
+    ->name('admin.view');
+
 Route::view('/servidores', 'servidores.index')
     ->middleware('auth')
     ->name('servers.view');
