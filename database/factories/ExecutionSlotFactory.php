@@ -26,7 +26,8 @@ class ExecutionSlotFactory extends Factory
             'service_name' => 'server-service-'.$slot_number,
             'status' => ExecutionSlot::STATUS_FREE,
             'server_id' => null,
-            'server_type' => null
+            'server_type' => null,
+            'hostname' => ExecutionSlot::generateHostname($slot_number),
         ];
     }
 
