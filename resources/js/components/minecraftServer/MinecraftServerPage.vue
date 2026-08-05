@@ -107,6 +107,12 @@
                 />
             </section>
 
+            <ServerHostnameCard
+                v-if="server.executionSlot"
+                class="mt-8"
+                :hostname="server.executionSlot.hostname ?? ''"
+            />
+
             <ServerConsole class="mt-8" :status="server.status" />
         </template>
     </main>
@@ -168,6 +174,7 @@ import PlayersSummaryCard from './components/PlayersSummaryCard.vue';
 import ResourcesSummaryCard from './components/ResourcesSummaryCard.vue';
 import ServerConsole from './components/ServerConsole.vue';
 import ServerControlsCard from './components/ServerControlsCard.vue';
+import ServerHostnameCard from './components/ServerHostnameCard.vue';
 import ServerSettingsModal from './components/ServerSettingsModal.vue';
 import {
     addOperatorNickname,
