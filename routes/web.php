@@ -34,6 +34,13 @@ Route::prefix('/execution-slot')->middleware('auth')->group(function () {
     Route::get('/', [ExecutionSlotController::class, 'index'])->name('index.execution_slot');
 });
 
+Route::prefix('admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/', [MinecraftVersionController::class, 'adminIndex'])->name('index.minecraftVersion.admin');
+    Route::post('/', [MinecraftVersionController::class, 'create'])->name('create.minecraftVersion');
+    Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
+    Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
+});
+
 Route::prefix('/servers')->group(function () {
     Route::prefix('/minecraft')->middleware('auth')->group(function () {
         // minecraft CRUD
@@ -61,13 +68,9 @@ Route::prefix('/servers')->group(function () {
             Route::delete('/{minecraftOperator}', [MinecraftOperatorController::class, 'delete'])->whereNumber('minecraftOperator')->name('delete.minecraftServer.operator');
             Route::get('/', [MinecraftOperatorController::class, 'index'])->name('index.minecraftServer.operator');    
         });
-        // minecraft server versions CRUD
-        Route::prefix('/version')->group(function () {
-            Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');
-            Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
-            Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
-            Route::get('/', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
-        });
+        // index minecraft versions
+        Route::get('/version', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
+        
     });
 });
 
