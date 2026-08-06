@@ -17,6 +17,13 @@ class MinecraftVersionController extends Controller
         return response()->json($versions);
     }
 
+    public function adminIndex(Request $request)
+    {
+        $versions = MinecraftVersion::query()->orderedDesc()->get();
+
+        return response()->json($versions);
+    }
+
     public function create(Request $request)
     {
         $validated = $request->validate([

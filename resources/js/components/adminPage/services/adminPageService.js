@@ -97,7 +97,7 @@ export const deleteUser = (userId) => axios.delete(
 );
 
 export const fetchMinecraftVersions = async () => {
-    const response = await axios.get(route('index.minecraftVersion'));
+    const response = await axios.get(route('index.minecraftVersion.admin'));
 
     return Array.isArray(response.data)
         ? response.data.map(normalizeVersion)
