@@ -17,7 +17,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'Joãozin do bet',
             'email' => 'joaozin@dobet.com',
             'password' => '123@Abcde',
@@ -33,7 +33,7 @@ class CreateUserTest extends TestCase
 
     public function test_guest_cannot_create_user()
     {
-        $response = $this->post('/user', []);
+        $response = $this->post('/admin/user', []);
 
         $response->assertRedirect('/login');
     }
@@ -44,7 +44,7 @@ class CreateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($user)->post('/user', [
+        $response = $this->actingAs($user)->post('/admin/user', [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -64,7 +64,7 @@ class CreateUserTest extends TestCase
             'email' => 'test@test.com'
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -80,7 +80,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'test',
             'email' => 'test',
             'password' => 'Password@1234',
@@ -96,7 +96,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => 'password',
@@ -112,7 +112,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => '',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -128,7 +128,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'Test',
             'email' => '',
             'password' => 'Password@1234',
@@ -144,7 +144,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'Test',
             'email' => 'test@test.com',
             'password' => '',
@@ -160,7 +160,7 @@ class CreateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->post('/user', [
+        $response = $this->actingAs($admin)->post('/admin/user', [
             'name' => 'Test',
             'email' => 'test@test.com',
             'password' => 'Password@1234',

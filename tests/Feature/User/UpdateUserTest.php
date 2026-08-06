@@ -22,7 +22,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$user->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$user->id}", [
             'name' => 'Joãozin do bet',
             'email' => 'joaozin@dobet.com',
             'password' => '123@Abcde',
@@ -49,7 +49,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->put("/user/{$user->id}", []);
+        $response = $this->put("/admin/user/{$user->id}", []);
 
         $response->assertRedirect('/login');
     }
@@ -64,7 +64,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($user)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($user)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => null,
@@ -88,7 +88,7 @@ class UpdateUserTest extends TestCase
             'email' => 'test@test.com'
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -108,7 +108,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'test',
             'email' => 'test',
             'password' => 'Password@1234',
@@ -128,7 +128,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'test',
             'email' => 'test@test.com',
             'password' => 'password',
@@ -148,7 +148,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => '',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -168,7 +168,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'Test',
             'email' => '',
             'password' => 'Password@1234',
@@ -188,7 +188,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'Test',
             'email' => 'test@test.com',
             'password' => null,
@@ -214,7 +214,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$userToUpdate->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$userToUpdate->id}", [
             'name' => 'Test',
             'email' => 'test@test.com',
             'password' => 'Password@1234',
@@ -229,7 +229,7 @@ class UpdateUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->put('/user/999', [
+        $response = $this->actingAs($admin)->put('/admin/user/999', [
             'name' => 'Teste',
             'email' => 'teste@test.com',
             'password' => 'Password@1234',
@@ -251,7 +251,7 @@ class UpdateUserTest extends TestCase
 
         $oldPasswordHash = $user->password;
 
-        $this->actingAs($admin)->put("/user/{$user->id}", [
+        $this->actingAs($admin)->put("/admin/user/{$user->id}", [
             'name' => 'Novo Nome',
             'email' => 'novo@test.com',
             'password' => null,
@@ -273,7 +273,7 @@ class UpdateUserTest extends TestCase
             'email' => 'test@test.com'
         ]);
 
-        $response = $this->actingAs($admin)->put("/user/{$user->id}", [
+        $response = $this->actingAs($admin)->put("/admin/user/{$user->id}", [
             'name' => 'Novo Nome',
             'email' => 'test@test.com',
             'password' => null,
