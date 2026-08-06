@@ -35,6 +35,30 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    // admin index sends all the user data that isnt protected
+    public function adminIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'page' => ['nullable', 'integer', 'min:1']
+        ]);
+
+        $search = trim($validated['search'] ?? '');
+
+        $users = User::query()
+            ->select()
+            ->when(
+                $search !== '',
+                fn ($query) => $query->where(
+                    'name',
+                    'like',
+                    '%'.$search.'%'
+                )
+            )->orderBy('name')->orderBy('id')->paginate(5)->withQueryString();
+
+        return response()->json($users);
+    }
+
     //admin only    
     public function create(Request $request)
     {

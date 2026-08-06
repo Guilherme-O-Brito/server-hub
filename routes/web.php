@@ -18,16 +18,14 @@ Route::prefix('/login')->middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::prefix('/user')->middleware('auth')->group(function () {
-    // user CRUD
-    Route::get('/', [UserController::class, 'index'])->name('index.user');
-    // authentication and admin only
-    Route::middleware(EnsureUserIsAdmin::class)->group(function () {
-        Route::post('/', [UserController::class, 'create'])->name('create.user');
-        Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
-        Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
-    });
-    
+Route::get('/user', [UserController::class, 'index'])->middleware('auth')->name('index.user');
+
+// authentication and admin only
+Route::prefix('admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/', [UserController::class, 'adminIndex'])->name('index.user.admin');
+    Route::post('/', [UserController::class, 'create'])->name('create.user');
+    Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
+    Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
 });
 
 Route::prefix('/execution-slot')->middleware('auth')->group(function () {
