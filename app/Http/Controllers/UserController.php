@@ -54,7 +54,7 @@ class UserController extends Controller
                     'like',
                     '%'.$search.'%'
                 )
-            )->orderBy('name')->orderBy('id')->paginate(5)->withQueryString();
+            )->orderBy('name')->orderBy('id')->paginate(20)->withQueryString();
 
         return response()->json($users);
     }
