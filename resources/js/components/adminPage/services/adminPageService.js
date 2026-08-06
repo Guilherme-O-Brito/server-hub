@@ -66,7 +66,6 @@ export const fetchAdminUsers = async ({ search = '', page = 1 } = {}) => {
         params: {
             search: search || undefined,
             page,
-            per_page: 20,
         },
     });
     const payload = response.data ?? {};
