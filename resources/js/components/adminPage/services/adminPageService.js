@@ -62,7 +62,7 @@ const normalizeExecutionSlot = (slot) => {
 };
 
 export const fetchAdminUsers = async ({ search = '', page = 1 } = {}) => {
-    const response = await axios.get(route('index.user'), {
+    const response = await axios.get(route('index.user.admin'), {
         params: {
             search: search || undefined,
             page,
