@@ -11,7 +11,7 @@ class ToggleMinecraftVersionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ROUTE = '/servers/minecraft/version';
+    private const ROUTE = '/admin/servers/minecraft/version';
 
     public function test_admin_can_toggle_enabled_version_to_disabled(): void
     {
@@ -45,6 +45,16 @@ class ToggleMinecraftVersionTest extends TestCase
         $response = $this->actingAs($user)->post(self::ROUTE."/{$minecraftVersion->id}/toggle");
 
         $response->assertForbidden();
+        $this->assertTrue($minecraftVersion->refresh()->is_enabled);
+    }
+
+    public function test_guest_cannot_toggle_minecraft_version(): void
+    {
+        $minecraftVersion = MinecraftVersion::factory()->enabled()->create();
+
+        $response = $this->post(self::ROUTE."/{$minecraftVersion->id}/toggle");
+
+        $response->assertRedirect('/login');
         $this->assertTrue($minecraftVersion->refresh()->is_enabled);
     }
 }

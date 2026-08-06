@@ -12,7 +12,7 @@ class DeleteMinecraftVersionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ROUTE = '/servers/minecraft/version';
+    private const ROUTE = '/admin/servers/minecraft/version';
 
     public function test_admin_can_delete_version_and_move_servers_to_enabled_replacement(): void
     {
@@ -73,6 +73,18 @@ class DeleteMinecraftVersionTest extends TestCase
         $response = $this->actingAs($user)->delete(self::ROUTE."/{$minecraftVersion->id}");
 
         $response->assertForbidden();
+        $this->assertDatabaseHas('minecraft_versions', [
+            'id' => $minecraftVersion->id,
+        ]);
+    }
+
+    public function test_guest_cannot_delete_minecraft_version(): void
+    {
+        $minecraftVersion = MinecraftVersion::factory()->enabled()->create();
+
+        $response = $this->delete(self::ROUTE."/{$minecraftVersion->id}");
+
+        $response->assertRedirect('/login');
         $this->assertDatabaseHas('minecraft_versions', [
             'id' => $minecraftVersion->id,
         ]);
