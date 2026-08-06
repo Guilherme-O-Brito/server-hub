@@ -12,6 +12,8 @@ class AdminIndexUserTest extends TestCase
 
     private const ROUTE = '/admin/user';
 
+    private const PER_PAGE = 20;
+
     public function test_guest_cannot_access_admin_index(): void
     {
         User::factory()->create();
@@ -121,7 +123,7 @@ class AdminIndexUserTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(0, 'data');
         $response->assertJsonPath('current_page', 1);
-        $response->assertJsonPath('per_page', 5);
+        $response->assertJsonPath('per_page', self::PER_PAGE);
         $response->assertJsonPath('total', 0);
     }
 
@@ -169,17 +171,16 @@ class AdminIndexUserTest extends TestCase
         );
     }
 
-    public function test_admin_index_paginates_five_users_per_page_and_preserves_search_query(): void
+    public function test_admin_index_paginates_twenty_users_per_page_and_preserves_search_query(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
-        $users = collect([
-            User::factory()->create(['name' => 'Target Alpha']),
-            User::factory()->create(['name' => 'Target Bravo']),
-            User::factory()->create(['name' => 'Target Charlie']),
-            User::factory()->create(['name' => 'Target Delta']),
-            User::factory()->create(['name' => 'Target Echo']),
-            User::factory()->create(['name' => 'Target Foxtrot']),
+        $admin = User::factory()->create([
+            'name' => 'Authenticated Admin',
+            'is_admin' => true,
         ]);
+        $users = collect(range(1, self::PER_PAGE + 1))
+            ->map(fn (int $number) => User::factory()->create([
+                'name' => sprintf('Target User %02d', $number),
+            ]));
 
         $firstPageResponse = $this->actingAs($admin)
             ->getJson(self::ROUTE.'?search=Target');
@@ -187,11 +188,11 @@ class AdminIndexUserTest extends TestCase
             ->getJson(self::ROUTE.'?search=Target&page=2');
 
         $firstPageResponse->assertOk();
-        $firstPageResponse->assertJsonCount(5, 'data');
+        $firstPageResponse->assertJsonCount(self::PER_PAGE, 'data');
         $firstPageResponse->assertJsonPath('current_page', 1);
         $firstPageResponse->assertJsonPath('last_page', 2);
-        $firstPageResponse->assertJsonPath('per_page', 5);
-        $firstPageResponse->assertJsonPath('total', 6);
+        $firstPageResponse->assertJsonPath('per_page', self::PER_PAGE);
+        $firstPageResponse->assertJsonPath('total', self::PER_PAGE + 1);
         $this->assertStringContainsString(
             'search=Target',
             $firstPageResponse->json('next_page_url')
@@ -200,7 +201,7 @@ class AdminIndexUserTest extends TestCase
         $secondPageResponse->assertOk();
         $secondPageResponse->assertJsonCount(1, 'data');
         $secondPageResponse->assertJsonPath('current_page', 2);
-        $secondPageResponse->assertJsonPath('total', 6);
+        $secondPageResponse->assertJsonPath('total', self::PER_PAGE + 1);
 
         $returnedIds = array_merge(
             array_column($firstPageResponse->json('data'), 'id'),
@@ -274,7 +275,7 @@ class AdminIndexUserTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
-        $response->assertJsonPath('per_page', 5);
+        $response->assertJsonPath('per_page', self::PER_PAGE);
         $this->assertEqualsCanonicalizing(
             [
                 'id',
