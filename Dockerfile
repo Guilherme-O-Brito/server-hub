@@ -2,21 +2,28 @@ FROM composer:2.9.8 AS composer-build
 
 WORKDIR /app
 
-COPY . .
+COPY composer.json composer.lock ./
+
 # composer dependencies
 RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --no-interaction \
-    --optimize-autoloader
+--no-dev \
+--prefer-dist \
+--no-interaction \
+--no-progress \
+--no-scripts
 
-FROM node:lts-bookworm AS frontend
+COPY . .
+
+RUN composer dump-autoload --optimize --no-dev \
+    && composer run-script post-autoload-dump
+
+FROM node:24-bookworm-slim AS frontend
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
@@ -40,12 +47,11 @@ COPY --from=composer-build /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
 # Perms
-RUN chown -R www-data:www-data /app/storage && chown -R www-data:www-data /app/bootstrap
+RUN chown -R www-data:www-data /app/storage && chown -R www-data:www-data /app/bootstrap/cache
 
 RUN setcap -r /usr/local/bin/frankenphp
 
 USER www-data
-
 
 EXPOSE 8080
 
