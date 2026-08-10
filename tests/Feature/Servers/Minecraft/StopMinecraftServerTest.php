@@ -89,8 +89,8 @@ class StopMinecraftServerTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    #[DataProvider('invalidServerStatuses')]
-    public function test_stop_rejects_servers_that_are_not_running(?MinecraftServerStatus $status): void
+    #[DataProvider('stoppableNonRunningServerStatuses')]
+    public function test_stop_accepts_servers_that_are_not_running(?MinecraftServerStatus $status): void
     {
         Queue::fake();
 
@@ -103,16 +103,19 @@ class StopMinecraftServerTest extends TestCase
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/stop");
 
-        $response->assertStatus(409);
-        $response->assertJson(['message' => 'Minecraft server is not running.']);
+        $response->assertOk();
+        $response->assertJson(['message' => 'Minecraft server is stopping']);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
-        $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
-        Queue::assertNothingPushed();
+        Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
+            return $job->serverId === $minecraftServer->id
+                && $job->slotId === $executionSlot->id;
+        });
     }
 
     public function test_stop_rejects_running_server_without_execution_slot(): void
@@ -145,7 +148,7 @@ class StopMinecraftServerTest extends TestCase
 
         $firstResponse->assertOk();
         $secondResponse->assertStatus(409);
-        $secondResponse->assertJson(['message' => 'Minecraft server is not running.']);
+        $secondResponse->assertJson(['message' => 'Minecraft server is already stopping.']);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
@@ -157,12 +160,11 @@ class StopMinecraftServerTest extends TestCase
         Queue::assertPushed(StopMinecraftServerJob::class, 1);
     }
 
-    public static function invalidServerStatuses(): array
+    public static function stoppableNonRunningServerStatuses(): array
     {
         return [
             'stopped' => [MinecraftServerStatus::Stopped],
             'starting' => [MinecraftServerStatus::Starting],
-            'stopping' => [MinecraftServerStatus::Stopping],
             'failed' => [MinecraftServerStatus::Failed],
             'deleting' => [MinecraftServerStatus::Deleting],
             'provisioning' => [MinecraftServerStatus::Provisioning],

@@ -13,6 +13,15 @@ class CreateExecutionSlotTest extends TestCase
 {
 	use RefreshDatabase;
 
+	private const APP_URL = 'https://server-hub.test';
+
+	protected function setUp(): void
+	{
+		parent::setUp();
+
+		config()->set('app.url', self::APP_URL);
+	}
+
 	public function test_admin_can_create_execution_slot_with_initial_values()
 	{
 		Queue::fake();
@@ -27,6 +36,7 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
+			'hostname' => 'sv1.server-hub.test',
 			'status' => ExecutionSlot::STATUS_PROVISIONING,
 			'server_id' => null,
 			'server_type' => null,
@@ -51,11 +61,13 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
+			'hostname' => 'sv1.server-hub.test',
 		]);
 		ExecutionSlot::factory()->create([
 			'slot_number' => 3,
 			'external_port' => 30002,
 			'service_name' => 'server-service-3',
+			'hostname' => 'sv3.server-hub.test',
 		]);
 
 		$response = $this->actingAs($admin)->post('/execution-slot', []);
@@ -65,6 +77,7 @@ class CreateExecutionSlotTest extends TestCase
 			'slot_number' => 4,
 			'external_port' => 30003,
 			'service_name' => 'server-service-4',
+			'hostname' => 'sv4.server-hub.test',
 			'status' => ExecutionSlot::STATUS_PROVISIONING,
 		]);
 		$this->assertDatabaseCount('execution_slots', 3);

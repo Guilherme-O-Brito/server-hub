@@ -12,7 +12,7 @@ class CreateMinecraftVersionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ROUTE = '/servers/minecraft/version';
+    private const ROUTE = '/admin/servers/minecraft/version';
 
     public function test_platform_admin_can_create_minecraft_version(): void
     {
@@ -41,6 +41,19 @@ class CreateMinecraftVersionTest extends TestCase
         ]);
 
         $response->assertForbidden();
+        $this->assertDatabaseMissing('minecraft_versions', [
+            'version' => '1.20.1',
+        ]);
+    }
+
+    public function test_guest_cannot_create_minecraft_version(): void
+    {
+        $response = $this->post(self::ROUTE, [
+            'version' => '1.20.1',
+            'is_enabled' => true,
+        ]);
+
+        $response->assertRedirect('/login');
         $this->assertDatabaseMissing('minecraft_versions', [
             'version' => '1.20.1',
         ]);

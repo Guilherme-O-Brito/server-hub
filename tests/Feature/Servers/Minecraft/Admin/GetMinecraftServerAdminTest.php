@@ -78,7 +78,7 @@ class GetMinecraftServerAdminTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_associated_admin_cannot_get_minecraft_server_admins(): void
+    public function test_associated_admin_can_get_minecraft_server_admins(): void
     {
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner);
@@ -87,7 +87,8 @@ class GetMinecraftServerAdminTest extends TestCase
 
         $response = $this->actingAs($admin)->get("/servers/minecraft/{$minecraftServer->id}/admins");
 
-        $response->assertForbidden();
+        $response->assertOK();
+        
     }
 
     public function test_cannot_get_admins_from_nonexistent_minecraft_server(): void

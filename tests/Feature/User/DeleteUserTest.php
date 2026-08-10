@@ -21,7 +21,7 @@ class DeleteUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($admin)->delete("/user/{$user->id}");
+        $response = $this->actingAs($admin)->delete("/admin/user/{$user->id}");
 
         $response->assertOk();
         $response->assertJson(['message' => 'User successfully deleted']);
@@ -37,7 +37,7 @@ class DeleteUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->delete("/user/{$user->id}");
+        $response = $this->delete("/admin/user/{$user->id}");
 
         $response->assertRedirect('/login');
     }
@@ -52,7 +52,7 @@ class DeleteUserTest extends TestCase
             'is_admin' => false
         ]);
 
-        $response = $this->actingAs($user)->delete("/user/{$userToDelete->id}");
+        $response = $this->actingAs($user)->delete("/admin/user/{$userToDelete->id}");
 
         $response->assertForbidden();
     }
@@ -63,7 +63,7 @@ class DeleteUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->delete('/user/999');
+        $response = $this->actingAs($admin)->delete('/admin/user/999');
 
         $response->assertNotFound();
     }
@@ -74,7 +74,7 @@ class DeleteUserTest extends TestCase
             'is_admin' => true
         ]);
 
-        $response = $this->actingAs($admin)->delete("/user/{$admin->id}");
+        $response = $this->actingAs($admin)->delete("/admin/user/{$admin->id}");
 
         $response->assertForbidden();
         $response->assertJson(['message' => 'Are you dumb?']);

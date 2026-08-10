@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css'])
     <title>Login</title>
 </head>
-<body class="h-screen w-screen flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-600">
+<body class="h-screen w-screen flex items-center justify-center bg-linear-to-tr from-indigo-600 to-purple-600">
     <div class="">
         <div class="bg-white shadow-xl rounded-md p-20">
             <div class="flex items-center space-x-20">
@@ -48,7 +48,7 @@
                         <div class="text-center">
                             <button
                                 type="submit"
-                                class="flex items-center justify-center gap-2 w-full mt-5 font-bold text-xl text-white bg-gradient-to-bl from-indigo-600 to-purple-600 px-4 py-2 rounded-3xl transition duration-300 ease-in-out hover:bg-gradient-to-tr hover:ring-2 ring-purple-400 hover:scale-110 cursor-pointer"
+                                class="flex items-center justify-center gap-2 w-full mt-5 font-bold text-xl text-white bg-linear-to-bl from-indigo-600 to-purple-600 px-4 py-2 rounded-3xl transition duration-300 ease-in-out hover:bg-linear-to-tr hover:ring-2 ring-purple-400 hover:scale-110 cursor-pointer"
                             >
                                 Entrar
                                 <svg class="w-5" data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

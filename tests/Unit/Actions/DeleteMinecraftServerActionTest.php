@@ -3,7 +3,6 @@
 namespace Tests\Unit\Actions;
 
 use App\Actions\DeleteMinecraftServerAction;
-use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
@@ -49,8 +48,8 @@ class DeleteMinecraftServerActionTest extends TestCase
         });
     }
 
-    #[DataProvider('invalidServerStatuses')]
-    public function test_execute_rejects_non_stopped_servers_without_dispatching_job(?MinecraftServerStatus $status): void
+    #[DataProvider('nonStoppedServerStatuses')]
+    public function test_execute_accepts_non_stopped_servers_and_dispatches_job(?MinecraftServerStatus $status): void
     {
         Queue::fake();
 
@@ -65,25 +64,21 @@ class DeleteMinecraftServerActionTest extends TestCase
             'status' => $status,
         ]);
 
-        try {
-            (new DeleteMinecraftServerAction())->execute($minecraftServer);
-            $this->fail('Expected MinecraftServerStateException to be thrown.');
-        } catch (MinecraftServerStateException $exception) {
-            $this->assertSame('Minecraft server is not stopped.', $exception->getMessage());
-            $this->assertSame(409, $exception->statusCode());
-        }
+        (new DeleteMinecraftServerAction())->execute($minecraftServer);
 
         $minecraftServer->refresh();
 
-        $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
         $this->assertDatabaseHas('minecraft_servers', [
             'id' => $minecraftServer->id,
-            'status' => $status?->value,
+            'status' => MinecraftServerStatus::Deleting->value,
         ]);
-        Queue::assertNothingPushed();
+        Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
+            return $job->serverId === $minecraftServer->id;
+        });
     }
 
-    public static function invalidServerStatuses(): array
+    public static function nonStoppedServerStatuses(): array
     {
         return [
             'running' => [MinecraftServerStatus::Running],

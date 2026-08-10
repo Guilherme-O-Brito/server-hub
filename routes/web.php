@@ -11,10 +11,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Route::prefix('/login')->middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'LoginView'])->name('login');
     Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
@@ -22,9 +18,11 @@ Route::prefix('/login')->middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::get('/user', [UserController::class, 'index'])->middleware('auth')->name('index.user');
+
 // authentication and admin only
-Route::prefix('/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
-    // user CRUD
+Route::prefix('admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/', [UserController::class, 'adminIndex'])->name('index.user.admin');
     Route::post('/', [UserController::class, 'create'])->name('create.user');
     Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
     Route::delete('/{user}', [UserController::class, 'delete'])->name('delete.user');
@@ -34,6 +32,13 @@ Route::prefix('/execution-slot')->middleware('auth')->group(function () {
     Route::post('/', [ExecutionSlotController::class, 'create_one'])->middleware(EnsureUserIsAdmin::class)->name('create_one.execution_slot');
     Route::delete('/', [ExecutionSlotController::class, 'delete_last'])->middleware(EnsureUserIsAdmin::class)->name('delete_last.execution_slot');
     Route::get('/', [ExecutionSlotController::class, 'index'])->name('index.execution_slot');
+});
+
+Route::prefix('admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/', [MinecraftVersionController::class, 'adminIndex'])->name('index.minecraftVersion.admin');
+    Route::post('/', [MinecraftVersionController::class, 'create'])->name('create.minecraftVersion');
+    Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
+    Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
 });
 
 Route::prefix('/servers')->group(function () {
@@ -63,15 +68,29 @@ Route::prefix('/servers')->group(function () {
             Route::delete('/{minecraftOperator}', [MinecraftOperatorController::class, 'delete'])->whereNumber('minecraftOperator')->name('delete.minecraftServer.operator');
             Route::get('/', [MinecraftOperatorController::class, 'index'])->name('index.minecraftServer.operator');    
         });
-        // minecraft server versions CRUD
-        Route::prefix('/version')->group(function () {
-            Route::post('/', [MinecraftVersionController::class, 'create'])->middleware(EnsureUserIsAdmin::class)->name('create.minecraftVersion');
-            Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
-            Route::delete('/{minecraftVersion}', [MinecraftVersionController::class, 'delete'])->middleware(EnsureUserIsAdmin::class)->whereNumber('minecraftVersion')->name('delete.minecraftVersion');
-            Route::get('/', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
-        });
+        // index minecraft versions
+        Route::get('/version', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
+        
     });
 });
+
+// view routes
+Route::view('/admin', 'admin.index')
+    ->middleware(['auth', EnsureUserIsAdmin::class])
+    ->name('admin.view');
+
+Route::view('/servidores', 'servidores.index')
+    ->middleware('auth')
+    ->name('servers.view');
+
+Route::view('/servidores/minecraft/{minecraftServer}', 'servidores.index')
+    ->whereNumber('minecraftServer')
+    ->middleware('auth')
+    ->name('servers.minecraft.view');
+
+Route::get('/', function () {
+    return Auth::check() ? redirect()->route('servers.view') : view('home');
+})->name('home');
 
 // temporary test routes
 Route::middleware('auth')->group(function () {

@@ -1,13 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.top_app_bar')
 
 @section('content')
+<!-- banner -->
+<div style="background: url('{{ asset('imgs/banner/Banner.jpg') }}'); height: 597px;">
+    <div class="container mx-auto"></div>
+</div>
+<!-- banner -->
 <!-- container entrar -->
 
 @guest    
     <div class="flex justify-center mt-10">
         <a
             href="{{ route('login') }}"
-            class="flex items-center justify-center gap-2 font-bold text-xl text-white bg-gradient-to-bl from-indigo-600 to-purple-600 px-4 py-2 rounded-3xl transition duration-300 ease-in-out hover:bg-gradient-to-tr hover:ring-2 ring-purple-400 hover:scale-110 cursor-pointer"
+            class="flex items-center justify-center gap-2 font-bold text-xl text-white bg-linear-to-bl from-indigo-600 to-purple-600 px-4 py-2 rounded-3xl transition duration-300 ease-in-out hover:bg-linear-to-tr hover:ring-2 ring-purple-400 hover:scale-110 cursor-pointer"
         >
         Entre para começar a gerenciar seu servidor
             <svg class="w-5" data-slot="icon" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -17,13 +22,6 @@
         
     </div>
 @endguest
-
-@auth
-<div class="container mx-auto mt-10 text-center text-gray-700">
-    <h1 class="text-purple-600 font-bold text-5xl">Bem Vindo ao Server-Hub {{ Auth::user()->name }}! </h1>
-    <p class="text-xl">Acesse a pagina <span class="text-purple-600 font-semibold">Servidores</span> para começar a jogar.</p> 
-</div>
-@endauth
 
 <!-- container entrar -->
 @endsection

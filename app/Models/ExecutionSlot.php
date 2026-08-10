@@ -29,6 +29,7 @@ class ExecutionSlot extends Model
         'service_name',
         'status',
         'last_error',
+        'hostname'
     ];
 
     protected $casts = [
@@ -65,4 +66,11 @@ class ExecutionSlot extends Model
         $this->save();
 
     }
+    
+    public static function generateHostname(int $slot_number): string 
+    {
+        // generate the slot hostname based on the app.url config and the slot_number
+        return sprintf('sv%d.%s', $slot_number, parse_url(config('app.url'), PHP_URL_HOST));
+    }
+
 }

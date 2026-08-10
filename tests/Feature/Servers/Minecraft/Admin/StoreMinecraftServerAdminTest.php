@@ -100,6 +100,35 @@ class StoreMinecraftServerAdminTest extends TestCase
         ]);
     }
 
+    public function test_owner_cannot_add_user_who_is_already_an_admin(): void
+    {
+        $owner = User::factory()->create();
+        $admin = User::factory()->create();
+
+        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
+            'server_name' => 'Test Server',
+            'motd' => 'Test motd',
+            'difficulty' => 1,
+            'force_gamemode' => true,
+            'allow_flight' => false,
+        ]);
+
+        $minecraftServer->admins()->attach($admin->id);
+
+        $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/admins/{$admin->id}");
+
+        $response->assertStatus(409);
+        $response->assertExactJson([
+            'message' => 'This user is already an admin.',
+        ]);
+
+        $this->assertDatabaseCount('minecraft_server_admins', 1);
+        $this->assertDatabaseHas('minecraft_server_admins', [
+            'minecraft_server_id' => $minecraftServer->id,
+            'user_id' => $admin->id,
+        ]);
+    }
+
     public function test_cannot_add_admin_to_nonexistent_minecraft_server(): void
     {
         $owner = User::factory()->create();

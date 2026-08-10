@@ -4,7 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    @routes
+    @auth
+        <div id="authUser" data-auth-user=@json([
+                "id" => Auth::user()->id,
+                "name" => Auth::user()->name,
+                "email" => Auth::user()->email
+            ], JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)>
+        </div>
+    @endauth
     @vite(['resources/css/app.css'])
     <title>Server Hub</title>
 </head>
@@ -18,17 +28,17 @@
 
             <ul class="flex items-center ml-auto space-x-3">
                 @auth
-                @if (Auth::user()->isAdmin())    
+                @if (Auth::user()->is_admin)    
                 <li>
-                    <a href="{{ route('admin') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
+                    <a href="{{ route('admin.view') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Painel Administrativo</a>
                 </li>
                 @endif
                 @endauth
                 <li>
-                    <a href="{{ route('servidores') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Servidores</a>
+                    <a href="{{ route('servers.view') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Servidores</a>
                 </li>
                 <li>
-                    <a href="{{ route('sobre') }}" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Sobre</a>
+                    <a href="" class="p-2 font-bold text-base text-gray-900 hover:text-purple-800 hover:bg-gray-200 rounded-lg transition duration-400 ease-in-out">Sobre</a>
                 </li>
                 @auth
                     <li>
@@ -43,14 +53,9 @@
         </div>
     </div>
     <!-- header -->
-    <!-- banner -->
-    <div style="background: url('{{ asset('imgs/banner/Banner.jpg') }}'); height: 597px;">
-        <div class="container mx-auto"></div>
-    </div>
-<!-- banner -->
     @yield('content')
 </body>
 <footer class="mt-8 text-center text-sm text-gray-500">
-    Server-Hub © 2025 • <a href="{{ route('sobre') }}" class="underline hover:text-gray-700">Sobre</a>
+    Server-Hub © 2026
 </footer>
 </html>

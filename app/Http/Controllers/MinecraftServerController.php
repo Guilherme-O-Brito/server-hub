@@ -11,20 +11,51 @@ use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
 use App\Http\Requests\MinecraftServerRequest;
 use App\Models\MinecraftServer;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 
 class MinecraftServerController extends Controller
 {   
     public function index(Request $request)
-    {
+    {   
+        
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'page' => ['nullable', 'integer', 'min:1']
+        ]);
+        
+        $user = $request->user();
+        
+        $search = trim($validated['search'] ?? '');
+
         $servers = MinecraftServer::query()
-            ->visibleToUser($request->user())
+            ->visibleToUser($user)
             ->with([
                 'version',
-                'executionSlot'
-            ])->get();
+                'executionSlot',
+                'admins' => function (BelongsToMany $query) use ($user) {
+                    $query->where('users.id', $user->id);
+                },
+            ])
+            ->when($search !== '',
+                fn ($query) => $query->where(
+                    'server_name',
+                    'like',
+                    '%'.$search.'%'
+                )
+            )->orderBy('server_name')->orderBy('id')
+            ->paginate(8)->withQueryString()->through(function (MinecraftServer $server) use ($user) {
+                $server->setAttribute(
+                'access_role',
+                    $server->accessRoleFor($user)
+                );
+
+                $server->unsetRelation('admins');
+
+                return $server;
+            });
         
-        return response()->json([$servers]);
+        return response()->json($servers);
     }
 
     public function get(Request $request, MinecraftServer $minecraftServer)
@@ -33,10 +64,20 @@ class MinecraftServerController extends Controller
             abort(403);
         }
 
+        $user = $request->user();
+
         $minecraftServer->load([
             'version',
             'executionSlot',
+            'admins' => fn (BelongsToMany $query) => $query->where('users.id', $user->id),
         ]);
+
+        $minecraftServer->setAttribute(
+            'access_role',
+            $minecraftServer->accessRoleFor($user)
+        );
+
+        $minecraftServer->unsetRelation('admins');
 
         return response()->json($minecraftServer);
     }

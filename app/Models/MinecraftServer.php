@@ -78,6 +78,22 @@ class MinecraftServer extends Model
             });
     }
 
+    public function accessRoleFor(User $user): ?string
+    {
+        if ($this->owner_id === $user->id) {
+            return 'owner';
+        }
+
+        if (
+            $this->relationLoaded('admins')
+            && $this->admins->contains('id', $user->id)
+        ) {
+            return 'admin';
+        }
+
+        return null;
+    }
+
     public function getDeployName(): string
     {
         return "minecraft-{$this->id}";

@@ -14,6 +14,13 @@ class CreateExecutionSlotActionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('app.url', 'https://server-hub.test');
+    }
+
     public function test_execute_creates_execution_slot_dispatches_job_and_returns_null(): void
     {
         Queue::fake();
@@ -33,6 +40,7 @@ class CreateExecutionSlotActionTest extends TestCase
             'slot_number' => 1,
             'external_port' => 30000,
             'service_name' => 'server-service-1',
+            'hostname' => 'sv1.server-hub.test',
             'status' => ExecutionSlot::STATUS_PROVISIONING,
         ]);
 

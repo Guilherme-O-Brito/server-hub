@@ -19,11 +19,13 @@ class GetExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
+			'hostname' => 'sv1.server-hub.test',
 		]);
 		ExecutionSlot::factory()->create([
 			'slot_number' => 2,
 			'external_port' => 30001,
 			'service_name' => 'server-service-2',
+			'hostname' => 'sv2.server-hub.test',
 		]);
 
 		$response = $this->actingAs($user)->get('/execution-slot');
@@ -34,12 +36,14 @@ class GetExecutionSlotTest extends TestCase
 			'slot_number' => 1,
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
+			'hostname' => 'sv1.server-hub.test',
 			'status' => ExecutionSlot::STATUS_FREE,
 		]);
 		$response->assertJsonFragment([
 			'slot_number' => 2,
 			'external_port' => 30001,
 			'service_name' => 'server-service-2',
+			'hostname' => 'sv2.server-hub.test',
 			'status' => ExecutionSlot::STATUS_FREE,
 		]);
 	}

@@ -46,8 +46,8 @@ class DeleteMinecraftServerTest extends TestCase
 		});
 	}
 
-	#[DataProvider('invalidServerStatuses')]
-	public function test_owner_cannot_delete_minecraft_server_when_it_is_not_stopped(?MinecraftServerStatus $status)
+	#[DataProvider('nonStoppedServerStatuses')]
+	public function test_owner_can_delete_minecraft_server_when_it_is_not_stopped(?MinecraftServerStatus $status)
 	{
 		Queue::fake();
 
@@ -64,18 +64,20 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$response = $this->actingAs($owner)->delete("/servers/minecraft/{$minecraftServer->id}");
 
-		$response->assertStatus(409);
-		$response->assertJson(['message' => 'Minecraft server is not stopped.']);
+		$response->assertOk();
+		$response->assertJson(['message' => 'Server successfully deleted']);
 
 		$minecraftServer->refresh();
 
-		$this->assertSame($status, $minecraftServer->status);
+		$this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
 		$this->assertDatabaseHas('minecraft_servers', [
 			'id' => $minecraftServer->id,
 			'owner_id' => $owner->id,
-			'status' => $status?->value,
+			'status' => MinecraftServerStatus::Deleting->value,
 		]);
-		Queue::assertNothingPushed();
+		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
+			return $job->serverId === $minecraftServer->id;
+		});
 	}
 
 	public function test_guest_cannot_delete_minecraft_server()
@@ -127,7 +129,7 @@ class DeleteMinecraftServerTest extends TestCase
 		$response->assertNotFound();
 	}
 
-	public static function invalidServerStatuses(): array
+	public static function nonStoppedServerStatuses(): array
 	{
 		return [
 			'running' => [MinecraftServerStatus::Running],
