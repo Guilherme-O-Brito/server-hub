@@ -78,6 +78,7 @@ class MinecraftServer extends Model
             });
     }
 
+    // used to determine the access level of the user to this server
     public function accessRoleFor(User $user): ?string
     {
         if ($this->owner_id === $user->id) {
