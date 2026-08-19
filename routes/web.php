@@ -21,7 +21,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 Route::get('/user', [UserController::class, 'index'])->middleware('auth')->name('index.user');
 
 // authentication and admin only
-Route::prefix('admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+Route::prefix('/admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('/', [UserController::class, 'adminIndex'])->name('index.user.admin');
     Route::post('/', [UserController::class, 'create'])->name('create.user');
     Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
@@ -34,7 +34,7 @@ Route::prefix('/execution-slot')->middleware('auth')->group(function () {
     Route::get('/', [ExecutionSlotController::class, 'index'])->name('index.execution_slot');
 });
 
-Route::prefix('admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+Route::prefix('/admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('/', [MinecraftVersionController::class, 'adminIndex'])->name('index.minecraftVersion.admin');
     Route::post('/', [MinecraftVersionController::class, 'create'])->name('create.minecraftVersion');
     Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
