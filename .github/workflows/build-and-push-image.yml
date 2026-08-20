@@ -49,5 +49,5 @@ jobs:
         files: |
           server-hub-${{ env.VERSION }}.tar.gz
           k3s-declaratives-${{ env.VERSION }}.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
