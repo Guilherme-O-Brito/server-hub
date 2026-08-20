@@ -23,7 +23,7 @@ spec:
             
       containers:
         - name: laravel
-          image: server_hub:0.0.1
+          image: ghcr.io/guilherme-o-brito/server-hub:0.0.1
           command:
             - php
           args:
