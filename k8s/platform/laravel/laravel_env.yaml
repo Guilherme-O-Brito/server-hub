@@ -7,7 +7,7 @@ metadata:
 data:
   APP_NAME: "Server-Hub"
   APP_ENV: "local"
-  APP_DEBUG: "true"
+  APP_DEBUG: "false"
   APP_URL: "https://<your.domain.com>"
 
   APP_LOCALE: "pt_BR"
