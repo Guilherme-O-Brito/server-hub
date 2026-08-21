@@ -102,6 +102,8 @@ class UserController extends Controller
         $user->email = $validated['email'];
         if ($validated['password'] != null) {
             $user->password = Hash::make($validated['password']);
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
         $user->is_admin = $validated['is_admin'];
 
