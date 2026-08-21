@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -102,6 +103,9 @@ class UserController extends Controller
         $user->email = $validated['email'];
         if ($validated['password'] != null) {
             $user->password = Hash::make($validated['password']);
+            DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->delete();
         }
         $user->is_admin = $validated['is_admin'];
 
