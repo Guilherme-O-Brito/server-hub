@@ -20,7 +20,7 @@ spec:
         image: mariadb:12.2.2
         env:
           - name: MYSQL_ROOT_PASSWORD
-            value: "root"
+            value: <your_root_password_CHANGE_IT>
           - name: MYSQL_DATABASE 
             value: "laravel_db"
           - name: MYSQL_USER

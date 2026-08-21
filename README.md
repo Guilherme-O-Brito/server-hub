@@ -153,6 +153,9 @@ Exemplo:
 "uma-senha-forte-aqui"
 ```
 
+> [!WARNING] Atenção
+>o mesmo deve ser feito para a "<your_root_password_CHANGE_IT>" porque esta é a senha de root do banco, NÃO ESQUEÇA DE ALTERA-LA
+
 Essa senha deverá ser utilizada novamente posteriormente na configuração do Laravel.
 
 ##### Utilizando outro banco de dados
