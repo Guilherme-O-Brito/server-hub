@@ -12,7 +12,27 @@ class ExecutionSlotController extends Controller
 {
     public function index(Request $request)
     {
-        $execution_slots = ExecutionSlot::orderBy('slot_number')->with('server.owner')->get();
+        $execution_slots = ExecutionSlot::select([
+            'id',
+            'slot_number',
+            'status',
+            'hostname',
+            'external_port',
+            'service_name',
+            'server_id',
+            'server_type',
+        ])
+            ->with([
+                'server:id,server_name,owner_id',
+                'server.owner:id,name',
+            ])
+            ->orderBy('slot_number')
+            ->get()
+            ->each(function (ExecutionSlot $execution_slot) {
+                $execution_slot->makeHidden('server_id');
+                $execution_slot->server?->makeHidden(['id', 'owner_id']);
+                $execution_slot->server?->owner?->makeHidden('id');
+            });
 
         return response()->json($execution_slots);
     }
