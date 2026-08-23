@@ -25,7 +25,10 @@ class StartMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'previous error',
+            'operation_generation' => 3,
+        ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
             'status' => ExecutionSlot::STATUS_FREE,
@@ -38,12 +41,15 @@ class StartMinecraftServerActionTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->status);
+        $this->assertSame(4, $minecraftServer->operation_generation);
+        $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
+                && $job->slotId === $executionSlot->id
+                && $job->generation === 4;
         });
     }
 
@@ -52,7 +58,9 @@ class StartMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'operation_generation' => 7,
+        ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
             'status' => ExecutionSlot::STATUS_FREE,
@@ -70,9 +78,11 @@ class StartMinecraftServerActionTest extends TestCase
         (new StartMinecraftServerAction($allocateAction))->execute($minecraftServer);
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->refresh()->status);
+        $this->assertSame(8, $minecraftServer->operation_generation);
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
+                && $job->slotId === $executionSlot->id
+                && $job->generation === 8;
         });
     }
 
@@ -82,7 +92,9 @@ class StartMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, $status);
+        $minecraftServer = $this->createMinecraftServer($owner, $status, [
+            'operation_generation' => 5,
+        ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
             'status' => ExecutionSlot::STATUS_FREE,
@@ -100,6 +112,7 @@ class StartMinecraftServerActionTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(5, $minecraftServer->operation_generation);
         $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
         $this->assertNull($executionSlot->server_id);
         $this->assertNull($executionSlot->server_type);
@@ -111,7 +124,9 @@ class StartMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'operation_generation' => 2,
+        ]);
 
         try {
             (new StartMinecraftServerAction(new AllocateExecutionSlotAction()))->execute($minecraftServer);
@@ -124,6 +139,7 @@ class StartMinecraftServerActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame(2, $minecraftServer->operation_generation);
         $this->assertDatabaseMissing('execution_slots', [
             'server_id' => $minecraftServer->id,
             'server_type' => $minecraftServer->getMorphClass(),
@@ -136,7 +152,9 @@ class StartMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'operation_generation' => 2,
+        ]);
 
         $allocateAction = $this->createMock(AllocateExecutionSlotAction::class);
         $allocateAction->expects($this->once())
@@ -151,6 +169,7 @@ class StartMinecraftServerActionTest extends TestCase
         }
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->refresh()->status);
+        $this->assertSame(2, $minecraftServer->operation_generation);
         Queue::assertNothingPushed();
     }
 
@@ -169,15 +188,15 @@ class StartMinecraftServerActionTest extends TestCase
         ];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Action Start Server',
             'motd' => 'Action start motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }

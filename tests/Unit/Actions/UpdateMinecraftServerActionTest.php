@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class UpdateMinecraftServerActionTest extends TestCase
@@ -36,6 +37,8 @@ class UpdateMinecraftServerActionTest extends TestCase
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => MinecraftServerStatus::Stopped,
+            'last_error' => 'previous error',
+            'operation_generation' => 12,
         ]);
 
         $action = new UpdateMinecraftServerAction();
@@ -56,9 +59,13 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertSame($newVersion->id, $minecraftServer->minecraft_version_id);
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertTrue($minecraftServer->allow_flight);
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+        $this->assertSame(13, $minecraftServer->operation_generation);
+        $this->assertNull($minecraftServer->last_error);
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-            return $job->serverId === $minecraftServer->id;
+            return $job->serverId === $minecraftServer->id
+                && $job->generation === 13;
         });
     }
 
@@ -81,6 +88,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
+            'operation_generation' => 8,
         ]);
 
         try {
@@ -106,6 +114,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertFalse($minecraftServer->allow_flight);
         $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(8, $minecraftServer->operation_generation);
         Queue::assertNothingPushed();
     }
 
@@ -122,5 +131,54 @@ class UpdateMinecraftServerActionTest extends TestCase
             'delete failed' => [MinecraftServerStatus::DeleteFailed],
             'null status' => [null],
         ];
+    }
+
+    public function test_execute_rolls_back_server_changes_generation_and_dispatch_when_transaction_fails(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create(['name' => 'Alice']);
+        $currentVersion = MinecraftVersion::factory()->enabled()->version('1.19.4')->create();
+        $newVersion = MinecraftVersion::factory()->enabled()->version('1.20.1')->create();
+        $minecraftServer = $user->ownedMinecraftServers()->create([
+            'server_name' => 'Old Server',
+            'motd' => 'Old motd',
+            'difficulty' => 0,
+            'minecraft_version_id' => $currentVersion->id,
+            'force_gamemode' => true,
+            'allow_flight' => false,
+            'status' => MinecraftServerStatus::Stopped,
+            'last_error' => 'preserved error',
+            'operation_generation' => 3,
+        ]);
+
+        MinecraftServer::updated(function () {
+            throw new RuntimeException('Fail inside update transaction');
+        });
+
+        try {
+            (new UpdateMinecraftServerAction())->execute($user, $minecraftServer, [
+                'server_name' => 'Updated Server',
+                'motd' => 'Updated motd',
+                'difficulty' => 2,
+                'minecraft_version_id' => $newVersion->id,
+                'force_gamemode' => false,
+                'allow_flight' => true,
+            ]);
+            $this->fail('Expected the update transaction to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Fail inside update transaction', $exception->getMessage());
+        } finally {
+            MinecraftServer::flushEventListeners();
+        }
+
+        $minecraftServer->refresh();
+
+        $this->assertSame('Old Server', $minecraftServer->server_name);
+        $this->assertSame($currentVersion->id, $minecraftServer->minecraft_version_id);
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame('preserved error', $minecraftServer->last_error);
+        Queue::assertNothingPushed();
     }
 }

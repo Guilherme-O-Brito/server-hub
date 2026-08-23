@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class DeleteMinecraftWhitelistActionTest extends TestCase
@@ -22,7 +23,10 @@ class DeleteMinecraftWhitelistActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'previous error',
+            'operation_generation' => 8,
+        ]);
         $minecraftWhitelist = $minecraftServer->whitelist()->create([
             'nickname' => 'Steve_01',
         ]);
@@ -34,8 +38,14 @@ class DeleteMinecraftWhitelistActionTest extends TestCase
             'id' => $minecraftWhitelist->id,
         ]);
 
+        $minecraftServer->refresh();
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+        $this->assertSame(9, $minecraftServer->operation_generation);
+        $this->assertNull($minecraftServer->last_error);
+
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-            return $job->serverId === $minecraftServer->id;
+            return $job->serverId === $minecraftServer->id
+                && $job->generation === 9;
         });
     }
 
@@ -45,7 +55,9 @@ class DeleteMinecraftWhitelistActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, $status);
+        $minecraftServer = $this->createMinecraftServer($owner, $status, [
+            'operation_generation' => 7,
+        ]);
         $minecraftWhitelist = $minecraftServer->whitelist()->create([
             'nickname' => 'Steve_01',
         ]);
@@ -61,6 +73,7 @@ class DeleteMinecraftWhitelistActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(7, $minecraftServer->operation_generation);
         $this->assertDatabaseHas('minecraft_whitelists', [
             'id' => $minecraftWhitelist->id,
             'minecraft_server_id' => $minecraftServer->id,
@@ -84,15 +97,48 @@ class DeleteMinecraftWhitelistActionTest extends TestCase
         ];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    public function test_execute_rolls_back_server_and_keeps_whitelist_when_transaction_fails(): void
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        Queue::fake();
+
+        $owner = User::factory()->create();
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'preserved error',
+            'operation_generation' => 3,
+        ]);
+        $minecraftWhitelist = $minecraftServer->whitelist()->create(['nickname' => 'Steve_01']);
+
+        MinecraftServer::updated(function () {
+            throw new RuntimeException('Fail inside whitelist delete transaction');
+        });
+
+        try {
+            (new DeleteMinecraftWhitelistAction())->execute($minecraftServer, $minecraftWhitelist);
+            $this->fail('Expected the whitelist delete transaction to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Fail inside whitelist delete transaction', $exception->getMessage());
+        } finally {
+            MinecraftServer::flushEventListeners();
+        }
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame('preserved error', $minecraftServer->last_error);
+        $this->assertDatabaseHas('minecraft_whitelists', ['id' => $minecraftWhitelist->id]);
+        Queue::assertNothingPushed();
+    }
+
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
+    {
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Whitelist Server',
             'motd' => 'Whitelist motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }

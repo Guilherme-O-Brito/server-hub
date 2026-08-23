@@ -35,8 +35,13 @@ class DeleteMinecraftWhitelistTest extends TestCase
 			'id' => $minecraftWhitelist->id,
 		]);
 
+		$minecraftServer->refresh();
+		$this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+		$this->assertSame(1, $minecraftServer->operation_generation);
+
 		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-			return $job->serverId === $minecraftServer->id;
+			return $job->serverId === $minecraftServer->id
+				&& $job->generation === 1;
 		});
 	}
 

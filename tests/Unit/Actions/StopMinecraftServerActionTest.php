@@ -24,7 +24,10 @@ class StopMinecraftServerActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner);
+        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner, [
+            'last_error' => 'previous error',
+            'operation_generation' => 11,
+        ]);
 
         $result = (new StopMinecraftServerAction())->execute($minecraftServer);
 
@@ -33,17 +36,20 @@ class StopMinecraftServerActionTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertSame(12, $minecraftServer->operation_generation);
+        $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
+                && $job->slotId === $executionSlot->id
+                && $job->generation === 12;
         });
     }
 
-    #[DataProvider('stoppableNonRunningServerStatuses')]
-    public function test_execute_accepts_non_running_servers_and_dispatches_job(?MinecraftServerStatus $status): void
+    #[DataProvider('invalidServerStatuses')]
+    public function test_execute_rejects_non_running_servers_without_dispatching_job(?MinecraftServerStatus $status): void
     {
         Queue::fake();
 
@@ -54,19 +60,21 @@ class StopMinecraftServerActionTest extends TestCase
             'status' => ExecutionSlot::STATUS_ALLOCATED,
         ]);
 
-        $result = (new StopMinecraftServerAction())->execute($minecraftServer);
+        try {
+            (new StopMinecraftServerAction())->execute($minecraftServer);
+            $this->fail('Expected MinecraftServerStateException to be thrown.');
+        } catch (MinecraftServerStateException $exception) {
+            $this->assertSame('Minecraft server is not running.', $exception->getMessage());
+            $this->assertSame(409, $exception->statusCode());
+        }
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
-        $this->assertNull($result);
-        $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertSame($status, $minecraftServer->status);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
-        Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
-            return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
-        });
+        Queue::assertNothingPushed();
     }
 
     public function test_execute_requires_associated_execution_slot_without_dispatching_job(): void
@@ -103,7 +111,7 @@ class StopMinecraftServerActionTest extends TestCase
             (new StopMinecraftServerAction())->execute($minecraftServer);
             $this->fail('Expected MinecraftServerStateException to be thrown.');
         } catch (MinecraftServerStateException $exception) {
-            $this->assertSame('Minecraft server is already stopping.', $exception->getMessage());
+            $this->assertSame('Minecraft server is not running.', $exception->getMessage());
             $this->assertSame(409, $exception->statusCode());
         }
 
@@ -146,7 +154,7 @@ class StopMinecraftServerActionTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public static function stoppableNonRunningServerStatuses(): array
+    public static function invalidServerStatuses(): array
     {
         return [
             'stopped' => [MinecraftServerStatus::Stopped],
@@ -160,9 +168,9 @@ class StopMinecraftServerActionTest extends TestCase
         ];
     }
 
-    private function createRunningServerWithSlot(User $owner): array
+    private function createRunningServerWithSlot(User $owner, array $attributes = []): array
     {
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running, $attributes);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
             'status' => ExecutionSlot::STATUS_ALLOCATED,
@@ -171,15 +179,15 @@ class StopMinecraftServerActionTest extends TestCase
         return [$minecraftServer, $executionSlot];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Action Stop Server',
             'motd' => 'Action stop motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }

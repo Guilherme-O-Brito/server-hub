@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class CreateMinecraftOperatorActionTest extends TestCase
@@ -22,7 +23,10 @@ class CreateMinecraftOperatorActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'previous error',
+            'operation_generation' => 2,
+        ]);
 
         $result = (new CreateMinecraftOperatorAction())->execute($minecraftServer, [
             'nickname' => 'Steve_01',
@@ -34,8 +38,14 @@ class CreateMinecraftOperatorActionTest extends TestCase
             'nickname' => 'Steve_01',
         ]);
 
+        $minecraftServer->refresh();
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertNull($minecraftServer->last_error);
+
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-            return $job->serverId === $minecraftServer->id;
+            return $job->serverId === $minecraftServer->id
+                && $job->generation === 3;
         });
     }
 
@@ -45,7 +55,9 @@ class CreateMinecraftOperatorActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, $status);
+        $minecraftServer = $this->createMinecraftServer($owner, $status, [
+            'operation_generation' => 7,
+        ]);
 
         try {
             (new CreateMinecraftOperatorAction())->execute($minecraftServer, [
@@ -60,6 +72,7 @@ class CreateMinecraftOperatorActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame(7, $minecraftServer->operation_generation);
         $this->assertDatabaseMissing('minecraft_operators', [
             'minecraft_server_id' => $minecraftServer->id,
             'nickname' => 'BlockedNick',
@@ -82,15 +95,52 @@ class CreateMinecraftOperatorActionTest extends TestCase
         ];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    public function test_execute_rolls_back_server_and_operator_when_transaction_fails(): void
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        Queue::fake();
+
+        $owner = User::factory()->create();
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'preserved error',
+            'operation_generation' => 3,
+        ]);
+
+        MinecraftServer::updated(function () {
+            throw new RuntimeException('Fail inside operator create transaction');
+        });
+
+        try {
+            (new CreateMinecraftOperatorAction())->execute($minecraftServer, [
+                'nickname' => 'BlockedNick',
+            ]);
+            $this->fail('Expected the operator create transaction to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Fail inside operator create transaction', $exception->getMessage());
+        } finally {
+            MinecraftServer::flushEventListeners();
+        }
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame('preserved error', $minecraftServer->last_error);
+        $this->assertDatabaseMissing('minecraft_operators', [
+            'minecraft_server_id' => $minecraftServer->id,
+            'nickname' => 'BlockedNick',
+        ]);
+        Queue::assertNothingPushed();
+    }
+
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
+    {
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Operator Server',
             'motd' => 'Operator motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }
