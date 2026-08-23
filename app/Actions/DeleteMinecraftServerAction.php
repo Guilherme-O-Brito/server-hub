@@ -11,27 +11,28 @@ use DB;
 
 class DeleteMinecraftServerAction
 {
-    public function execute(MinecraftServer $server)
+    public function execute(MinecraftServer $minecraftServer)
     {   
-        /*if ($server->status !== MinecraftServerStatus::Stopped) {
-            throw new MinecraftServerStateException(
-                'Minecraft server is not stopped.'
-            );
-        }*/
+        DB::transaction(function () use ($minecraftServer) {
+            $server = MinecraftServer::query()->lockForUpdate()->findOrFail($minecraftServer->id);
 
-        $server->update([
-            'status' => MinecraftServerStatus::Deleting
-        ]);
+            if ($server->status === MinecraftServerStatus::Deleting) {
+                throw new MinecraftServerStateException(
+                    'Minecraft server is already being deleted.'
+                );
+            }
 
-        $serverSlot = $server->executionSlot;
+            $generation = $server->operation_generation + 1;
 
-        if ($serverSlot) {
-            DB::transaction(function () use ($serverSlot) {
-                $slot = ExecutionSlot::query()->lockForUpdate()->find($serverSlot->id);
-                $slot->release();
+            $server->update([
+                'status' => MinecraftServerStatus::Deleting,
+                'operation_generation' => $generation,
+                'last_error' => null
+            ]);
+
+            DB::afterCommit(function () use ($server, $generation) {
+                DeleteMinecraftinfrastructureJob::dispatch($server->id, $generation);
             });
-        }
-
-        DeleteMinecraftinfrastructureJob::dispatch($server->id);
+        });
     }
 }

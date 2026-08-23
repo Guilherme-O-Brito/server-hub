@@ -9,6 +9,7 @@ use App\Services\Kubernetes\ProvisioningService;
 use DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class StopMinecraftServerJob implements ShouldQueue
 {
@@ -19,44 +20,88 @@ class StopMinecraftServerJob implements ShouldQueue
      */
     public function __construct(
         public int $serverId,
-        public int $slotId
+        public int $slotId,
+        public int $generation
     )
     {}
+
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping("minecraft-server:{$this->serverId}"))->shared(),
+        ];
+    }
+
+    private function getCurrentContext(): ?array
+    {
+        return DB::transaction(function () {
+            $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
+
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+                return null;
+            }
+
+            $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
+
+            if (! $slot || ! $slot->isAllocatedTo($server)) {
+                return null;
+            }
+
+            return [$server, $slot];
+        });
+    }
 
     /**
      * Execute the job.
      */
     public function handle(ProvisioningService $provisioningService): void
-    {
-        $minecraftServer = MinecraftServer::findOrFail($this->serverId);
-        
-        $provisioningService->stopMinecraftServer($minecraftServer);
+    {   
+        $context = $this->getCurrentContext();
 
-        DB::transaction(function () use ($minecraftServer){
-            $server = MinecraftServer::query()->lockForUpdate()->find($minecraftServer->id);
-            $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
+        if (! $context) {
+            return;
+        }
+
+        [$server] = $context;
+        
+        $provisioningService->stopMinecraftServer($server);
+
+        DB::transaction(function () {
+            $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
             
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+                return;
+            }
+
+            $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
+
+            if (! $slot || ! $slot->isAllocatedTo($server)) {
+                return;
+            }
+            
+            $slot->release($server);
+
             $server->update([
                 'status' => MinecraftServerStatus::Stopped,
                 'last_error' => null
             ]);
             
-            if ($slot) {
-                $slot->release();
-            }
         });
     }
 
     public function failed(\Throwable $exception): void
     {
-        $server = MinecraftServer::find($this->serverId);
-        
-        if ($server) {
+        DB::transaction(function () use ($exception) {
+            $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
+            
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+                return;
+            }
+            
             $server->update([
-                'status' => MinecraftServerStatus::Running,
-                'last_error' => $exception->getMessage(),
+                'status' => MinecraftServerStatus::Failed,
+                'last_error' => $exception->getMessage()
             ]);
-        }
-
+        });
     }
 }

@@ -29,11 +29,16 @@ class StartMinecraftServerAction
     
             $slot = $this->allocateExecutionSlotAction->execute($server);
 
-            $server->status = MinecraftServerStatus::Starting;
-            $server->save();
+            $generation = $server->operation_generation + 1;
 
-            DB::afterCommit(function () use ($server, $slot) {
-                StartMinecraftServerJob::dispatch($server->id, $slot->id);
+            $server->update([
+                'status' => MinecraftServerStatus::Starting,
+                'operation_generation' => $generation,
+                'last_error' => null
+            ]);
+
+            DB::afterCommit(function () use ($server, $slot, $generation) {
+                StartMinecraftServerJob::dispatch($server->id, $slot->id, $generation);
             });
         });
 

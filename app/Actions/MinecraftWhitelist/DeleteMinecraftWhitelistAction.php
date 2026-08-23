@@ -7,21 +7,36 @@ use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
+use DB;
 
 
 
 class DeleteMinecraftWhitelistAction
 {
     public function execute(MinecraftServer $minecraftServer, MinecraftWhitelist $minecraftWhitelist)
-    {
-        if ($minecraftServer->status !== MinecraftServerStatus::Stopped) {
-            throw new MinecraftServerStateException(
-                'Minecraft server is not stopped.'
-            );
-        }
+    {   
+        DB::transaction(function () use ($minecraftServer, $minecraftWhitelist) {
+            $server = MinecraftServer::query()->lockForUpdate()->findOrFail($minecraftServer->id);    
 
-        $minecraftWhitelist->delete();
+            if ($server->status !== MinecraftServerStatus::Stopped) {
+                throw new MinecraftServerStateException(
+                    'Minecraft server is not stopped.'
+                );
+            }
 
-        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+            $generation = $server->operation_generation + 1;
+
+            $server->update([
+                'status' => MinecraftServerStatus::Provisioning,
+                'operation_generation' => $generation,
+                'last_error' => null
+            ]);
+
+            DB::afterCommit(function () use ($server, $generation, $minecraftWhitelist) {
+                $minecraftWhitelist->delete();
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $generation);    
+            });
+        });
+
     }
 }
