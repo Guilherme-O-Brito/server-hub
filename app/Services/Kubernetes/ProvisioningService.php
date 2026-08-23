@@ -19,18 +19,11 @@ class ProvisioningService
 
         $this->client->createDeployment($this->minecraftBuilder->deployment($server));
 
-        $server->update([
-            'status' => MinecraftServerStatus::Stopped
-        ]);
     }
 
     public function updateMinecraftServer(MinecraftServer $server): void
     {   
         $this->client->updateConfigMap($server->getEnvName(), $this->minecraftBuilder->server_env($server));
-
-        $server->update([
-            'status' => MinecraftServerStatus::Stopped
-        ]);
     }
 
     public function deleteMinecraftServer(MinecraftServer $server): void
@@ -61,10 +54,6 @@ class ProvisioningService
     public function provisionExecutionSlotService(ExecutionSlot $slot): void
     {
         $this->client->createService($this->slotBuilder->service($slot));
-
-        $slot->update([
-            'status' => ExecutionSlot::STATUS_FREE
-        ]);
     }
 
     public function updateExecutionSlotService(ExecutionSlot $slot):void

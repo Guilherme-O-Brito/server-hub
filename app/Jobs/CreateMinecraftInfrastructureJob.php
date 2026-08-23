@@ -28,6 +28,10 @@ class CreateMinecraftInfrastructureJob implements ShouldQueue
         $server = MinecraftServer::findOrFail($this->serverId);
 
         $provisioningService->provisionMinecraftServer($server);
+
+        $server->update([
+            'status' => MinecraftServerStatus::Stopped
+        ]);
     }
 
     public function failed(\Throwable $exception): void

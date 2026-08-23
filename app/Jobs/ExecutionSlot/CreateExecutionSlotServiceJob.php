@@ -27,6 +27,10 @@ class CreateExecutionSlotServiceJob implements ShouldQueue
         $slot = ExecutionSlot::findOrFail($this->slotId);
 
         $provisioningService->provisionExecutionSlotService($slot);
+
+        $slot->update([
+            'status' => ExecutionSlot::STATUS_FREE
+        ]);
     }
 
     public function failed(\Throwable $exception): void
