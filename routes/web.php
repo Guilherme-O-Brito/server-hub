@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/login')->middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'LoginView'])->name('login');
-    Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
+    Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:login');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
