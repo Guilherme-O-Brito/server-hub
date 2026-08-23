@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -121,8 +122,21 @@ class UserController extends Controller
         if (auth()->id() === $user->id) {
             return response()->json(['message' => 'Are you dumb?'], 403);
         }
+        try {
+            $user->delete();
+        } catch (QueryException $exception) {
 
-        $user->delete();
+            $driver = DB::connection()->getDriverName();
+            $code = $exception->errorInfo[1] ?? null;
+
+            $isForeignKeyViolation = ($driver === 'mysql' && $code === 1451) || ($driver === 'sqlite' && in_array($code, [19, 787], true));
+
+            if ($isForeignKeyViolation) {
+                return response()->json(['message' => 'User cannot be deleted while they still own Minecraft servers.'], 409);
+            }
+
+            throw $exception;
+        }
 
         return response()->json(['message' => 'User successfully deleted']);
     }

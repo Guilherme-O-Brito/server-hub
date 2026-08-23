@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('force_gamemode');
             $table->boolean('allow_flight');
             // owner relation 1:N
-            $table->foreignId('owner')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('owner')->constrained('users')->restrictOnDelete();
             $table->timestamps();
         });
     }

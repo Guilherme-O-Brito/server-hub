@@ -22,7 +22,7 @@ return new class extends Migration
 
         Schema::table('minecraft_servers', function (Blueprint $table) {
             $table->dropColumn('owner');
-            $table->foreign('owner_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('owner_id')->references('id')->on('users')->restrictOnDelete();
         });
     }
 
@@ -41,7 +41,7 @@ return new class extends Migration
         Schema::table('minecraft_servers', function (Blueprint $table) {
             $table->dropForeign(['owner_id']);
             $table->dropColumn('owner_id');
-            $table->foreign('owner')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('owner')->references('id')->on('users')->restrictOnDelete();
         });
     }
 };
