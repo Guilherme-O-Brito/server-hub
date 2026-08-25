@@ -1,3 +1,4 @@
+[![Laravel-Tests](https://github.com/Guilherme-O-Brito/server-hub/actions/workflows/laravel.yml/badge.svg)](https://github.com/Guilherme-O-Brito/server-hub/actions/workflows/laravel.yml)
 # 🇧🇷 Server-Hub 0.0.1
 
 O **Server-Hub** é uma plataforma criada para abstrair a complexidade da auto-hospedagem de servidores de jogos, permitindo que usuários comuns, mesmo sem conhecimento técnico sobre containers, Kubernetes ou administração de servidores, possam criar e gerenciar seus próprios servidores por meio de uma interface simples e amigável.
