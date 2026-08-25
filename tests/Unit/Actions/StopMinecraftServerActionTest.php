@@ -26,7 +26,7 @@ class StopMinecraftServerActionTest extends TestCase
         $owner = User::factory()->create();
         [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner, [
             'last_error' => 'previous error',
-            'operation_generation' => 11,
+            'operation_id' => $this->operationId(11),
         ]);
 
         $result = (new StopMinecraftServerAction())->execute($minecraftServer);
@@ -36,7 +36,8 @@ class StopMinecraftServerActionTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
-        $this->assertSame(12, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(11), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
@@ -44,7 +45,7 @@ class StopMinecraftServerActionTest extends TestCase
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
                 && $job->slotId === $executionSlot->id
-                && $job->generation === 12;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 

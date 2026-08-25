@@ -20,32 +20,32 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'previous error',
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ]);
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->once())
             ->method('updateMinecraftServer')
             ->with($this->callback(fn (MinecraftServer $server) => $server->is($minecraftServer)));
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 4))->handle($service);
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
 
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
-        $this->assertSame(4, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
     }
 
-    public function test_handle_ignores_stale_generation_without_calling_service(): void
+    public function test_handle_ignores_stale_operation_id_without_calling_service(): void
     {
-        $minecraftServer = $this->createMinecraftServer(['operation_generation' => 8]);
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(8)]);
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('updateMinecraftServer');
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 7))->handle($service);
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(7)))->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->refresh()->status);
-        $this->assertSame(8, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(8), $minecraftServer->operation_id);
     }
 
     public function test_handle_ignores_job_when_server_status_no_longer_matches(): void
@@ -56,7 +56,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('updateMinecraftServer');
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 4))->handle($service);
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->refresh()->status);
     }
@@ -70,16 +70,16 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
             ->willReturnCallback(function () use ($minecraftServer) {
                 MinecraftServer::query()->whereKey($minecraftServer->id)->update([
                     'status' => MinecraftServerStatus::Deleting,
-                    'operation_generation' => 5,
+                    'operation_id' => $this->operationId(5),
                 ]);
             });
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 4))->handle($service);
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
 
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
-        $this->assertSame(5, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
     }
 
     public function test_handle_ignores_missing_server(): void
@@ -87,7 +87,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('updateMinecraftServer');
 
-        (new UpdateMinecraftInfrastructureJob(999, 1))->handle($service);
+        (new UpdateMinecraftInfrastructureJob(999, $this->operationId(1)))->handle($service);
 
         $this->assertDatabaseMissing('minecraft_servers', ['id' => 999]);
     }
@@ -96,7 +96,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer();
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 4))
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))
             ->failed(new RuntimeException('Update failed'));
 
         $minecraftServer->refresh();
@@ -109,22 +109,22 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
-            'operation_generation' => 5,
+            'operation_id' => $this->operationId(5),
         ]);
 
-        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, 4))
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))
             ->failed(new RuntimeException('stale error'));
 
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
         $this->assertSame('newer error', $minecraftServer->last_error);
-        $this->assertSame(5, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
     }
 
     public function test_middleware_uses_shared_server_lock(): void
     {
-        $job = new UpdateMinecraftInfrastructureJob(42, 3);
+        $job = new UpdateMinecraftInfrastructureJob(42, $this->operationId(3));
 
         $middleware = $job->middleware();
 
@@ -141,7 +141,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
         return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'status' => MinecraftServerStatus::Provisioning,
             'last_error' => null,
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ], $attributes));
     }
 }

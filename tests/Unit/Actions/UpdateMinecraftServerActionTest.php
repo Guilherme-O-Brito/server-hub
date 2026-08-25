@@ -38,7 +38,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'allow_flight' => false,
             'status' => MinecraftServerStatus::Stopped,
             'last_error' => 'previous error',
-            'operation_generation' => 12,
+            'operation_id' => $this->operationId(12),
         ]);
 
         $action = new UpdateMinecraftServerAction();
@@ -60,12 +60,13 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertTrue($minecraftServer->allow_flight);
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
-        $this->assertSame(13, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(12), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
-                && $job->generation === 13;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -88,7 +89,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-            'operation_generation' => 8,
+            'operation_id' => $this->operationId(8),
         ]);
 
         try {
@@ -114,7 +115,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertTrue($minecraftServer->force_gamemode);
         $this->assertFalse($minecraftServer->allow_flight);
         $this->assertSame($status, $minecraftServer->status);
-        $this->assertSame(8, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(8), $minecraftServer->operation_id);
         Queue::assertNothingPushed();
     }
 
@@ -133,7 +134,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         ];
     }
 
-    public function test_execute_rolls_back_server_changes_generation_and_dispatch_when_transaction_fails(): void
+    public function test_execute_rolls_back_server_changes_operation_id_and_dispatch_when_transaction_fails(): void
     {
         Queue::fake();
 
@@ -149,7 +150,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'allow_flight' => false,
             'status' => MinecraftServerStatus::Stopped,
             'last_error' => 'preserved error',
-            'operation_generation' => 3,
+            'operation_id' => $this->operationId(3),
         ]);
 
         MinecraftServer::updated(function () {
@@ -177,7 +178,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertSame('Old Server', $minecraftServer->server_name);
         $this->assertSame($currentVersion->id, $minecraftServer->minecraft_version_id);
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
-        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertSame('preserved error', $minecraftServer->last_error);
         Queue::assertNothingPushed();
     }

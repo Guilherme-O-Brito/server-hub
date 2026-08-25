@@ -23,7 +23,7 @@ class StartMinecraftServerTest extends TestCase
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
             'last_error' => 'previous error',
-            'operation_generation' => 3,
+            'operation_id' => $this->operationId(3),
         ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
@@ -39,7 +39,8 @@ class StartMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->status);
-        $this->assertSame(4, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
@@ -47,7 +48,7 @@ class StartMinecraftServerTest extends TestCase
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
                 && $job->slotId === $executionSlot->id
-                && $job->generation === 4;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -58,7 +59,7 @@ class StartMinecraftServerTest extends TestCase
         $owner = User::factory()->create();
         $admin = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
-            'operation_generation' => 7,
+            'operation_id' => $this->operationId(7),
         ]);
         $minecraftServer->admins()->attach($admin);
 
@@ -76,14 +77,15 @@ class StartMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->status);
-        $this->assertSame(8, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(7), $minecraftServer->operation_id);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
                 && $job->slotId === $executionSlot->id
-                && $job->generation === 8;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -234,13 +236,18 @@ class StartMinecraftServerTest extends TestCase
         $secondSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->status);
-        $this->assertSame(1, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $firstSlot->status);
         $this->assertSame(ExecutionSlot::STATUS_FREE, $secondSlot->status);
         $this->assertTrue($firstSlot->server->is($minecraftServer));
         $this->assertNull($secondSlot->server_id);
         $this->assertNull($secondSlot->server_type);
 
+        Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $firstSlot) {
+            return $job->serverId === $minecraftServer->id
+                && $job->slotId === $firstSlot->id
+                && $job->operationId === $minecraftServer->operation_id;
+        });
         Queue::assertPushed(StartMinecraftServerJob::class, 1);
     }
 

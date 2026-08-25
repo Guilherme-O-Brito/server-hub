@@ -42,6 +42,8 @@ class CreateMinecraftServerActionTest extends TestCase
             ->where('server_name', 'Action Server')
             ->firstOrFail();
 
+        $this->assertValidOperationId($minecraftServer->operation_id);
+
         $this->assertDatabaseHas('minecraft_servers', [
             'id' => $minecraftServer->id,
             'owner_id' => $user->id,
@@ -54,7 +56,8 @@ class CreateMinecraftServerActionTest extends TestCase
         ]);
 
         Queue::assertPushed(CreateMinecraftInfrastructureJob::class, function (CreateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-            return $job->serverId === $minecraftServer->id;
+            return $job->serverId === $minecraftServer->id
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 }

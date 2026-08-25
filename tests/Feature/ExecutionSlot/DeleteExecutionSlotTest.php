@@ -47,9 +47,12 @@ class DeleteExecutionSlotTest extends TestCase
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 1]);
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 2]);
 		$this->assertDatabaseCount('execution_slots', 3);
+		$lastSlot->refresh();
+		$this->assertValidOperationId($lastSlot->operation_id);
 
 		Queue::assertPushed(DeleteExecutionSlotServiceJob::class, function (DeleteExecutionSlotServiceJob $job) use ($lastSlot) {
-			return $job->slotId === $lastSlot->id;
+			return $job->slotId === $lastSlot->id
+				&& $job->operationId === $lastSlot->operation_id;
 		});
 	}
 

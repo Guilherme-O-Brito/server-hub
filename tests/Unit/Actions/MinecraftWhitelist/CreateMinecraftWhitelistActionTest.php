@@ -25,7 +25,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
             'last_error' => 'previous error',
-            'operation_generation' => 6,
+            'operation_id' => $this->operationId(6),
         ]);
 
         $result = (new CreateMinecraftWhitelistAction())->execute($minecraftServer, [
@@ -40,12 +40,13 @@ class CreateMinecraftWhitelistActionTest extends TestCase
 
         $minecraftServer->refresh();
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
-        $this->assertSame(7, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(6), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
-                && $job->generation === 7;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -56,7 +57,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
 
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, $status, [
-            'operation_generation' => 7,
+            'operation_id' => $this->operationId(7),
         ]);
 
         try {
@@ -72,7 +73,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
-        $this->assertSame(7, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(7), $minecraftServer->operation_id);
         $this->assertDatabaseMissing('minecraft_whitelists', [
             'minecraft_server_id' => $minecraftServer->id,
             'nickname' => 'BlockedNick',
@@ -102,7 +103,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
             'last_error' => 'preserved error',
-            'operation_generation' => 3,
+            'operation_id' => $this->operationId(3),
         ]);
 
         MinecraftServer::updated(function () {
@@ -123,7 +124,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
-        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertSame('preserved error', $minecraftServer->last_error);
         $this->assertDatabaseMissing('minecraft_whitelists', [
             'minecraft_server_id' => $minecraftServer->id,

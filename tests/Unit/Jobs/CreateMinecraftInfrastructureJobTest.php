@@ -3,6 +3,7 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\CreateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use App\Services\Kubernetes\ProvisioningService;
@@ -23,6 +24,8 @@ class CreateMinecraftInfrastructureJobTest extends TestCase
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
+            'status' => MinecraftServerStatus::Provisioning,
+            'operation_id' => $this->operationId(1),
         ]);
 
         $service = $this->createMock(ProvisioningService::class);
@@ -32,8 +35,13 @@ class CreateMinecraftInfrastructureJobTest extends TestCase
                 return $passedServer->is($minecraftServer);
             }));
 
-        $job = new CreateMinecraftInfrastructureJob($minecraftServer->id);
+        $job = new CreateMinecraftInfrastructureJob(
+            $minecraftServer->id,
+            $minecraftServer->operation_id,
+        );
 
         $job->handle($service);
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->refresh()->status);
     }
 }

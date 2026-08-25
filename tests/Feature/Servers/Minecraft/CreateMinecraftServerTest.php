@@ -51,9 +51,11 @@ class CreateMinecraftServerTest extends TestCase
 		]);
 
 		$this->assertTrue($minecraftServer->version->is($minecraftVersion));
+		$this->assertValidOperationId($minecraftServer->operation_id);
 
 		Queue::assertPushed(CreateMinecraftInfrastructureJob::class, function (CreateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-			return $job->serverId === $minecraftServer->id;
+			return $job->serverId === $minecraftServer->id
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 

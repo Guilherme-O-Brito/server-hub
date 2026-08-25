@@ -29,7 +29,7 @@ class DeleteMinecraftServerTest extends TestCase
 			'allow_flight' => false,
 			'status' => MinecraftServerStatus::Stopped,
 			'last_error' => 'previous error',
-			'operation_generation' => 4,
+			'operation_id' => $this->operationId(4),
 		]);
 
 		$response = $this->actingAs($owner)->delete("/servers/minecraft/{$minecraftServer->id}");
@@ -37,17 +37,21 @@ class DeleteMinecraftServerTest extends TestCase
 		$response->assertOk();
 		$response->assertJson(['message' => 'Server successfully deleted']);
 
+		$minecraftServer->refresh();
+		$this->assertValidOperationId($minecraftServer->operation_id);
+		$this->assertNotSame($this->operationId(4), $minecraftServer->operation_id);
+
 		$this->assertDatabaseHas('minecraft_servers', [
 			'id' => $minecraftServer->id,
 			'owner_id' => $owner->id,
 			'status' => 'deleting',
 			'last_error' => null,
-			'operation_generation' => 5,
+			'operation_id' => $minecraftServer->operation_id,
 		]);
 
 		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
 			return $job->serverId === $minecraftServer->id
-				&& $job->generation === 5;
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 
@@ -65,7 +69,7 @@ class DeleteMinecraftServerTest extends TestCase
 			'force_gamemode' => true,
 			'allow_flight' => false,
 			'status' => $status,
-			'operation_generation' => 9,
+			'operation_id' => $this->operationId(9),
 		]);
 
 		$response = $this->actingAs($owner)->delete("/servers/minecraft/{$minecraftServer->id}");
@@ -76,7 +80,8 @@ class DeleteMinecraftServerTest extends TestCase
 		$minecraftServer->refresh();
 
 		$this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
-		$this->assertSame(10, $minecraftServer->operation_generation);
+		$this->assertValidOperationId($minecraftServer->operation_id);
+		$this->assertNotSame($this->operationId(9), $minecraftServer->operation_id);
 		$this->assertDatabaseHas('minecraft_servers', [
 			'id' => $minecraftServer->id,
 			'owner_id' => $owner->id,
@@ -84,7 +89,7 @@ class DeleteMinecraftServerTest extends TestCase
 		]);
 		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
 			return $job->serverId === $minecraftServer->id
-				&& $job->generation === 10;
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 
@@ -96,7 +101,7 @@ class DeleteMinecraftServerTest extends TestCase
 		$minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
 			'status' => MinecraftServerStatus::Deleting,
 			'last_error' => 'delete in progress',
-			'operation_generation' => 6,
+			'operation_id' => $this->operationId(6),
 		]);
 
 		$response = $this->actingAs($owner)->delete("/servers/minecraft/{$minecraftServer->id}");
@@ -106,7 +111,7 @@ class DeleteMinecraftServerTest extends TestCase
 
 		$minecraftServer->refresh();
 		$this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
-		$this->assertSame(6, $minecraftServer->operation_generation);
+		$this->assertSame($this->operationId(6), $minecraftServer->operation_id);
 		$this->assertSame('delete in progress', $minecraftServer->last_error);
 		Queue::assertNothingPushed();
 	}

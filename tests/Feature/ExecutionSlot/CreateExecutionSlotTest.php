@@ -45,9 +45,11 @@ class CreateExecutionSlotTest extends TestCase
 		$executionSlot = ExecutionSlot::query()
 			->where('slot_number', 1)
 			->firstOrFail();
+		$this->assertValidOperationId($executionSlot->operation_id);
 
 		Queue::assertPushed(CreateExecutionSlotServiceJob::class, function (CreateExecutionSlotServiceJob $job) use ($executionSlot) {
-			return $job->slotId === $executionSlot->id;
+			return $job->slotId === $executionSlot->id
+				&& $job->operationId === $executionSlot->operation_id;
 		});
 	}
 
@@ -85,9 +87,11 @@ class CreateExecutionSlotTest extends TestCase
 		$executionSlot = ExecutionSlot::query()
 			->where('slot_number', 4)
 			->firstOrFail();
+		$this->assertValidOperationId($executionSlot->operation_id);
 
 		Queue::assertPushed(CreateExecutionSlotServiceJob::class, function (CreateExecutionSlotServiceJob $job) use ($executionSlot) {
-			return $job->slotId === $executionSlot->id;
+			return $job->slotId === $executionSlot->id
+				&& $job->operationId === $executionSlot->operation_id;
 		});
 	}
 

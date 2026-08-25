@@ -37,11 +37,11 @@ class DeleteMinecraftOperatorTest extends TestCase
 
 		$minecraftServer->refresh();
 		$this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
-		$this->assertSame(1, $minecraftServer->operation_generation);
+		$this->assertValidOperationId($minecraftServer->operation_id);
 
 		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
 			return $job->serverId === $minecraftServer->id
-				&& $job->generation === 1;
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 

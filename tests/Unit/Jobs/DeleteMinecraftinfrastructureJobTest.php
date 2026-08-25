@@ -29,7 +29,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
         (new DeleteMinecraftinfrastructureJob(
             $minecraftServer->id,
-            $minecraftServer->operation_generation,
+            $minecraftServer->operation_id,
         ))->handle($service);
 
         $executionSlot->refresh();
@@ -49,27 +49,27 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
         (new DeleteMinecraftinfrastructureJob(
             $minecraftServer->id,
-            $minecraftServer->operation_generation,
+            $minecraftServer->operation_id,
         ))->handle($service);
 
         $this->assertDatabaseMissing('minecraft_servers', ['id' => $minecraftServer->id]);
     }
 
-    public function test_handle_ignores_job_with_stale_generation_without_calling_service_or_releasing_slot(): void
+    public function test_handle_ignores_job_with_stale_operation_id_without_calling_service_or_releasing_slot(): void
     {
-        $minecraftServer = $this->createMinecraftServer(['operation_generation' => 9]);
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(9)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('deleteMinecraftServer');
 
-        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, 8))->handle($service);
+        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, $this->operationId(8)))->handle($service);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
-        $this->assertSame(9, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(9), $minecraftServer->operation_id);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
     }
 
@@ -84,7 +84,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
         (new DeleteMinecraftinfrastructureJob(
             $minecraftServer->id,
-            $minecraftServer->operation_generation,
+            $minecraftServer->operation_id,
         ))->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->refresh()->status);
@@ -92,7 +92,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
     public function test_handle_does_not_finalize_when_operation_is_superseded_during_cleanup(): void
     {
-        $minecraftServer = $this->createMinecraftServer(['operation_generation' => 4]);
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(4)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
         $service = $this->createMock(ProvisioningService::class);
@@ -101,17 +101,17 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
             ->willReturnCallback(function () use ($minecraftServer) {
                 MinecraftServer::query()->whereKey($minecraftServer->id)->update([
                     'status' => MinecraftServerStatus::Provisioning,
-                    'operation_generation' => 5,
+                    'operation_id' => $this->operationId(5),
                 ]);
             });
 
-        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, 4))->handle($service);
+        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
-        $this->assertSame(5, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
     }
 
@@ -120,7 +120,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('deleteMinecraftServer');
 
-        (new DeleteMinecraftinfrastructureJob(999, 1))->handle($service);
+        (new DeleteMinecraftinfrastructureJob(999, $this->operationId(1)))->handle($service);
 
         $this->assertDatabaseMissing('minecraft_servers', ['id' => 999]);
     }
@@ -132,7 +132,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
         (new DeleteMinecraftinfrastructureJob(
             $minecraftServer->id,
-            $minecraftServer->operation_generation,
+            $minecraftServer->operation_id,
         ))->failed(new RuntimeException('Delete failed'));
 
         $minecraftServer->refresh();
@@ -147,22 +147,22 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
-            'operation_generation' => 6,
+            'operation_id' => $this->operationId(6),
         ]);
 
-        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, 5))
+        (new DeleteMinecraftinfrastructureJob($minecraftServer->id, $this->operationId(5)))
             ->failed(new RuntimeException('stale error'));
 
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
         $this->assertSame('newer error', $minecraftServer->last_error);
-        $this->assertSame(6, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(6), $minecraftServer->operation_id);
     }
 
     public function test_middleware_uses_shared_server_lock(): void
     {
-        $job = new DeleteMinecraftinfrastructureJob(42, 3);
+        $job = new DeleteMinecraftinfrastructureJob(42, $this->operationId(3));
 
         $middleware = $job->middleware();
 
@@ -179,7 +179,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'status' => MinecraftServerStatus::Deleting,
             'last_error' => null,
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ], $attributes));
     }
 }

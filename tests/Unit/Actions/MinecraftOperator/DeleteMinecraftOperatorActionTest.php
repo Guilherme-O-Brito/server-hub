@@ -25,7 +25,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
             'last_error' => 'previous error',
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ]);
         $minecraftOperator = $minecraftServer->operators()->create([
             'nickname' => 'Steve_01',
@@ -40,12 +40,13 @@ class DeleteMinecraftOperatorActionTest extends TestCase
 
         $minecraftServer->refresh();
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
-        $this->assertSame(5, $minecraftServer->operation_generation);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
-                && $job->generation === 5;
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -56,7 +57,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
 
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, $status, [
-            'operation_generation' => 7,
+            'operation_id' => $this->operationId(7),
         ]);
         $minecraftOperator = $minecraftServer->operators()->create([
             'nickname' => 'Steve_01',
@@ -73,7 +74,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
-        $this->assertSame(7, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(7), $minecraftServer->operation_id);
         $this->assertDatabaseHas('minecraft_operators', [
             'id' => $minecraftOperator->id,
             'minecraft_server_id' => $minecraftServer->id,
@@ -104,7 +105,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
             'last_error' => 'preserved error',
-            'operation_generation' => 3,
+            'operation_id' => $this->operationId(3),
         ]);
         $minecraftOperator = $minecraftServer->operators()->create(['nickname' => 'Steve_01']);
 
@@ -124,7 +125,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
-        $this->assertSame(3, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertSame('preserved error', $minecraftServer->last_error);
         $this->assertDatabaseHas('minecraft_operators', ['id' => $minecraftOperator->id]);
         Queue::assertNothingPushed();

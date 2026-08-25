@@ -21,7 +21,7 @@ class StartMinecraftServerJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'previous error',
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
@@ -33,27 +33,27 @@ class StartMinecraftServerJobTest extends TestCase
             ->method('startMinecraftServer')
             ->with($this->callback(fn (MinecraftServer $server) => $server->is($minecraftServer)));
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->handle($service);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Running, $minecraftServer->status);
-        $this->assertSame(4, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
     }
 
-    public function test_handle_ignores_stale_generation_without_calling_services(): void
+    public function test_handle_ignores_stale_operation_id_without_calling_services(): void
     {
-        $minecraftServer = $this->createMinecraftServer(['operation_generation' => 8]);
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(8)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('updateExecutionSlotService');
         $service->expects($this->never())->method('startMinecraftServer');
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 7))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(7)))
             ->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->refresh()->status);
@@ -70,7 +70,7 @@ class StartMinecraftServerJobTest extends TestCase
         $service->expects($this->never())->method('updateExecutionSlotService');
         $service->expects($this->never())->method('startMinecraftServer');
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->refresh()->status);
@@ -85,7 +85,7 @@ class StartMinecraftServerJobTest extends TestCase
         $service->expects($this->never())->method('updateExecutionSlotService');
         $service->expects($this->never())->method('startMinecraftServer');
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->handle($service);
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->refresh()->status);
@@ -94,7 +94,7 @@ class StartMinecraftServerJobTest extends TestCase
 
     public function test_handle_does_not_finalize_when_operation_is_superseded_during_start(): void
     {
-        $minecraftServer = $this->createMinecraftServer(['operation_generation' => 4]);
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(4)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->once())->method('updateExecutionSlotService');
@@ -103,18 +103,18 @@ class StartMinecraftServerJobTest extends TestCase
             ->willReturnCallback(function () use ($minecraftServer) {
                 MinecraftServer::query()->whereKey($minecraftServer->id)->update([
                     'status' => MinecraftServerStatus::Deleting,
-                    'operation_generation' => 5,
+                    'operation_id' => $this->operationId(5),
                 ]);
             });
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->handle($service);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
-        $this->assertSame(5, $minecraftServer->operation_generation);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
     }
 
@@ -125,7 +125,7 @@ class StartMinecraftServerJobTest extends TestCase
         $service->expects($this->never())->method('updateExecutionSlotService');
         $service->expects($this->never())->method('startMinecraftServer');
 
-        (new StartMinecraftServerJob(999, $executionSlot->id, 1))->handle($service);
+        (new StartMinecraftServerJob(999, $executionSlot->id, $this->operationId(1)))->handle($service);
 
         $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->refresh()->status);
     }
@@ -135,7 +135,7 @@ class StartMinecraftServerJobTest extends TestCase
         $minecraftServer = $this->createMinecraftServer();
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->failed(new RuntimeException('Kubernetes failed'));
 
         $minecraftServer->refresh();
@@ -152,11 +152,11 @@ class StartMinecraftServerJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
-            'operation_generation' => 5,
+            'operation_id' => $this->operationId(5),
         ]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->failed(new RuntimeException('stale error'));
 
         $minecraftServer->refresh();
@@ -171,7 +171,7 @@ class StartMinecraftServerJobTest extends TestCase
     {
         $minecraftServer = $this->createMinecraftServer();
 
-        (new StartMinecraftServerJob($minecraftServer->id, 999, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, 999, $this->operationId(4)))
             ->failed(new RuntimeException('Missing slot failure'));
 
         $minecraftServer->refresh();
@@ -187,7 +187,7 @@ class StartMinecraftServerJobTest extends TestCase
         $serverId = $minecraftServer->id;
         $minecraftServer->delete();
 
-        (new StartMinecraftServerJob($serverId, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($serverId, $executionSlot->id, $this->operationId(4)))
             ->failed(new RuntimeException('Server disappeared'));
 
         $executionSlot->refresh();
@@ -204,7 +204,7 @@ class StartMinecraftServerJobTest extends TestCase
         $otherServer = $this->createMinecraftServer(['status' => MinecraftServerStatus::Running]);
         $executionSlot = ExecutionSlot::factory()->occupied($otherServer)->create();
 
-        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, 4))
+        (new StartMinecraftServerJob($minecraftServer->id, $executionSlot->id, $this->operationId(4)))
             ->failed(new RuntimeException('Start failed'));
 
         $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->refresh()->status);
@@ -213,7 +213,7 @@ class StartMinecraftServerJobTest extends TestCase
 
     public function test_middleware_uses_shared_server_lock(): void
     {
-        $job = new StartMinecraftServerJob(42, 7, 3);
+        $job = new StartMinecraftServerJob(42, 7, $this->operationId(3));
 
         $middleware = $job->middleware();
 
@@ -230,7 +230,7 @@ class StartMinecraftServerJobTest extends TestCase
         return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'status' => MinecraftServerStatus::Starting,
             'last_error' => null,
-            'operation_generation' => 4,
+            'operation_id' => $this->operationId(4),
         ], $attributes));
     }
 }

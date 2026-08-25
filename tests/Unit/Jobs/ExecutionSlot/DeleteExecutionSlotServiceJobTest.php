@@ -19,6 +19,7 @@ class DeleteExecutionSlotServiceJobTest extends TestCase
             'external_port' => 30000,
             'service_name' => 'server-service-1',
             'status' => ExecutionSlot::STATUS_DELETING,
+            'operation_id' => $this->operationId(1),
         ]);
 
         $service = $this->createMock(ProvisioningService::class);
@@ -28,7 +29,10 @@ class DeleteExecutionSlotServiceJobTest extends TestCase
                 return $passedSlot->is($executionSlot);
             }));
 
-        $job = new DeleteExecutionSlotServiceJob($executionSlot->id);
+        $job = new DeleteExecutionSlotServiceJob(
+            $executionSlot->id,
+            $executionSlot->operation_id,
+        );
 
         $job->handle($service);
 
@@ -44,9 +48,13 @@ class DeleteExecutionSlotServiceJobTest extends TestCase
             'external_port' => 30000,
             'service_name' => 'server-service-1',
             'status' => ExecutionSlot::STATUS_DELETING,
+            'operation_id' => $this->operationId(1),
         ]);
 
-        $job = new DeleteExecutionSlotServiceJob($executionSlot->id);
+        $job = new DeleteExecutionSlotServiceJob(
+            $executionSlot->id,
+            $executionSlot->operation_id,
+        );
         $exception = new \RuntimeException('Delete failed');
 
         $job->failed($exception);
