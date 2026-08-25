@@ -200,7 +200,40 @@ Entretanto, expor o banco desnecessariamente aumenta a superfície de ataque da 
 >
 > Se decidir utilizá-lo, é sua responsabilidade garantir que o banco e a rede estejam configurados de maneira segura.
 
-#### 3.3. Configurar os Secrets do Laravel
+#### 3.3. Configurar a ACL do Redis
+
+Abra:
+
+```text
+k8s/platform/redis/redis_acl_secret.yaml
+```
+
+Localize a linha:
+
+```text
+user laravel on ><your_redis_password> ~* &* +@all
+```
+
+Substitua somente:
+
+```text
+<your_redis_password>
+```
+
+por uma senha forte e confiável que será utilizada pelo Laravel para autenticar no Redis.
+
+Exemplo:
+
+```text
+user laravel on >uma-senha-forte-aqui ~* &* +@all
+```
+
+Essa mesma senha deverá ser utilizada novamente na configuração dos Secrets do Laravel.
+
+> [!WARNING]
+> Não utilize a senha de exemplo em produção. Escolha uma senha forte e mantenha esse Secret protegido.
+
+#### 3.4. Configurar os Secrets do Laravel
 
 Abra:
 
@@ -208,7 +241,7 @@ Abra:
 k8s/platform/laravel/secrets.yaml
 ```
 
-Os dois valores presentes nesse arquivo devem ser configurados obrigatoriamente.
+Os três valores presentes nesse arquivo devem ser configurados obrigatoriamente.
 
 ##### `DB_PASSWORD`
 
@@ -221,6 +254,24 @@ DB_PASSWORD
 deve ser exatamente a mesma senha configurada anteriormente no MariaDB.
 
 Caso você esteja utilizando um banco externo, utilize a senha do usuário criado para o Laravel.
+
+##### `REDIS_PASSWORD`
+
+O valor de:
+
+```yaml
+REDIS_PASSWORD: "<your_redis_password>"
+```
+
+deve utilizar exatamente a mesma senha configurada anteriormente no `redis_acl_secret.yaml`.
+
+Substitua somente:
+
+```text
+<your_redis_password>
+```
+
+pela senha escolhida para o usuário `laravel` do Redis.
 
 ##### `APP_KEY`
 
@@ -253,7 +304,7 @@ APP_KEY
 > [!WARNING]
 > Não reutilize uma `APP_KEY` de outra instalação e não utilize os valores de exemplo da documentação.
 
-#### 3.4. Configurar o Ingress
+#### 3.5. Configurar o Ingress
 
 Abra:
 
@@ -287,7 +338,7 @@ Como mencionado nas recomendações de segurança do projeto, é fortemente reco
 
 O Cloudflare Tunnel é também a configuração utilizada como exemplo pelos declarativos atuais.
 
-#### 3.5. Configurar as variáveis de ambiente do Laravel
+#### 3.6. Configurar as variáveis de ambiente do Laravel
 
 Abra:
 
