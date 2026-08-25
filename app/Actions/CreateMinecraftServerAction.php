@@ -6,16 +6,16 @@ use App\Jobs\CreateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\User;
 use App\Models\MinecraftServer;
+use Illuminate\Support\Str;
 
 class CreateMinecraftServerAction
 {
     public function execute(User $user, array $data)
     {
         $motd = $data['motd'] ?? "{$user->name}'s minecraft server";
-
         $force_gamemode = $data['force_gamemode'];
-
         $allow_flight = $data['allow_flight'];
+        $operationId = (string) Str::uuid();
 
         $server = $user->ownedMinecraftServers()->create([
             'server_name' => $data['server_name'],
@@ -24,9 +24,10 @@ class CreateMinecraftServerAction
             'minecraft_version_id' => $data['minecraft_version_id'],
             'force_gamemode' => $force_gamemode,
             'allow_flight' => $allow_flight,
-            'status' => MinecraftServerStatus::Provisioning
+            'status' => MinecraftServerStatus::Provisioning,
+            'operation_id' => $operationId
         ]);
 
-        CreateMinecraftInfrastructureJob::dispatch($server->id);
+        CreateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
     }
 }

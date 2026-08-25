@@ -24,7 +24,7 @@ class MinecraftServer extends Model
         'allow_flight',
         'status',
         'last_error',
-        'operation_generation'
+        'operation_id'
     ];
     
     protected $guarded = ['id', 'owner_id'];
@@ -34,8 +34,7 @@ class MinecraftServer extends Model
         'allow_flight' => 'boolean',
         'difficulty' => 'integer',
         'minecraft_server_id' => 'integer',
-        'status' => MinecraftServerStatus::class,
-        'operation_generation' => 'integer'
+        'status' => MinecraftServerStatus::class
     ];
 
     public function owner() 

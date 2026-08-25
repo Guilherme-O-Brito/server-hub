@@ -4,19 +4,29 @@ namespace App\Jobs\ExecutionSlot;
 
 use App\Models\ExecutionSlot;
 use App\Services\Kubernetes\ProvisioningService;
+use DB;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
-class CreateExecutionSlotServiceJob implements ShouldQueue
+class CreateExecutionSlotServiceJob implements ShouldQueue, ShouldBeEncrypted
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public int $slotId)
+    public function __construct(public int $slotId, public string $operationId)
     {
         //
+    }
+
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping("execution-slot:{$this->slotId}"))->shared(),
+        ];
     }
 
     /**
@@ -26,22 +36,39 @@ class CreateExecutionSlotServiceJob implements ShouldQueue
     {
         $slot = ExecutionSlot::findOrFail($this->slotId);
 
+        if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+            return;
+        }
+
         $provisioningService->provisionExecutionSlotService($slot);
 
-        $slot->update([
-            'status' => ExecutionSlot::STATUS_FREE
-        ]);
+        DB::transaction(function () {
+            $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
+
+            if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+                return;
+            }
+            
+            $slot->update([
+                'status' => ExecutionSlot::STATUS_FREE
+            ]);
+        });
     }
 
     public function failed(\Throwable $exception): void
     {
-        $slot = ExecutionSlot::find($this->slotId);
+        DB::transaction(function () use ($exception) {
+            $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
+    
+            if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+                return;
+            }
 
-        if ($slot) {
             $slot->update([
                 'status' => ExecutionSlot::STATUS_FAILED,
                 'last_error' => $exception->getMessage(),
             ]);
-        }
+            
+        });
     }
 }

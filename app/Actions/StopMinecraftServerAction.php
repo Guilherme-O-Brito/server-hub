@@ -8,6 +8,7 @@ use App\MinecraftServerStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use DB;
+use Illuminate\Support\Str;
 
 class StopMinecraftServerAction
 {
@@ -33,16 +34,16 @@ class StopMinecraftServerAction
                 );
             }
 
-            $generation = $server->operation_generation + 1;
+            $operationId = (string) Str::uuid();
 
             $server->update([
                 'status' => MinecraftServerStatus::Stopping,
-                'operation_generation' => $generation,
+                'operation_id' => $operationId,
                 'last_error' => null
             ]);
 
-            DB::afterCommit(function () use ($server, $slot, $generation){
-                StopMinecraftServerJob::dispatch($server->id, $slot->id, $generation);
+            DB::afterCommit(function () use ($server, $slot, $operationId){
+                StopMinecraftServerJob::dispatch($server->id, $slot->id, $operationId);
             });
 
         });

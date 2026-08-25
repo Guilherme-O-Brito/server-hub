@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('minecraft_servers', function (Blueprint $table) {
+        Schema::table('execution_slots', function (Blueprint $table) {
             $table->uuid('operation_id')->nullable();
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('minecraft_servers', function (Blueprint $table) {
+        Schema::table('execution_slots', function (Blueprint $table) {
             $table->dropColumn('operation_id');
         });
     }

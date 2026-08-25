@@ -8,6 +8,7 @@ use App\MinecraftServerStatus;
 use App\Models\MinecraftOperator;
 use App\Models\MinecraftServer;
 use DB;
+use Illuminate\Support\Str;
 
 class DeleteMinecraftOperatorAction
 {
@@ -22,17 +23,17 @@ class DeleteMinecraftOperatorAction
                 );
             }
             
-            $generation = $server->operation_generation + 1;
+            $operationId = (string) Str::uuid();
 
             $server->update([
                 'status' => MinecraftServerStatus::Provisioning,
-                'operation_generation' => $generation,
+                'operation_id' => $operationId,
                 'last_error' => null
             ]);
 
-            DB::afterCommit(function () use ($server, $generation, $minecraftOperator) {
+            DB::afterCommit(function () use ($server, $operationId, $minecraftOperator) {
                 $minecraftOperator->delete();
-                UpdateMinecraftInfrastructureJob::dispatch($server->id, $generation);
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
             });
 
         });

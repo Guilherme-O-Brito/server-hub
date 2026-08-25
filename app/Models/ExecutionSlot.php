@@ -29,7 +29,8 @@ class ExecutionSlot extends Model
         'service_name',
         'status',
         'last_error',
-        'hostname'
+        'hostname',
+        'operation_id'
     ];
 
     protected $casts = [

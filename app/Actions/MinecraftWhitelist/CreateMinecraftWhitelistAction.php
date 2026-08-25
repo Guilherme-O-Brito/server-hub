@@ -7,6 +7,7 @@ use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use DB;
+use Illuminate\Support\Str;
 
 class CreateMinecraftWhitelistAction
 {
@@ -21,11 +22,11 @@ class CreateMinecraftWhitelistAction
                 );
             }
 
-            $generation = $server->operation_generation + 1;
+            $operationId = (string) Str::uuid();
 
             $server->update([
                 'status' => MinecraftServerStatus::Provisioning,
-                'operation_generation' => $generation,
+                'operation_id' => $operationId,
                 'last_error' => null
             ]);
 
@@ -33,8 +34,8 @@ class CreateMinecraftWhitelistAction
                 'nickname' => $validated['nickname']
             ]);
 
-            DB::afterCommit(function () use ($server, $generation) {
-                UpdateMinecraftInfrastructureJob::dispatch($server->id, $generation);
+            DB::afterCommit(function () use ($server, $operationId) {
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
             });
         });
     }

@@ -8,6 +8,7 @@ use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use DB;
+use Illuminate\Support\Str;
 
 class UpdateMinecraftServerAction
 {
@@ -22,7 +23,7 @@ class UpdateMinecraftServerAction
                 );
             }
 
-            $generation = $server->operation_generation + 1;
+            $operationId = (string) Str::uuid();
 
             $server->update([
                 'server_name' => $data['server_name'],
@@ -32,12 +33,12 @@ class UpdateMinecraftServerAction
                 'force_gamemode' => $data['force_gamemode'],
                 'allow_flight' => $data['allow_flight'],
                 'status' => MinecraftServerStatus::Provisioning,
-                'operation_generation' => $generation,
+                'operation_id' => $operationId,
                 'last_error' => null
             ]);
 
-            DB::afterCommit(function () use ($server, $generation) {
-                UpdateMinecraftInfrastructureJob::dispatch($server->id, $generation);
+            DB::afterCommit(function () use ($server, $operationId) {
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
             });
         });
     }

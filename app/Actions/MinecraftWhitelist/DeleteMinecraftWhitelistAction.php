@@ -8,6 +8,7 @@ use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
 use DB;
+use Illuminate\Support\Str;
 
 
 
@@ -24,17 +25,17 @@ class DeleteMinecraftWhitelistAction
                 );
             }
 
-            $generation = $server->operation_generation + 1;
+            $operationId = (string) Str::uuid();
 
             $server->update([
                 'status' => MinecraftServerStatus::Provisioning,
-                'operation_generation' => $generation,
+                'operation_id' => $operationId,
                 'last_error' => null
             ]);
 
-            DB::afterCommit(function () use ($server, $generation, $minecraftWhitelist) {
+            DB::afterCommit(function () use ($server, $operationId, $minecraftWhitelist) {
                 $minecraftWhitelist->delete();
-                UpdateMinecraftInfrastructureJob::dispatch($server->id, $generation);    
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);    
             });
         });
 

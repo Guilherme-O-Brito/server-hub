@@ -13,6 +13,7 @@ spec:
       labels:
         app: laravel
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 33

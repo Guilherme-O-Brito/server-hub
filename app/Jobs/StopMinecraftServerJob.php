@@ -7,11 +7,12 @@ use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;
 use DB;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
-class StopMinecraftServerJob implements ShouldQueue
+class StopMinecraftServerJob implements ShouldQueue, ShouldBeEncrypted
 {
     use Queueable;
 
@@ -21,7 +22,7 @@ class StopMinecraftServerJob implements ShouldQueue
     public function __construct(
         public int $serverId,
         public int $slotId,
-        public int $generation
+        public string $operationId
     )
     {}
 
@@ -37,7 +38,7 @@ class StopMinecraftServerJob implements ShouldQueue
         return DB::transaction(function () {
             $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
 
-            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_id !== $this->operationId) {
                 return null;
             }
 
@@ -69,7 +70,7 @@ class StopMinecraftServerJob implements ShouldQueue
         DB::transaction(function () {
             $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
             
-            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_id !== $this->operationId) {
                 return;
             }
 
@@ -94,7 +95,7 @@ class StopMinecraftServerJob implements ShouldQueue
         DB::transaction(function () use ($exception) {
             $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
             
-            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_generation !== $this->generation) {
+            if (! $server || $server->status !== MinecraftServerStatus::Stopping || $server->operation_id !== $this->operationId) {
                 return;
             }
             

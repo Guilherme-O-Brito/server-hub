@@ -6,18 +6,19 @@ use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;
 use DB;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
-class UpdateMinecraftInfrastructureJob implements ShouldQueue
+class UpdateMinecraftInfrastructureJob implements ShouldQueue, ShouldBeEncrypted
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public int $serverId, public int $generation)
+    public function __construct(public int $serverId, public string $operationId)
     {
         //
     }
@@ -36,7 +37,7 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue
     {
         $server = MinecraftServer::find($this->serverId);
 
-        if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_generation !== $this->generation) {
+        if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
             return;
         }
 
@@ -45,7 +46,7 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue
         DB::transaction(function () {
             $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
 
-            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_generation !== $this->generation) {
+            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
                 return;
             }
 
@@ -61,7 +62,7 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue
         DB::transaction(function () use ($exception) {
             $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
 
-            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_generation !== $this->generation) {
+            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
                 return;
             }
 

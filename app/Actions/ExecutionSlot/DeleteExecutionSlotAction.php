@@ -6,6 +6,7 @@ use App\Exceptions\ExecutionSlotStateException;
 use App\Jobs\ExecutionSlot\DeleteExecutionSlotServiceJob;
 use App\Models\ExecutionSlot;
 use DB;
+use Illuminate\Support\Str;
 
 class DeleteExecutionSlotAction {
     public function execute()
@@ -17,12 +18,16 @@ class DeleteExecutionSlotAction {
                 throw new ExecutionSlotStateException('Cannot delete occupied slot');
             }
 
+            $operationId = (string) Str::uuid();
+
             $slot->update([
-                'status' => ExecutionSlot::STATUS_DELETING
+                'status' => ExecutionSlot::STATUS_DELETING,
+                'operation_id' => $operationId,
+                'last_error' => null
             ]);
 
-            DB::afterCommit(function () use ($slot) {
-                DeleteExecutionSlotServiceJob::dispatch($slot->id);
+            DB::afterCommit(function () use ($slot, $operationId) {
+                DeleteExecutionSlotServiceJob::dispatch($slot->id, $operationId);
             });
         }, 3);
     }
