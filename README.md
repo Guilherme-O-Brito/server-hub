@@ -456,6 +456,11 @@ http://traefik.kube-system.svc.cluster.local:80
 
 ### 5. Instalar o Server-Hub
 
+> [!WARNING]
+> Apesar de poder ser executado em qualquer ambiente kubernetes o manifesto criado pelo server-hub para instanciar o servidor de minecraft espera que exista um serviceAccount para o proprio namespace chamado `minecraft-runtime` caso não va usar os manifestos deste repositorio se atente a isso.
+> Esta medida é visando a segurança da estrutura kuberntes, os manifestos deste repositorios são estremamente restritivos com relação a segurança.
+
+
 Depois de revisar todos os valores indicados por `< >`, entre no diretório que contém a pasta `k8s` e execute:
 
 ```bash

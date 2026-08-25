@@ -1,0 +1,176 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+
+metadata:
+  name: server-hub-minecraft-deployment
+
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - apps
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - deployments
+
+  variables:
+    - name: podSpec
+      expression: object.spec.template.spec
+
+    - name: containers
+      expression: object.spec.template.spec.containers
+
+  validations:
+
+    # Server-Hub só escala Minecraft entre 0 e 1.
+    - expression: >
+        object.spec.replicas == 0 ||
+        object.spec.replicas == 1
+      message: "Minecraft Deployments may only have 0 or 1 replica."
+
+    # Apenas a label app usada pelo Builder.
+    - expression: >
+        object.spec.selector.matchLabels.size() == 1 &&
+        'app' in object.spec.selector.matchLabels &&
+        has(object.spec.template.metadata.labels) &&
+        object.spec.template.metadata.labels.size() == 1 &&
+        'app' in object.spec.template.metadata.labels &&
+        object.spec.selector.matchLabels['app'] ==
+        object.spec.template.metadata.labels['app']
+      message: "Minecraft Deployment selectors must use only the expected app label."
+
+    # ServiceAccount conhecido e sem token.
+    - expression: >
+        variables.podSpec.serviceAccountName == 'minecraft-runtime' &&
+        has(variables.podSpec.automountServiceAccountToken) &&
+        variables.podSpec.automountServiceAccountToken == false
+      message: "Minecraft workloads must use minecraft-runtime without an API token."
+
+    # Host namespaces não podem ser utilizados.
+    - expression: >
+        (!has(variables.podSpec.hostNetwork) ||
+          variables.podSpec.hostNetwork == false) &&
+        (!has(variables.podSpec.hostPID) ||
+          variables.podSpec.hostPID == false) &&
+        (!has(variables.podSpec.hostIPC) ||
+          variables.podSpec.hostIPC == false)
+      message: "Host namespaces are not allowed."
+
+    # Exatamente um container e nenhum init container.
+    - expression: >
+        variables.containers.size() == 1 &&
+        (
+          !has(variables.podSpec.initContainers) ||
+          variables.podSpec.initContainers.size() == 0
+        )
+      message: "Minecraft workloads must contain exactly one container and no init containers."
+
+    # Container fixo e sem command/args arbitrários.
+    - expression: >
+        variables.containers.all(c,
+          c.name == 'minecraft' &&
+          c.image == 'itzg/minecraft-server:latest' &&
+          (!has(c.command) || c.command.size() == 0) &&
+          (!has(c.args) || c.args.size() == 0)
+        )
+      message: "Only the approved Minecraft image without custom commands is allowed."
+
+    # Somente 25565.
+    - expression: >
+        variables.containers.all(c,
+          c.ports.size() == 1 &&
+          c.ports[0].containerPort == 25565 &&
+          c.ports[0].protocol == 'TCP'
+        )
+      message: "Minecraft containers may expose only TCP port 25565."
+
+    # Configuração somente através de um ConfigMap.
+    - expression: >
+        variables.containers.all(c,
+          (!has(c.env) || c.env.size() == 0) &&
+          has(c.envFrom) &&
+          c.envFrom.size() == 1 &&
+          c.envFrom.all(e,
+            has(e.configMapRef) &&
+            !has(e.secretRef) &&
+            e.configMapRef.name != 'kube-root-ca.crt'
+          )
+        )
+      message: "Minecraft environment must come from exactly one ConfigMap."
+
+    # Apenas os dois mounts definidos pelo Builder.
+    - expression: >
+        variables.containers.all(c,
+          c.volumeMounts.size() == 2 &&
+          c.volumeMounts.exists(v,
+            v.name == 'minecraft-data' &&
+            v.mountPath == '/data'
+          ) &&
+          c.volumeMounts.exists(v,
+            v.name == 'tmp' &&
+            v.mountPath == '/tmp'
+          )
+        )
+      message: "Only the Minecraft data and tmp volume mounts are allowed."
+
+    # SecurityContext exatamente no formato esperado.
+    - expression: >
+        variables.containers.all(c,
+          has(c.securityContext) &&
+          c.securityContext.runAsNonRoot == true &&
+          c.securityContext.runAsUser == 1000 &&
+          c.securityContext.allowPrivilegeEscalation == false &&
+          c.securityContext.readOnlyRootFilesystem == true &&
+          has(c.securityContext.capabilities) &&
+          c.securityContext.capabilities.drop.size() == 1 &&
+          c.securityContext.capabilities.drop[0] == 'ALL' &&
+          has(c.securityContext.seccompProfile) &&
+          c.securityContext.seccompProfile.type == 'RuntimeDefault' &&
+          (!has(c.securityContext.privileged) ||
+            c.securityContext.privileged == false)
+        )
+      message: "Minecraft container securityContext does not match the approved configuration."
+
+    # fsGroup definido pelo Builder.
+    - expression: >
+        has(variables.podSpec.securityContext) &&
+        variables.podSpec.securityContext.fsGroup == 1000
+      message: "Minecraft Pods must use fsGroup 1000."
+
+    # Somente PVC + emptyDir.
+    - expression: >
+        variables.podSpec.volumes.size() == 2 &&
+        variables.podSpec.volumes.exists(v,
+          v.name == 'minecraft-data' &&
+          has(v.persistentVolumeClaim)
+        ) &&
+        variables.podSpec.volumes.exists(v,
+          v.name == 'tmp' &&
+          has(v.emptyDir)
+        )
+      message: "Only minecraft-data PVC and tmp emptyDir volumes are allowed."
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+
+metadata:
+  name: server-hub-minecraft-deployment-games
+
+spec:
+  policyName: server-hub-minecraft-deployment
+
+  validationActions:
+    - Deny
+    - Audit
+
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: games
