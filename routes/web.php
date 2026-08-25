@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/login')->middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'LoginView'])->name('login');
-    Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:5,1');
+    Route::post('/', [LoginController::class, 'authenticate'])->middleware('throttle:login');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
@@ -21,7 +21,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 Route::get('/user', [UserController::class, 'index'])->middleware('auth')->name('index.user');
 
 // authentication and admin only
-Route::prefix('admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+Route::prefix('/admin/user')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('/', [UserController::class, 'adminIndex'])->name('index.user.admin');
     Route::post('/', [UserController::class, 'create'])->name('create.user');
     Route::put('/{user}', [UserController::class, 'update'])->name('update.user');
@@ -34,7 +34,7 @@ Route::prefix('/execution-slot')->middleware('auth')->group(function () {
     Route::get('/', [ExecutionSlotController::class, 'index'])->name('index.execution_slot');
 });
 
-Route::prefix('admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
+Route::prefix('/admin/servers/minecraft/version')->middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('/', [MinecraftVersionController::class, 'adminIndex'])->name('index.minecraftVersion.admin');
     Route::post('/', [MinecraftVersionController::class, 'create'])->name('create.minecraftVersion');
     Route::post('/{minecraftVersion}/toggle', [MinecraftVersionController::class, 'toggle'])->whereNumber('minecraftVersion')->name('toggle.minecraftVersion');
@@ -91,71 +91,3 @@ Route::view('/servidores/minecraft/{minecraftServer}', 'servidores.index')
 Route::get('/', function () {
     return Auth::check() ? redirect()->route('servers.view') : view('home');
 })->name('home');
-
-// temporary test routes
-Route::middleware('auth')->group(function () {
-    Route::get('/servers/minecraft/create', function () {
-        return view('server_form');
-    });
-
-    Route::get('/servers/minecraft/update/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('server_edit_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/delete/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('server_delete_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/start/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('server_start_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/stop/{minecraftServer}', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('server_stop_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/{minecraftServer}/whitelist/create', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('whitelist_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/{minecraftServer}/whitelist/delete/{minecraftWhitelist}', function (\App\Models\MinecraftServer $minecraftServer, \App\Models\MinecraftWhitelist $minecraftWhitelist) {
-        if ($minecraftWhitelist->minecraft_server_id !== $minecraftServer->id) {
-            abort(404);
-        }
-
-        return view('whitelist_delete_form', compact('minecraftServer', 'minecraftWhitelist'));
-    });
-
-    Route::get('/servers/minecraft/{minecraftServer}/operators/create', function (\App\Models\MinecraftServer $minecraftServer) {
-        return view('operator_form', compact('minecraftServer'));
-    });
-
-    Route::get('/servers/minecraft/{minecraftServer}/operators/delete/{minecraftOperator}', function (\App\Models\MinecraftServer $minecraftServer, \App\Models\MinecraftOperator $minecraftOperator) {
-        if ($minecraftOperator->minecraft_server_id !== $minecraftServer->id) {
-            abort(404);
-        }
-
-        return view('operator_delete_form', compact('minecraftServer', 'minecraftOperator'));
-    });
-
-    Route::get('/servers/minecraft/version/create', function () {
-        return view('minecraft_version_form');
-    });
-
-    Route::get('/servers/minecraft/version/toggle/{minecraftVersion}', function (\App\Models\MinecraftVersion $minecraftVersion) {
-        return view('minecraft_version_toggle_form', compact('minecraftVersion'));
-    });
-
-    Route::get('/servers/minecraft/version/delete/{minecraftVersion}', function (\App\Models\MinecraftVersion $minecraftVersion) {
-        return view('minecraft_version_delete_form', compact('minecraftVersion'));
-    });
-
-    Route::get('/execution-slot/create', function () {
-        return view('execution_slot_form');
-    });
-
-    Route::get('/execution-slot/delete', function () {
-        return view('execution_slot_delete_form');
-    });
-
-});

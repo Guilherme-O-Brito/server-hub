@@ -234,7 +234,7 @@ class ProvisioningServiceTest extends TestCase
         $service->stopMinecraftServer($minecraftServer);
     }
 
-    public function test_provision_execution_slot_uses_builder_and_client_and_marks_slot_free(): void
+    public function test_provision_execution_slot_uses_builder_and_client_without_changing_slot_state(): void
     {
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
@@ -265,7 +265,7 @@ class ProvisioningServiceTest extends TestCase
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlot::STATUS_PROVISIONING, $executionSlot->status);
     }
 
     public function test_update_execution_slot_updates_existing_service_and_marks_slot_allocated(): void

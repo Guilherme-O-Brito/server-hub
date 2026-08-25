@@ -6,21 +6,38 @@ use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
+use DB;
+use Illuminate\Support\Str;
 
 class CreateMinecraftOperatorAction
 {
     public function execute(MinecraftServer $minecraftServer, array $validated)
     {
-        if ($minecraftServer->status !== MinecraftServerStatus::Stopped) {
-            throw new MinecraftServerStateException(
-                'Minecraft server is not stopped.'
-            );
-        }
+        DB::transaction(function () use ($minecraftServer, $validated) {
+            $server = MinecraftServer::query()->lockForUpdate()->findOrFail($minecraftServer->id);
+            
+            if ($server->status !== MinecraftServerStatus::Stopped) {
+                throw new MinecraftServerStateException(
+                    'Minecraft server is not stopped.'
+                );
+            }
 
-        $minecraftServer->operators()->create([
-            'nickname' => $validated['nickname']
-        ]);
+            $operationId = (string) Str::uuid();
 
-        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+            $server->update([
+                'status' => MinecraftServerStatus::Provisioning,
+                'operation_id' => $operationId,
+                'last_error' => null
+            ]);
+
+            $server->operators()->create([
+                'nickname' => $validated['nickname']
+            ]);
+
+            DB::afterCommit(function () use ($server, $operationId) {
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
+            });
+
+        });
     }
 }

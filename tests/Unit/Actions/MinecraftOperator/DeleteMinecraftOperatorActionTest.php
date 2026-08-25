@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class DeleteMinecraftOperatorActionTest extends TestCase
@@ -22,7 +23,10 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'previous error',
+            'operation_id' => $this->operationId(4),
+        ]);
         $minecraftOperator = $minecraftServer->operators()->create([
             'nickname' => 'Steve_01',
         ]);
@@ -34,8 +38,15 @@ class DeleteMinecraftOperatorActionTest extends TestCase
             'id' => $minecraftOperator->id,
         ]);
 
+        $minecraftServer->refresh();
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(4), $minecraftServer->operation_id);
+        $this->assertNull($minecraftServer->last_error);
+
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-            return $job->serverId === $minecraftServer->id;
+            return $job->serverId === $minecraftServer->id
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -45,7 +56,9 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        $minecraftServer = $this->createMinecraftServer($owner, $status);
+        $minecraftServer = $this->createMinecraftServer($owner, $status, [
+            'operation_id' => $this->operationId(7),
+        ]);
         $minecraftOperator = $minecraftServer->operators()->create([
             'nickname' => 'Steve_01',
         ]);
@@ -61,6 +74,7 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         $minecraftServer->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
+        $this->assertSame($this->operationId(7), $minecraftServer->operation_id);
         $this->assertDatabaseHas('minecraft_operators', [
             'id' => $minecraftOperator->id,
             'minecraft_server_id' => $minecraftServer->id,
@@ -84,15 +98,48 @@ class DeleteMinecraftOperatorActionTest extends TestCase
         ];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    public function test_execute_rolls_back_server_and_keeps_operator_when_transaction_fails(): void
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        Queue::fake();
+
+        $owner = User::factory()->create();
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
+            'last_error' => 'preserved error',
+            'operation_id' => $this->operationId(3),
+        ]);
+        $minecraftOperator = $minecraftServer->operators()->create(['nickname' => 'Steve_01']);
+
+        MinecraftServer::updated(function () {
+            throw new RuntimeException('Fail inside operator delete transaction');
+        });
+
+        try {
+            (new DeleteMinecraftOperatorAction())->execute($minecraftServer, $minecraftOperator);
+            $this->fail('Expected the operator delete transaction to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Fail inside operator delete transaction', $exception->getMessage());
+        } finally {
+            MinecraftServer::flushEventListeners();
+        }
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame($this->operationId(3), $minecraftServer->operation_id);
+        $this->assertSame('preserved error', $minecraftServer->last_error);
+        $this->assertDatabaseHas('minecraft_operators', ['id' => $minecraftOperator->id]);
+        Queue::assertNothingPushed();
+    }
+
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
+    {
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Operator Server',
             'motd' => 'Operator motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }

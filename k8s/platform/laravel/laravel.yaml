@@ -13,6 +13,7 @@ spec:
       labels:
         app: laravel
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 33
@@ -21,7 +22,7 @@ spec:
         fsGroupChangePolicy: "OnRootMismatch"
       initContainers:
         - name: laravel-storage-init
-          image: server_hub:0.0.1
+          image: ghcr.io/guilherme-o-brito/server-hub:0.0.1
           command:
             - /bin/sh
             - -c 
@@ -47,7 +48,7 @@ spec:
             
       containers:
         - name: laravel
-          image: server_hub:0.0.1
+          image: ghcr.io/guilherme-o-brito/server-hub:0.0.1
           envFrom:
             - configMapRef:
                 name: laravel-env

@@ -29,7 +29,8 @@ class ExecutionSlot extends Model
         'service_name',
         'status',
         'last_error',
-        'hostname'
+        'hostname',
+        'operation_id'
     ];
 
     protected $casts = [
@@ -52,11 +53,22 @@ class ExecutionSlot extends Model
         return $this->status === ExecutionSlot::STATUS_FREE;
     }
 
-    public function release() // this method must run inside a db transaction with lockForUpdate
+    public function isAllocatedTo(Model $server): bool
+    {
+        return $this->status === self::STATUS_ALLOCATED
+            && $this->server_type === $server->getMorphClass()
+            && (int) $this->server_id === (int) $server->getKey();
+    }
+
+    public function release(Model $server): bool // this method must run inside a db transaction with lockForUpdate
     {
 
-        if ($this->status !== self::STATUS_ALLOCATED) {
+        /*if ($this->status !== self::STATUS_ALLOCATED) {
             throw new ExecutionSlotStateException('Execution slot is not allocated.');
+        }*/
+
+        if (! $this->isAllocatedTo($server)) {
+            return false;
         }
 
         $this->server()->dissociate();
@@ -65,6 +77,7 @@ class ExecutionSlot extends Model
 
         $this->save();
 
+        return true;
     }
     
     public static function generateHostname(int $slot_number): string 

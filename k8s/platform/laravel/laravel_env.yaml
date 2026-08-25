@@ -7,7 +7,7 @@ metadata:
 data:
   APP_NAME: "Server-Hub"
   APP_ENV: "local"
-  APP_DEBUG: "true"
+  APP_DEBUG: "false"
   APP_URL: "https://<your.domain.com>"
 
   APP_LOCALE: "pt_BR"
@@ -31,7 +31,7 @@ data:
   DB_DATABASE: "laravel_db"
   DB_USERNAME: "laravel_user"
 
-  SESSION_DRIVER: "redis"
+  SESSION_DRIVER: "database"
   SESSION_LIFETIME: "120"
   SESSION_ENCRYPT: "true"
   SESSION_PATH: "/"
@@ -45,7 +45,7 @@ data:
 
   REDIS_CLIENT: "phpredis"
   REDIS_HOST: "redis-service"
-  REDIS_PASSWORD: "null"
+  REDIS_USERNAME: "laravel"
   REDIS_PORT: "6379"
 
   VITE_APP_NAME: "Server-Hub"

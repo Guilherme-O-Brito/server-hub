@@ -3,37 +3,145 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use App\Services\Kubernetes\ProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use RuntimeException;
 use Tests\TestCase;
 
 class UpdateMinecraftInfrastructureJobTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_handle_loads_server_and_calls_update_service(): void
+    public function test_handle_runs_current_update_and_marks_server_stopped(): void
     {
-        $owner = User::factory()->create();
-
-        $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
-            'server_name' => 'Job Server',
-            'motd' => 'Job motd',
-            'difficulty' => 1,
-            'force_gamemode' => true,
-            'allow_flight' => false,
+        $minecraftServer = $this->createMinecraftServer([
+            'last_error' => 'previous error',
+            'operation_id' => $this->operationId(4),
         ]);
-
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->once())
             ->method('updateMinecraftServer')
-            ->with($this->callback(function (MinecraftServer $passedServer) use ($minecraftServer) {
-                return $passedServer->is($minecraftServer);
-            }));
+            ->with($this->callback(fn (MinecraftServer $server) => $server->is($minecraftServer)));
 
-        $job = new UpdateMinecraftInfrastructureJob($minecraftServer->id);
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
 
-        $job->handle($service);
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
+        $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
+        $this->assertNull($minecraftServer->last_error);
+    }
+
+    public function test_handle_ignores_stale_operation_id_without_calling_service(): void
+    {
+        $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(8)]);
+        $service = $this->createMock(ProvisioningService::class);
+        $service->expects($this->never())->method('updateMinecraftServer');
+
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(7)))->handle($service);
+
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->refresh()->status);
+        $this->assertSame($this->operationId(8), $minecraftServer->operation_id);
+    }
+
+    public function test_handle_ignores_job_when_server_status_no_longer_matches(): void
+    {
+        $minecraftServer = $this->createMinecraftServer([
+            'status' => MinecraftServerStatus::Deleting,
+        ]);
+        $service = $this->createMock(ProvisioningService::class);
+        $service->expects($this->never())->method('updateMinecraftServer');
+
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
+
+        $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->refresh()->status);
+    }
+
+    public function test_handle_does_not_finalize_when_operation_is_superseded_during_update(): void
+    {
+        $minecraftServer = $this->createMinecraftServer();
+        $service = $this->createMock(ProvisioningService::class);
+        $service->expects($this->once())
+            ->method('updateMinecraftServer')
+            ->willReturnCallback(function () use ($minecraftServer) {
+                MinecraftServer::query()->whereKey($minecraftServer->id)->update([
+                    'status' => MinecraftServerStatus::Deleting,
+                    'operation_id' => $this->operationId(5),
+                ]);
+            });
+
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))->handle($service);
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
+    }
+
+    public function test_handle_ignores_missing_server(): void
+    {
+        $service = $this->createMock(ProvisioningService::class);
+        $service->expects($this->never())->method('updateMinecraftServer');
+
+        (new UpdateMinecraftInfrastructureJob(999, $this->operationId(1)))->handle($service);
+
+        $this->assertDatabaseMissing('minecraft_servers', ['id' => 999]);
+    }
+
+    public function test_failed_marks_current_update_failed_and_records_error(): void
+    {
+        $minecraftServer = $this->createMinecraftServer();
+
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))
+            ->failed(new RuntimeException('Update failed'));
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->status);
+        $this->assertSame('Update failed', $minecraftServer->last_error);
+    }
+
+    public function test_failed_ignores_stale_job(): void
+    {
+        $minecraftServer = $this->createMinecraftServer([
+            'last_error' => 'newer error',
+            'operation_id' => $this->operationId(5),
+        ]);
+
+        (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))
+            ->failed(new RuntimeException('stale error'));
+
+        $minecraftServer->refresh();
+
+        $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+        $this->assertSame('newer error', $minecraftServer->last_error);
+        $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
+    }
+
+    public function test_middleware_uses_shared_server_lock(): void
+    {
+        $job = new UpdateMinecraftInfrastructureJob(42, $this->operationId(3));
+
+        $middleware = $job->middleware();
+
+        $this->assertCount(1, $middleware);
+        $this->assertInstanceOf(WithoutOverlapping::class, $middleware[0]);
+        $this->assertSame('minecraft-server:42', $middleware[0]->key);
+        $this->assertTrue($middleware[0]->shareKey);
+    }
+
+    private function createMinecraftServer(array $attributes = []): MinecraftServer
+    {
+        $owner = User::factory()->create();
+
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
+            'status' => MinecraftServerStatus::Provisioning,
+            'last_error' => null,
+            'operation_id' => $this->operationId(4),
+        ], $attributes));
     }
 }

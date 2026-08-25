@@ -13,6 +13,7 @@ spec:
       labels:
         app: redis
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: redis
         image: redis:7
@@ -23,6 +24,13 @@ spec:
           - ""
           - --appendonly
           - "no"
+          - --aclfile
+          - /etc/redis/users.acl
+        volumeMounts:
+          - name: redis-acl
+            mountPath: /etc/redis/users.acl
+            subPath: users.acl
+            readOnly: true
         securityContext:
           runAsNonRoot: true
           runAsUser: 999
@@ -33,3 +41,8 @@ spec:
               - ALL
           seccompProfile:
             type: RuntimeDefault
+      
+      volumes:
+        - name: redis-acl
+          secret:
+            secretName: redis-acl

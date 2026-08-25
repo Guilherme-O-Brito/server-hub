@@ -63,6 +63,23 @@ class LoginTest extends TestCase
         $response->assertSessionHasErrors(['email', 'password']);
     }
 
+    public function test_login_is_throttled_after_five_attempts_for_the_same_email_and_ip(): void
+    {
+        $credentials = [
+            'email' => 'fake@email.com',
+            'password' => 'wrong-password',
+        ];
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->post('/login', $credentials)
+                ->assertRedirect()
+                ->assertSessionHasErrors('email');
+        }
+
+        $this->post('/login', $credentials)
+            ->assertTooManyRequests();
+    }
+
     public function test_authenticated_user_cannot_access_login_view()
     {
         $user = User::factory()->create();

@@ -19,6 +19,7 @@ class CreateExecutionSlotServiceJobTest extends TestCase
             'external_port' => 30000,
             'service_name' => 'server-service-1',
             'status' => ExecutionSlot::STATUS_PROVISIONING,
+            'operation_id' => $this->operationId(1),
         ]);
 
         $service = $this->createMock(ProvisioningService::class);
@@ -28,7 +29,10 @@ class CreateExecutionSlotServiceJobTest extends TestCase
                 return $passedSlot->is($executionSlot);
             }));
 
-        $job = new CreateExecutionSlotServiceJob($executionSlot->id);
+        $job = new CreateExecutionSlotServiceJob(
+            $executionSlot->id,
+            $executionSlot->operation_id,
+        );
 
         $job->handle($service);
     }
@@ -40,9 +44,13 @@ class CreateExecutionSlotServiceJobTest extends TestCase
             'external_port' => 30000,
             'service_name' => 'server-service-1',
             'status' => ExecutionSlot::STATUS_PROVISIONING,
+            'operation_id' => $this->operationId(1),
         ]);
 
-        $job = new CreateExecutionSlotServiceJob($executionSlot->id);
+        $job = new CreateExecutionSlotServiceJob(
+            $executionSlot->id,
+            $executionSlot->operation_id,
+        );
         $exception = new \RuntimeException('Provision failed');
 
         $job->failed($exception);

@@ -35,8 +35,13 @@ class CreateMinecraftWhitelistTest extends TestCase
 			'nickname' => 'Steve_01',
 		]);
 
+		$minecraftServer->refresh();
+		$this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+		$this->assertValidOperationId($minecraftServer->operation_id);
+
 		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-			return $job->serverId === $minecraftServer->id;
+			return $job->serverId === $minecraftServer->id
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 
@@ -238,7 +243,8 @@ class CreateMinecraftWhitelistTest extends TestCase
 		]);
 
 		Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
-			return $job->serverId === $minecraftServer->id;
+			return $job->serverId === $minecraftServer->id
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 

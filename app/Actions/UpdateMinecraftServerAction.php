@@ -7,26 +7,39 @@ use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
+use DB;
+use Illuminate\Support\Str;
 
 class UpdateMinecraftServerAction
 {
-    public function execute(User $user, MinecraftServer $server, array $data)
+    public function execute(User $user, MinecraftServer $minecraftServer, array $data)
     {   
-        if ($server->status !== MinecraftServerStatus::Stopped) {
-            throw new MinecraftServerStateException(
-                'Minecraft server is not stopped.'
-            );
-        }
+        DB::transaction(function () use ($user, $minecraftServer, $data) {
+            $server = MinecraftServer::query()->lockForUpdate()->findOrFail($minecraftServer->id);
 
-        $server->server_name = $data['server_name'];
-        $server->motd = $data['motd'] ?? "{$user->name}'s minecraft server";
-        $server->minecraft_version_id = $data['minecraft_version_id'];
-        $server->difficulty = $data['difficulty'];
-        $server->force_gamemode = $data['force_gamemode'];
-        $server->allow_flight = $data['allow_flight'];
+            if ($server->status !== MinecraftServerStatus::Stopped) {
+                throw new MinecraftServerStateException(
+                    'Minecraft server is not stopped.'
+                );
+            }
 
-        $server->save();
+            $operationId = (string) Str::uuid();
 
-        UpdateMinecraftInfrastructureJob::dispatch($server->id);
+            $server->update([
+                'server_name' => $data['server_name'],
+                'motd' => $data['motd'] ?? "{$user->name}'s minecraft server",
+                'minecraft_version_id' => $data['minecraft_version_id'],
+                'difficulty' => $data['difficulty'],
+                'force_gamemode' => $data['force_gamemode'],
+                'allow_flight' => $data['allow_flight'],
+                'status' => MinecraftServerStatus::Provisioning,
+                'operation_id' => $operationId,
+                'last_error' => null
+            ]);
+
+            DB::afterCommit(function () use ($server, $operationId) {
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
+            });
+        });
     }
 }

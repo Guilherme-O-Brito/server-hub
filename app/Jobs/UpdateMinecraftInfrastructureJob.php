@@ -5,19 +5,29 @@ namespace App\Jobs;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;
+use DB;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
-class UpdateMinecraftInfrastructureJob implements ShouldQueue
+class UpdateMinecraftInfrastructureJob implements ShouldQueue, ShouldBeEncrypted
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public int $serverId)
+    public function __construct(public int $serverId, public string $operationId)
     {
         //
+    }
+
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping("minecraft-server:{$this->serverId}"))->shared(),
+        ];
     }
 
     /**
@@ -25,20 +35,41 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue
      */
     public function handle(ProvisioningService $provisioningService): void
     {
-        $server = MinecraftServer::findOrFail($this->serverId);
+        $server = MinecraftServer::find($this->serverId);
+
+        if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
+            return;
+        }
 
         $provisioningService->updateMinecraftServer($server);
+
+        DB::transaction(function () {
+            $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
+
+            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
+                return;
+            }
+
+            $server->update([
+                'status' => MinecraftServerStatus::Stopped,
+                'last_error' => null
+            ]);
+        });
     }
 
     public function failed(\Throwable $exception): void
     {
-        $server = MinecraftServer::find($this->serverId);
+        DB::transaction(function () use ($exception) {
+            $server = MinecraftServer::query()->lockForUpdate()->find($this->serverId);
 
-        if ($server) {
+            if (! $server || $server->status !== MinecraftServerStatus::Provisioning || $server->operation_id !== $this->operationId) {
+                return;
+            }
+
             $server->update([
                 'status' => MinecraftServerStatus::Failed,
                 'last_error' => $exception->getMessage(),
             ]);
-        }
+        });
     }
 }

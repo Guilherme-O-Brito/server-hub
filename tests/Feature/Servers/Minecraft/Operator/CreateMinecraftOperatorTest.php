@@ -34,8 +34,13 @@ class CreateMinecraftOperatorTest extends TestCase
 			'nickname' => 'OwnerNick',
 		]);
 
+		$minecraftServer->refresh();
+		$this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
+		$this->assertValidOperationId($minecraftServer->operation_id);
+
 		Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
-			return $job->serverId === $minecraftServer->id;
+			return $job->serverId === $minecraftServer->id
+				&& $job->operationId === $minecraftServer->operation_id;
 		});
 	}
 

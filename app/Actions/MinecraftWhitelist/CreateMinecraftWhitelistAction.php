@@ -6,21 +6,37 @@ use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
+use DB;
+use Illuminate\Support\Str;
 
 class CreateMinecraftWhitelistAction
 {
     public function execute(MinecraftServer $minecraftServer, array $validated)
     {
-        if ($minecraftServer->status !== MinecraftServerStatus::Stopped) {
-            throw new MinecraftServerStateException(
-                'Minecraft server is not stopped.'
-            );
-        }
+        DB::transaction(function () use ($minecraftServer, $validated) {
+            $server = MinecraftServer::query()->lockForUpdate()->findOrFail($minecraftServer->id);    
 
-        $minecraftServer->whitelist()->create([
-            'nickname' => $validated['nickname']
-        ]);
+            if ($server->status !== MinecraftServerStatus::Stopped) {
+                throw new MinecraftServerStateException(
+                    'Minecraft server is not stopped.'
+                );
+            }
 
-        UpdateMinecraftInfrastructureJob::dispatch($minecraftServer->id);
+            $operationId = (string) Str::uuid();
+
+            $server->update([
+                'status' => MinecraftServerStatus::Provisioning,
+                'operation_id' => $operationId,
+                'last_error' => null
+            ]);
+
+            $server->whitelist()->create([
+                'nickname' => $validated['nickname']
+            ]);
+
+            DB::afterCommit(function () use ($server, $operationId) {
+                UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);
+            });
+        });
     }
 }

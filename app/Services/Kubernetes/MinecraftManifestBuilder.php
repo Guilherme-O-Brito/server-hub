@@ -92,6 +92,9 @@ public function pvc(MinecraftServer $minecraftServer): array
                     ],
 
                     'spec' => [
+
+                        'serviceAccountName' => 'minecraft-runtime',
+
                         'automountServiceAccountToken' => false,
 
                         'securityContext' => [

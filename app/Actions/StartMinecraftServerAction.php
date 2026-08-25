@@ -8,6 +8,7 @@ use App\Jobs\StartMinecraftServerJob;
 use App\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use DB;
+use Illuminate\Support\Str;
 
 class StartMinecraftServerAction
 {
@@ -29,11 +30,16 @@ class StartMinecraftServerAction
     
             $slot = $this->allocateExecutionSlotAction->execute($server);
 
-            $server->status = MinecraftServerStatus::Starting;
-            $server->save();
+            $operationId = (string) Str::uuid();
 
-            DB::afterCommit(function () use ($server, $slot) {
-                StartMinecraftServerJob::dispatch($server->id, $slot->id);
+            $server->update([
+                'status' => MinecraftServerStatus::Starting,
+                'operation_id' => $operationId,
+                'last_error' => null
+            ]);
+
+            DB::afterCommit(function () use ($server, $slot, $operationId) {
+                StartMinecraftServerJob::dispatch($server->id, $slot->id, $operationId);
             });
         });
 

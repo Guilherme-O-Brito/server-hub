@@ -1,0 +1,67 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+
+metadata:
+  name: server-hub-execution-slot-service
+
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - services
+
+  validations:
+
+    - expression: >
+        object.spec.type == 'NodePort'
+      message: "Only NodePort Services are allowed in games."
+
+    - expression: >
+        object.spec.selector.size() == 1 &&
+        'app' in object.spec.selector
+      message: "ExecutionSlot Services must contain only the app selector."
+
+    - expression: >
+        object.spec.ports.size() == 1 &&
+        object.spec.ports[0].protocol == 'TCP' &&
+        object.spec.ports[0].port == 25565 &&
+        object.spec.ports[0].targetPort == 25565
+      message: "ExecutionSlot Services may expose only TCP 25565."
+
+    - expression: >
+        object.spec.ports[0].nodePort >= 30000 &&
+        object.spec.ports[0].nodePort <= 32767
+      message: "ExecutionSlot NodePort is outside the allowed range."
+
+    - expression: >
+        !has(object.spec.externalIPs) ||
+        object.spec.externalIPs.size() == 0
+      message: "externalIPs are not allowed on ExecutionSlot Services."
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+
+metadata:
+  name: server-hub-execution-slot-service-games
+
+spec:
+  policyName: server-hub-execution-slot-service
+
+  validationActions:
+    - Deny
+    - Audit
+
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: games

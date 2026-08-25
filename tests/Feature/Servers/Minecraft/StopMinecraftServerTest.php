@@ -21,7 +21,10 @@ class StopMinecraftServerTest extends TestCase
         Queue::fake();
 
         $owner = User::factory()->create();
-        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner);
+        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner, [
+            'last_error' => 'previous error',
+            'operation_id' => $this->operationId(3),
+        ]);
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/stop");
 
@@ -32,12 +35,16 @@ class StopMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(3), $minecraftServer->operation_id);
+        $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
+                && $job->slotId === $executionSlot->id
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -47,7 +54,9 @@ class StopMinecraftServerTest extends TestCase
 
         $owner = User::factory()->create();
         $admin = User::factory()->create();
-        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner);
+        [$minecraftServer, $executionSlot] = $this->createRunningServerWithSlot($owner, [
+            'operation_id' => $this->operationId(7),
+        ]);
         $minecraftServer->admins()->attach($admin);
 
         $response = $this->actingAs($admin)->post("/servers/minecraft/{$minecraftServer->id}/stop");
@@ -59,12 +68,15 @@ class StopMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertValidOperationId($minecraftServer->operation_id);
+        $this->assertNotSame($this->operationId(7), $minecraftServer->operation_id);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
+                && $job->slotId === $executionSlot->id
+                && $job->operationId === $minecraftServer->operation_id;
         });
     }
 
@@ -89,8 +101,8 @@ class StopMinecraftServerTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    #[DataProvider('stoppableNonRunningServerStatuses')]
-    public function test_stop_accepts_servers_that_are_not_running(?MinecraftServerStatus $status): void
+    #[DataProvider('invalidServerStatuses')]
+    public function test_stop_rejects_servers_that_are_not_running(?MinecraftServerStatus $status): void
     {
         Queue::fake();
 
@@ -103,19 +115,16 @@ class StopMinecraftServerTest extends TestCase
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/stop");
 
-        $response->assertOk();
-        $response->assertJson(['message' => 'Minecraft server is stopping']);
+        $response->assertStatus(409);
+        $response->assertJson(['message' => 'Minecraft server is not running.']);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
-        $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertSame($status, $minecraftServer->status);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
-        Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
-            return $job->serverId === $minecraftServer->id
-                && $job->slotId === $executionSlot->id;
-        });
+        Queue::assertNothingPushed();
     }
 
     public function test_stop_rejects_running_server_without_execution_slot(): void
@@ -148,19 +157,25 @@ class StopMinecraftServerTest extends TestCase
 
         $firstResponse->assertOk();
         $secondResponse->assertStatus(409);
-        $secondResponse->assertJson(['message' => 'Minecraft server is already stopping.']);
+        $secondResponse->assertJson(['message' => 'Minecraft server is not running.']);
 
         $minecraftServer->refresh();
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
+        $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
+        Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
+            return $job->serverId === $minecraftServer->id
+                && $job->slotId === $executionSlot->id
+                && $job->operationId === $minecraftServer->operation_id;
+        });
         Queue::assertPushed(StopMinecraftServerJob::class, 1);
     }
 
-    public static function stoppableNonRunningServerStatuses(): array
+    public static function invalidServerStatuses(): array
     {
         return [
             'stopped' => [MinecraftServerStatus::Stopped],
@@ -174,9 +189,9 @@ class StopMinecraftServerTest extends TestCase
         ];
     }
 
-    private function createRunningServerWithSlot(User $owner): array
+    private function createRunningServerWithSlot(User $owner, array $attributes = []): array
     {
-        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running);
+        $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running, $attributes);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
             'status' => ExecutionSlot::STATUS_ALLOCATED,
@@ -185,15 +200,15 @@ class StopMinecraftServerTest extends TestCase
         return [$minecraftServer, $executionSlot];
     }
 
-    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status): MinecraftServer
+    private function createMinecraftServer(User $owner, ?MinecraftServerStatus $status, array $attributes = []): MinecraftServer
     {
-        return MinecraftServer::factory()->for($owner, 'owner')->create([
+        return MinecraftServer::factory()->for($owner, 'owner')->create(array_merge([
             'server_name' => 'Stop Server',
             'motd' => 'Stop motd',
             'difficulty' => 1,
             'force_gamemode' => true,
             'allow_flight' => false,
             'status' => $status,
-        ]);
+        ], $attributes));
     }
 }

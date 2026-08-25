@@ -1,0 +1,117 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+
+metadata:
+  name: server-hub-minecraft-configmap
+
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - configmaps
+
+  matchConditions:
+    - name: ignore-kubernetes-root-ca
+      expression: object.metadata.name != 'kube-root-ca.crt'
+
+  validations:
+
+    - expression: >
+        has(object.data) &&
+        object.data.size() == 20 &&
+        [
+          'EULA',
+          'MEMORY',
+          'VERSION',
+          'MAX_PLAYERS',
+          'MOTD',
+          'USE_AIKAR_FLAGS',
+          'USE_MEOWICE_FLAGS',
+          'TZ',
+          'DIFFICULTY',
+          'FORCE_GAMEMODE',
+          'SIMULATION_DISTANCE',
+          'VIEW_DISTANCE',
+          'ENABLE_WHITELIST',
+          'WHITELIST',
+          'OPS',
+          'PREVENT_PROXY_CONNECTIONS',
+          'PLAYER_IDLE_TIMEOUT',
+          'ALLOW_FLIGHT',
+          'ANNOUNCE_PLAYER_ACHIEVEMENTS',
+          'SERVER_NAME'
+        ].all(k, k in object.data)
+      message: "Minecraft ConfigMaps must contain exactly the approved environment keys."
+
+    - expression: >
+        object.data['EULA'] == 'TRUE' &&
+        object.data['MEMORY'] == '4096M' &&
+        object.data['MAX_PLAYERS'] == '10' &&
+        object.data['USE_AIKAR_FLAGS'] == 'true' &&
+        object.data['USE_MEOWICE_FLAGS'] == 'true' &&
+        object.data['TZ'] == 'America/Sao_Paulo' &&
+        object.data['SIMULATION_DISTANCE'] == '12' &&
+        object.data['VIEW_DISTANCE'] == '32' &&
+        object.data['ENABLE_WHITELIST'] == 'true' &&
+        object.data['PREVENT_PROXY_CONNECTIONS'] == 'true' &&
+        object.data['PLAYER_IDLE_TIMEOUT'] == '5' &&
+        object.data['ANNOUNCE_PLAYER_ACHIEVEMENTS'] == 'true'
+      message: "Fixed Minecraft environment settings may not be changed."
+
+    - expression: >
+        object.data['DIFFICULTY'] in
+          ['0', '1', '2', '3'] &&
+        object.data['FORCE_GAMEMODE'] in ['true', 'false'] &&
+        object.data['ALLOW_FLIGHT'] in ['true', 'false']
+      message: "Minecraft gameplay options contain an invalid value."
+
+    - expression: >
+        object.data['VERSION'].matches('^[A-Za-z0-9._+-]{1,32}$')
+      message: "Minecraft version contains invalid characters."
+
+    - expression: >
+        object.data['MOTD'].size() <= 256 &&
+        object.data['SERVER_NAME'].size() <= 64
+      message: "Minecraft MOTD or server name is too long."
+
+    - expression: >
+        object.data['WHITELIST'] == '' ||
+        object.data['WHITELIST'].matches(
+          '^([A-Za-z0-9_]{3,16})(,[A-Za-z0-9_]{3,16})*$'
+        )
+      message: "Minecraft whitelist has an invalid format."
+
+    - expression: >
+        object.data['OPS'] == '' ||
+        object.data['OPS'].matches(
+          '^([A-Za-z0-9_]{3,16})(,[A-Za-z0-9_]{3,16})*$'
+        )
+      message: "Minecraft operators have an invalid format."
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+
+metadata:
+  name: server-hub-minecraft-configmap-games
+
+spec:
+  policyName: server-hub-minecraft-configmap
+
+  validationActions:
+    - Deny
+    - Audit
+
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: games

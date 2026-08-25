@@ -23,7 +23,8 @@ class MinecraftServer extends Model
         'force_gamemode',
         'allow_flight',
         'status',
-        'last_error'
+        'last_error',
+        'operation_id'
     ];
     
     protected $guarded = ['id', 'owner_id'];
@@ -78,6 +79,7 @@ class MinecraftServer extends Model
             });
     }
 
+    // used to determine the access level of the user to this server
     public function accessRoleFor(User $user): ?string
     {
         if ($this->owner_id === $user->id) {
