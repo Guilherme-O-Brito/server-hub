@@ -62,7 +62,7 @@ spec:
         object.data['SIMULATION_DISTANCE'] == '12' &&
         object.data['VIEW_DISTANCE'] == '32' &&
         object.data['ENABLE_WHITELIST'] == 'true' &&
-        object.data['PREVENT_PROXY_CONNECTIONS'] == 'true' &&
+        object.data['PREVENT_PROXY_CONNECTIONS'] == 'false' &&
         object.data['PLAYER_IDLE_TIMEOUT'] == '5' &&
         object.data['ANNOUNCE_PLAYER_ACHIEVEMENTS'] == 'true'
       message: "Fixed Minecraft environment settings may not be changed."
