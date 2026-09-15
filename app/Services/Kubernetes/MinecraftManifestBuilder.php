@@ -55,7 +55,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                 'ENABLE_WHITELIST' => 'true',
                 'WHITELIST' => $minecraftServer->whitelist()->pluck('nickname')->implode(','),
                 'OPS' => $minecraftServer->operators()->pluck('nickname')->implode(','),
-                'PREVENT_PROXY_CONNECTIONS' => 'true',
+                'PREVENT_PROXY_CONNECTIONS' => 'false',
                 'PLAYER_IDLE_TIMEOUT' => '5',
                 'ALLOW_FLIGHT' => $minecraftServer->allow_flight ? 'true' : 'false',
                 'ANNOUNCE_PLAYER_ACHIEVEMENTS' => 'true',

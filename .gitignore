@@ -25,3 +25,4 @@ storage/telescope/
 storage/horizon/
 /minecraft
 .directory
+docker-compose.yml
