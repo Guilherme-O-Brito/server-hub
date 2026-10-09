@@ -34,16 +34,30 @@ spec:
         object.spec.replicas == 1
       message: "Minecraft Deployments may only have 0 or 1 replica."
 
-    # Apenas a label app usada pelo Builder.
+    # Somente as labels geradas pelo Builder, com valores fixos ou derivados do ID.
     - expression: >
         object.spec.selector.matchLabels.size() == 1 &&
         'app' in object.spec.selector.matchLabels &&
         has(object.spec.template.metadata.labels) &&
-        object.spec.template.metadata.labels.size() == 1 &&
-        'app' in object.spec.template.metadata.labels &&
+        object.spec.template.metadata.labels.size() == 6 &&
+        [
+          'app',
+          'app.kubernetes.io/name',
+          'app.kubernetes.io/managed-by',
+          'server-hub.io/server-id',
+          'server-hub.io/workload',
+          'server-hub.io/game'
+        ].all(k, k in object.spec.template.metadata.labels) &&
+        object.spec.template.metadata.labels['app.kubernetes.io/name'] == 'minecraft' &&
+        object.spec.template.metadata.labels['app.kubernetes.io/managed-by'] == 'server-hub' &&
+        object.spec.template.metadata.labels['server-hub.io/workload'] == 'game-server' &&
+        object.spec.template.metadata.labels['server-hub.io/game'] == 'minecraft' &&
+        object.spec.template.metadata.labels['server-hub.io/server-id'].matches('^[0-9]+$') &&
+        object.spec.template.metadata.labels['app'] ==
+        'minecraft-' + object.spec.template.metadata.labels['server-hub.io/server-id'] &&
         object.spec.selector.matchLabels['app'] ==
         object.spec.template.metadata.labels['app']
-      message: "Minecraft Deployment selectors must use only the expected app label."
+      message: "Minecraft Deployment labels and selectors must match the approved Builder format."
 
     # ServiceAccount conhecido e sem token.
     - expression: >
