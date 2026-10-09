@@ -41,14 +41,24 @@ class MinecraftManifestBuilderTest extends TestCase
         $configMap = $builder->server_env($minecraftServer);
         $deployment = $builder->deployment($minecraftServer);
 
+        $expectedLabels = [
+            'app.kubernetes.io/name' => 'minecraft',
+            'app.kubernetes.io/managed-by' => 'server-hub',
+            'server-hub.io/server-id' => (string) $minecraftServer->id,
+            'server-hub.io/workload' => 'game-server',
+            'server-hub.io/game' => 'minecraft',
+        ];
+
         $this->assertSame("minecraft-{$minecraftServer->id}-storage", $pvc['metadata']['name']);
         $this->assertSame('games', $pvc['metadata']['namespace']);
+        $this->assertSame($expectedLabels, $pvc['metadata']['labels']);
         $this->assertSame('local-path', $pvc['spec']['storageClassName']);
         $this->assertSame(['ReadWriteOnce'], $pvc['spec']['accessModes']);
         $this->assertSame('5Gi', $pvc['spec']['resources']['requests']['storage']);
 
         $this->assertSame("minecraft-env-{$minecraftServer->id}", $configMap['metadata']['name']);
         $this->assertSame('games', $configMap['metadata']['namespace']);
+        $this->assertSame($expectedLabels, $configMap['metadata']['labels']);
         $this->assertSame('Builder Server', $configMap['data']['SERVER_NAME']);
         $this->assertSame('Builder motd', $configMap['data']['MOTD']);
         $this->assertSame('1.20.1', $configMap['data']['VERSION']);
@@ -60,9 +70,13 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame('Deployment', $deployment['kind']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['metadata']['name']);
         $this->assertSame('games', $deployment['metadata']['namespace']);
+        $this->assertSame($expectedLabels, $deployment['metadata']['labels']);
         $this->assertSame(0, $deployment['spec']['replicas']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['selector']['matchLabels']['app']);
-        $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['spec']['template']['metadata']['labels']['app']);
+        $this->assertSame(
+            ['app' => "minecraft-{$minecraftServer->id}"] + $expectedLabels,
+            $deployment['spec']['template']['metadata']['labels']
+        );
         $this->assertSame("minecraft-env-{$minecraftServer->id}", $deployment['spec']['template']['spec']['containers'][0]['envFrom'][0]['configMapRef']['name']);
         $this->assertSame("minecraft-{$minecraftServer->id}-storage", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
         $this->assertSame(25565, $deployment['spec']['template']['spec']['containers'][0]['ports'][0]['containerPort']);
