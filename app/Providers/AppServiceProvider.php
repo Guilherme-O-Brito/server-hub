@@ -31,12 +31,12 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             $email = Str::lower(trim((string) $request->input('email')));
+            $ip = (string) $request->ip();
 
-            $cfIp = trim((string) $request->header('CF-Connecting-IP'));
-
-            $ip = filter_var($cfIp, FILTER_VALIDATE_IP) ? $cfIp : $request->ip();
-
-            return Limit::perMinute(5)->by($email.'|'.$ip);
+            return [
+                Limit::perMinute(5)->by('login-email:'.$email),
+                Limit::perMinute(5)->by('login-ip:'.$ip),
+            ];
         });
     }
 }

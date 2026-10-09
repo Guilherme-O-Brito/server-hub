@@ -7,7 +7,19 @@ use App\Models\MinecraftServer;
 class MinecraftManifestBuilder
 {
     
-public function pvc(MinecraftServer $minecraftServer): array
+    private function labels(MinecraftServer $minecraftServer): array
+    {
+        return [
+            'app.kubernetes.io/name' => 'minecraft',
+            'app.kubernetes.io/managed-by' => 'server-hub',
+
+            'server-hub.io/server-id' => (string) $minecraftServer->id,
+            'server-hub.io/workload' => 'game-server',
+            'server-hub.io/game' => 'minecraft',
+        ];
+    }
+
+    public function pvc(MinecraftServer $minecraftServer): array
     {
         return [
             'apiVersion' => 'v1',
@@ -15,6 +27,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'metadata' => [
                 'name' => $minecraftServer->getStorageName(),
                 'namespace' => 'games',
+                'labels' => $this->labels($minecraftServer),
             ],
             'spec' => [
                 'storageClassName' => 'local-path',
@@ -37,7 +50,8 @@ public function pvc(MinecraftServer $minecraftServer): array
             'kind' => 'ConfigMap',
             'metadata' => [
                 'name' => $minecraftServer->getEnvName(),
-                'namespace' => 'games'
+                'namespace' => 'games',
+                'labels' => $this->labels($minecraftServer),
             ],
             'data' => [
                 'EULA' => 'TRUE',
@@ -73,6 +87,7 @@ public function pvc(MinecraftServer $minecraftServer): array
             'metadata' => [
                 'name' => $minecraftServer->getDeployName(),
                 'namespace' => 'games',
+                'labels' => $this->labels($minecraftServer),
             ],
 
             'spec' => [
@@ -88,7 +103,7 @@ public function pvc(MinecraftServer $minecraftServer): array
                     'metadata' => [
                         'labels' => [
                             'app' => $minecraftServer->getDeployName(),
-                        ],
+                        ] + $this->labels($minecraftServer),
                     ],
 
                     'spec' => [

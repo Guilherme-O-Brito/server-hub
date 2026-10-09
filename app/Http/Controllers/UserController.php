@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use Illuminate\Validation\Rule;
+use Str;
 
 class UserController extends Controller
 {
@@ -107,6 +108,7 @@ class UserController extends Controller
             DB::table('sessions')
                 ->where('user_id', $user->id)
                 ->delete();
+            $user->setRememberToken(Str::random(60));
         }
         $user->is_admin = $validated['is_admin'];
 
