@@ -103,8 +103,7 @@ class MinecraftManifestBuilder
                     'metadata' => [
                         'labels' => [
                             'app' => $minecraftServer->getDeployName(),
-                        ],
-                        $this->labels($minecraftServer),
+                        ] + $this->labels($minecraftServer),
                     ],
 
                     'spec' => [
