@@ -9,6 +9,7 @@ data:
   APP_ENV: "local"
   APP_DEBUG: "false"
   APP_URL: "https://<your.domain.com>"
+  TRUSTED_PROXIES: "10.42.0.0/16"
 
   APP_LOCALE: "pt_BR"
   APP_FALLBACK_LOCALE: "en"
