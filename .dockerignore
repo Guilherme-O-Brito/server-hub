@@ -2,6 +2,7 @@
 .github
 .gitignore
 .gitattributes
+.agents/
 
 .env
 .env.*
