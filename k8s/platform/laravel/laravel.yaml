@@ -22,7 +22,7 @@ spec:
         fsGroupChangePolicy: "OnRootMismatch"
       initContainers:
         - name: laravel-storage-init
-          image: ghcr.io/guilherme-o-brito/server-hub:0.0.1
+          image: ghcr.io/guilherme-o-brito/server-hub:latest
           command:
             - /bin/sh
             - -c 
@@ -48,7 +48,7 @@ spec:
             
       containers:
         - name: laravel
-          image: ghcr.io/guilherme-o-brito/server-hub:0.0.1
+          image: ghcr.io/guilherme-o-brito/server-hub:latest
           envFrom:
             - configMapRef:
                 name: laravel-env
