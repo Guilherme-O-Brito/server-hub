@@ -192,7 +192,7 @@
                         <button
                             type="button"
                             class="h-11 cursor-pointer rounded-xl bg-red-700 px-5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="server?.accessRole !== 'owner' || server?.status !== 'stopped' || isSubmitting"
+                            :disabled="server?.accessRole !== 'owner' || isSubmitting"
                             :title="server?.accessRole !== 'owner'
                                 ? 'Apenas o dono pode excluir o servidor'
                                 : 'Excluir servidor'"
