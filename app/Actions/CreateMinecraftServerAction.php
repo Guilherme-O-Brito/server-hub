@@ -15,6 +15,7 @@ class CreateMinecraftServerAction
         $motd = $data['motd'] ?? "{$user->name}'s minecraft server";
         $force_gamemode = $data['force_gamemode'];
         $allow_flight = $data['allow_flight'];
+        $seed = $data['seed'] ?? null;
         $operationId = (string) Str::uuid();
 
         $server = $user->ownedMinecraftServers()->create([
@@ -22,6 +23,7 @@ class CreateMinecraftServerAction
             'motd' => $motd,
             'difficulty' => $data['difficulty'],
             'minecraft_version_id' => $data['minecraft_version_id'],
+            'seed' => $seed,
             'force_gamemode' => $force_gamemode,
             'allow_flight' => $allow_flight,
             'status' => MinecraftServerStatus::Provisioning,
