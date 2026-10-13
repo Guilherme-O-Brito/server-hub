@@ -7,6 +7,7 @@ use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 use App\Models\User;
 
@@ -48,6 +49,7 @@ class CreateMinecraftServerTest extends TestCase
 			'minecraft_version_id' => $minecraftVersion->id,
 			'force_gamemode' => true,
 			'allow_flight' => false,
+			'seed' => null,
 		]);
 
 		$this->assertTrue($minecraftServer->version->is($minecraftVersion));
@@ -57,6 +59,42 @@ class CreateMinecraftServerTest extends TestCase
 			return $job->serverId === $minecraftServer->id
 				&& $job->operationId === $minecraftServer->operation_id;
 		});
+	}
+
+	#[DataProvider('validSeeds')]
+	public function test_authenticated_user_can_create_minecraft_server_with_seed(string $seed): void
+	{
+		Queue::fake();
+
+		$user = User::factory()->create();
+		$minecraftVersion = MinecraftVersion::factory()->enabled()->create();
+
+		$response = $this->actingAs($user)->post('/servers/minecraft', [
+			'server_name' => 'Seeded Server',
+			'difficulty' => 1,
+			'minecraft_version_id' => $minecraftVersion->id,
+			'force_gamemode' => true,
+			'allow_flight' => false,
+			'seed' => $seed,
+		]);
+
+		$response->assertCreated();
+
+		$this->assertDatabaseHas('minecraft_servers', [
+			'owner_id' => $user->id,
+			'server_name' => 'Seeded Server',
+			'seed' => $seed,
+		]);
+	}
+
+	public static function validSeeds(): array
+	{
+		return [
+			'positive integer seed' => ['123456789'],
+			'negative integer seed' => ['-987654321'],
+			'single word seed' => ['Creeper'],
+			'short phrase seed' => ['Blue moon valley'],
+		];
 	}
 
 	public function test_guest_cannot_create_minecraft_server()
