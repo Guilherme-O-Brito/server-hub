@@ -6,6 +6,7 @@ use App\Actions\ExecutionSlot\CreateExecutionSlotAction;
 use App\Actions\ExecutionSlot\DeleteExecutionSlotAction;
 use App\Exceptions\ExecutionSlotStateException;
 use App\Models\ExecutionSlot;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class ExecutionSlotController extends Controller
@@ -49,6 +50,8 @@ class ExecutionSlotController extends Controller
         
         try {
             $action->execute();
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Não há slots de execução para excluir.'], 404);
         } catch (ExecutionSlotStateException $e) {
             return response()->json(['message' => $e->getMessage()], $e->statusCode());
         }

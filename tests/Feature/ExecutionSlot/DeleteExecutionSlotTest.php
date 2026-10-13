@@ -66,6 +66,18 @@ class DeleteExecutionSlotTest extends TestCase
 		$this->assertDatabaseCount('execution_slots', 0);
 	}
 
+	public function test_delete_returns_a_json_message_when_no_execution_slots_exist()
+	{
+		$admin = User::factory()->create(['is_admin' => true]);
+
+		$response = $this->actingAs($admin)->delete('/execution-slot');
+
+		$response->assertNotFound();
+		$response->assertExactJson([
+			'message' => 'Não há slots de execução para excluir.',
+		]);
+	}
+
 	public function test_admin_cannot_delete_occupied_last_execution_slot()
 	{
 		Queue::fake();
