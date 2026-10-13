@@ -163,6 +163,29 @@
 
                             <label class="block sm:col-span-2">
                                 <span class="mb-2 block text-sm font-semibold text-gray-700">
+                                    Seed
+                                    <span class="font-normal text-gray-500">(opcional)</span>
+                                </span>
+                                <input
+                                    v-model.trim="form.seed"
+                                    type="text"
+                                    name="seed"
+                                    maxlength="256"
+                                    placeholder="Informe a seed do mundo"
+                                    class="h-11 w-full rounded-xl border bg-gray-100 px-4 text-sm text-gray-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-purple-100"
+                                    :class="fieldError('seed') ? 'border-red-600' : 'border-gray-200 focus:border-purple-600'"
+                                    :disabled="isSubmitting"
+                                />
+                                <span
+                                    v-if="fieldError('seed')"
+                                    class="mt-1 block text-xs font-medium text-red-600"
+                                >
+                                    {{ fieldError('seed') }}
+                                </span>
+                            </label>
+
+                            <label class="block sm:col-span-2">
+                                <span class="mb-2 block text-sm font-semibold text-gray-700">
                                     Mensagem do servidor
                                     <span class="font-normal text-gray-500">(opcional)</span>
                                 </span>
@@ -344,6 +367,7 @@ let previousBodyOverflow = '';
 const form = reactive({
     game: 'minecraft',
     serverName: '',
+    seed: '',
     motd: '',
     difficulty: '2',
     minecraftVersionId: '',
@@ -381,6 +405,7 @@ const resetForm = () => {
     Object.assign(form, {
         game: 'minecraft',
         serverName: '',
+        seed: '',
         motd: '',
         difficulty: '2',
         minecraftVersionId: '',
@@ -424,6 +449,7 @@ const requestClose = () => {
 
 const submitMinecraft = () => createMinecraftServer({
     server_name: form.serverName,
+    seed: form.seed || null,
     motd: form.motd || null,
     difficulty: Number(form.difficulty),
     minecraft_version_id: Number(form.minecraftVersionId),
