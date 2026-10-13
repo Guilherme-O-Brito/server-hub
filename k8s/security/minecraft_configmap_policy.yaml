@@ -27,7 +27,7 @@ spec:
 
     - expression: >
         has(object.data) &&
-        object.data.size() == 20 &&
+        object.data.size() == 21 &&
         [
           'EULA',
           'MEMORY',
@@ -48,7 +48,8 @@ spec:
           'PLAYER_IDLE_TIMEOUT',
           'ALLOW_FLIGHT',
           'ANNOUNCE_PLAYER_ACHIEVEMENTS',
-          'SERVER_NAME'
+          'SERVER_NAME',
+          'SEED'
         ].all(k, k in object.data)
       message: "Minecraft ConfigMaps must contain exactly the approved environment keys."
 
