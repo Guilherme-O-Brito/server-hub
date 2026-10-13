@@ -22,17 +22,17 @@ class ExecutionSlotController extends Controller
             'server_id',
             'server_type',
         ])
-            ->with([
-                'server:id,server_name,owner_id',
-                'server.owner:id,name',
-            ])
-            ->orderBy('slot_number')
-            ->get()
-            ->each(function (ExecutionSlot $execution_slot) {
-                $execution_slot->makeHidden('server_id');
-                $execution_slot->server?->makeHidden(['id', 'owner_id']);
-                $execution_slot->server?->owner?->makeHidden('id');
-            });
+        ->with([
+            'server:id,server_name,owner_id',
+            'server.owner:id,name',
+        ])
+        ->orderBy('slot_number')
+        ->get()
+        ->each(function (ExecutionSlot $execution_slot) {
+            $execution_slot->makeHidden('server_id');
+            $execution_slot->server?->makeHidden(['id', 'owner_id']);
+            $execution_slot->server?->owner?->makeHidden('id');
+        });
 
         return response()->json($execution_slots);
     }
