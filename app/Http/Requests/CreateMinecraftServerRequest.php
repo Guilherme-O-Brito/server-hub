@@ -5,9 +5,8 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use SebastianBergmann\Type\TrueType;
 
-class MinecraftServerRequest extends FormRequest
+class CreateMinecraftServerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +31,8 @@ class MinecraftServerRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('minecraft_versions', 'id')->where('is_enabled', true),
-            ],  
+            ],
+            'seed' => ['nullable', 'max:256', 'string'],  
             'force_gamemode' => ['boolean', 'required'],
             'allow_flight' => ['boolean', 'required']    
         ];

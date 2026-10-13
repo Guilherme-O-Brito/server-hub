@@ -9,7 +9,8 @@ use App\Actions\StopMinecraftServerAction;
 use App\Actions\UpdateMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
-use App\Http\Requests\MinecraftServerRequest;
+use App\Http\Requests\CreateMinecraftServerRequest;
+use App\Http\Requests\UpdateMinecraftServerRequest;
 use App\Models\MinecraftServer;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
@@ -82,10 +83,7 @@ class MinecraftServerController extends Controller
         return response()->json($minecraftServer);
     }
 
-    public function create(
-        MinecraftServerRequest $request,
-        CreateMinecraftServerAction $action
-    ) {
+    public function create(CreateMinecraftServerRequest $request, CreateMinecraftServerAction $action) {
         $validated = $request->validated();
 
         $user = auth()->user();
@@ -96,7 +94,7 @@ class MinecraftServerController extends Controller
 
     }
 
-    public function update(MinecraftServerRequest $request, MinecraftServer $minecraftServer, UpdateMinecraftServerAction $action)
+    public function update(UpdateMinecraftServerRequest $request, MinecraftServer $minecraftServer, UpdateMinecraftServerAction $action)
     {
         if ($request->user()->cannot('update', $minecraftServer)) {
             abort(403);

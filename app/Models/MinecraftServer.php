@@ -24,7 +24,8 @@ class MinecraftServer extends Model
         'allow_flight',
         'status',
         'last_error',
-        'operation_id'
+        'operation_id',
+        'seed'
     ];
     
     protected $guarded = ['id', 'owner_id'];

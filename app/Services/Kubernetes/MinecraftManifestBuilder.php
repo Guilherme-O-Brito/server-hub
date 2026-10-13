@@ -73,7 +73,8 @@ class MinecraftManifestBuilder
                 'PLAYER_IDLE_TIMEOUT' => '5',
                 'ALLOW_FLIGHT' => $minecraftServer->allow_flight ? 'true' : 'false',
                 'ANNOUNCE_PLAYER_ACHIEVEMENTS' => 'true',
-                'SERVER_NAME' => "$minecraftServer->server_name"
+                'SERVER_NAME' => "$minecraftServer->server_name",
+                'SEED' => "$minecraftServer->seed"
             ]
         ];
     }
