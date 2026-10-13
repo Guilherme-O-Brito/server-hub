@@ -7,11 +7,11 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('imgs/logo/Logo server-hub2.svg') }}">
     @routes
     @auth
-        <div id="authUser" data-auth-user=@json([
+        <div id="authUser" data-auth-user='@json([
                 "id" => Auth::user()->id,
                 "name" => Auth::user()->name,
                 "email" => Auth::user()->email
-            ], JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)>
+            ], JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)'>
         </div>
     @endauth
     @vite(['resources/css/app.css'])
