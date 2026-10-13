@@ -195,9 +195,7 @@
                             :disabled="server?.accessRole !== 'owner' || server?.status !== 'stopped' || isSubmitting"
                             :title="server?.accessRole !== 'owner'
                                 ? 'Apenas o dono pode excluir o servidor'
-                                : server?.status === 'stopped'
-                                    ? 'Excluir servidor'
-                                    : 'O servidor deve estar parado'"
+                                : 'Excluir servidor'"
                             @click="$emit('request-delete')"
                         >
                             Deletar Servidor
