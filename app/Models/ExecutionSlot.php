@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\ExecutionSlotStateException;
+use App\enums\ExecutionSlotStatus;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,14 +14,8 @@ class ExecutionSlot extends Model
     /** @use HasFactory<\Database\Factories\ExecutionSlotFactory> */
     use HasFactory;
 
-    public const string STATUS_FREE = 'free';
-    public const string STATUS_PROVISIONING = 'provisioning';
-    public const string STATUS_DELETING = 'deleting';
-    public const string STATUS_ALLOCATED = 'allocated';
-    public const string STATUS_FAILED = 'failed';
-
     protected $attributes = [
-        'status' => self::STATUS_FREE,
+        'status' => ExecutionSlotStatus::Free,
     ];
 
     protected $fillable = [
@@ -36,6 +31,7 @@ class ExecutionSlot extends Model
     protected $casts = [
         'slot_number' => 'integer',
         'external_port' => 'integer',
+        'status' => ExecutionSlotStatus::class,
     ];
 
     public function server(): MorphTo
@@ -45,17 +41,17 @@ class ExecutionSlot extends Model
 
     public function isOccupied(): bool
     {
-        return $this->status !== ExecutionSlot::STATUS_FREE;
+        return $this->status !== ExecutionSlotStatus::Free;
     }
 
     public function isAvailable(): bool
     {
-        return $this->status === ExecutionSlot::STATUS_FREE;
+        return $this->status === ExecutionSlotStatus::Free;
     }
 
     public function isAllocatedTo(Model $server): bool
     {
-        return $this->status === self::STATUS_ALLOCATED
+        return $this->status === ExecutionSlotStatus::Allocated
             && $this->server_type === $server->getMorphClass()
             && (int) $this->server_id === (int) $server->getKey();
     }
@@ -63,7 +59,7 @@ class ExecutionSlot extends Model
     public function release(Model $server): bool // this method must run inside a db transaction with lockForUpdate
     {
 
-        /*if ($this->status !== self::STATUS_ALLOCATED) {
+        /*if ($this->status !== ExecutionSlotStatus::Allocated) {
             throw new ExecutionSlotStateException('Execution slot is not allocated.');
         }*/
 
@@ -73,7 +69,7 @@ class ExecutionSlot extends Model
 
         $this->server()->dissociate();
 
-        $this->status = self::STATUS_FREE;
+        $this->status = ExecutionSlotStatus::Free;
 
         $this->save();
 
