@@ -3,7 +3,7 @@
 namespace Tests\Feature\Servers\Minecraft\Operator;
 
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

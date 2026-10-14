@@ -3,6 +3,7 @@
 namespace Tests\Feature\ExecutionSlot;
 
 use App\Jobs\ExecutionSlot\CreateExecutionSlotServiceJob;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,7 +38,7 @@ class CreateExecutionSlotTest extends TestCase
 			'external_port' => 30000,
 			'service_name' => 'server-service-1',
 			'hostname' => 'sv1.server-hub.test',
-			'status' => ExecutionSlot::STATUS_PROVISIONING,
+			'status' => ExecutionSlotStatus::Provisioning,
 			'server_id' => null,
 			'server_type' => null,
 		]);
@@ -80,7 +81,7 @@ class CreateExecutionSlotTest extends TestCase
 			'external_port' => 30003,
 			'service_name' => 'server-service-4',
 			'hostname' => 'sv4.server-hub.test',
-			'status' => ExecutionSlot::STATUS_PROVISIONING,
+			'status' => ExecutionSlotStatus::Provisioning,
 		]);
 		$this->assertDatabaseCount('execution_slots', 3);
 

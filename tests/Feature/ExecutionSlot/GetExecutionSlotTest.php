@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\ExecutionSlot;
 
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -38,7 +39,7 @@ class GetExecutionSlotTest extends TestCase
 			[
 				'id' => $firstSlot->id,
 				'slot_number' => 1,
-				'status' => ExecutionSlot::STATUS_FREE,
+				'status' => ExecutionSlotStatus::Free,
 				'hostname' => 'sv1.server-hub.test',
 				'external_port' => 30000,
 				'service_name' => 'server-service-1',
@@ -48,7 +49,7 @@ class GetExecutionSlotTest extends TestCase
 			[
 				'id' => $secondSlot->id,
 				'slot_number' => 2,
-				'status' => ExecutionSlot::STATUS_FREE,
+				'status' => ExecutionSlotStatus::Free,
 				'hostname' => 'sv2.server-hub.test',
 				'external_port' => 30001,
 				'service_name' => 'server-service-2',
@@ -79,7 +80,7 @@ class GetExecutionSlotTest extends TestCase
 			[
 				'id' => $slot->id,
 				'slot_number' => 1,
-				'status' => ExecutionSlot::STATUS_ALLOCATED,
+				'status' => ExecutionSlotStatus::Allocated,
 				'hostname' => 'sv1.server-hub.test',
 				'external_port' => 30000,
 				'service_name' => 'server-service-1',

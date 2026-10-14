@@ -7,7 +7,8 @@ use App\Actions\StartMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
 use App\Jobs\StartMinecraftServerJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -31,7 +32,7 @@ class StartMinecraftServerActionTest extends TestCase
         ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
         ]);
 
         $result = (new StartMinecraftServerAction(new AllocateExecutionSlotAction()))->execute($minecraftServer);
@@ -44,7 +45,7 @@ class StartMinecraftServerActionTest extends TestCase
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
@@ -64,7 +65,7 @@ class StartMinecraftServerActionTest extends TestCase
         ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
         ]);
 
         $allocateAction = $this->createMock(AllocateExecutionSlotAction::class);
@@ -99,7 +100,7 @@ class StartMinecraftServerActionTest extends TestCase
         ]);
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
         ]);
 
         try {
@@ -115,7 +116,7 @@ class StartMinecraftServerActionTest extends TestCase
 
         $this->assertSame($status, $minecraftServer->status);
         $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->status);
         $this->assertNull($executionSlot->server_id);
         $this->assertNull($executionSlot->server_type);
         Queue::assertNothingPushed();

@@ -5,7 +5,7 @@ namespace Tests\Unit\Actions;
 use App\Actions\UpdateMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;

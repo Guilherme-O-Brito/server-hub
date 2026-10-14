@@ -2,6 +2,7 @@
 
 namespace App\Actions\ExecutionSlot;
 
+use App\enums\ExecutionSlotStatus;
 use App\Jobs\ExecutionSlot\CreateExecutionSlotServiceJob;
 use App\Models\ExecutionSlot;
 use DB;
@@ -24,7 +25,7 @@ class CreateExecutionSlotAction
                 'slot_number' => $slot_number,
                 'external_port' => $external_port,
                 'service_name' => $service_name,
-                'status' => ExecutionSlot::STATUS_PROVISIONING,
+                'status' => ExecutionSlotStatus::Provisioning,
                 'hostname' => $hostname,
                 'operation_id' => $operationId
             ]);

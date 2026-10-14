@@ -5,7 +5,7 @@ namespace App\Actions;
 use App\Actions\ExecutionSlot\AllocateExecutionSlotAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\StartMinecraftServerJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use DB;
 use Illuminate\Support\Str;

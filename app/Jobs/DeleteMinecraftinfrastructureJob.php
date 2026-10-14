@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;

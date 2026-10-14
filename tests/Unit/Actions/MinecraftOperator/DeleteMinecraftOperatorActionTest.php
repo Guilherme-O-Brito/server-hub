@@ -5,7 +5,7 @@ namespace Tests\Unit\Actions\MinecraftOperator;
 use App\Actions\MinecraftOperator\DeleteMinecraftOperatorAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

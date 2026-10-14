@@ -4,7 +4,7 @@ namespace App\Actions\MinecraftWhitelist;
 
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftWhitelist;
 use DB;

@@ -3,7 +3,7 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\CreateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use App\Services\Kubernetes\ProvisioningService;

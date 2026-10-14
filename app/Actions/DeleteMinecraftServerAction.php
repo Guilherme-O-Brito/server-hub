@@ -4,7 +4,7 @@ namespace App\Actions;
 
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\DeleteMinecraftinfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use DB;

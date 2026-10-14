@@ -3,11 +3,14 @@
 namespace Tests\Unit\Actions\ExecutionSlot;
 
 use App\Actions\ExecutionSlot\DeleteExecutionSlotAction;
+use App\Events\ExecutionSlotStatusChanged;
 use App\Exceptions\ExecutionSlotStateException;
 use App\Jobs\ExecutionSlot\DeleteExecutionSlotServiceJob;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
@@ -19,6 +22,7 @@ class DeleteExecutionSlotActionTest extends TestCase
     public function test_execute_marks_slot_as_deleting_and_dispatches_job(): void
     {
         Queue::fake();
+        Event::fake();
 
         $executionSlot = ExecutionSlot::factory()->create([
             'slot_number' => 1,
@@ -28,25 +32,30 @@ class DeleteExecutionSlotActionTest extends TestCase
 
         $action = new DeleteExecutionSlotAction();
 
-        $action->execute($executionSlot);
+        $action->execute();
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_DELETING, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Deleting, $executionSlot->status);
         $this->assertValidOperationId($executionSlot->operation_id);
         $this->assertDatabaseHas('execution_slots', [
             'id' => $executionSlot->id,
-            'status' => ExecutionSlot::STATUS_DELETING,
+            'status' => ExecutionSlotStatus::Deleting,
         ]);
 
         Queue::assertPushed(DeleteExecutionSlotServiceJob::class, function (DeleteExecutionSlotServiceJob $job) use ($executionSlot) {
             return $job->slotId === $executionSlot->id
                 && $job->operationId === $executionSlot->operation_id;
         });
+        Event::assertDispatched(ExecutionSlotStatusChanged::class, function (ExecutionSlotStatusChanged $event) use ($executionSlot) {
+            return $event->slot->is($executionSlot)
+                && $event->slot->status === ExecutionSlotStatus::Deleting;
+        });
+        Event::assertDispatchedTimes(ExecutionSlotStatusChanged::class, 1);
     }
 
     #[DataProvider('invalidSlotStatuses')]
-    public function test_execute_rejects_invalid_slot_statuses_without_dispatching_job(string $status): void
+    public function test_execute_rejects_invalid_slot_statuses_without_dispatching_job(ExecutionSlotStatus $status): void
     {
         Queue::fake();
 
@@ -78,7 +87,7 @@ class DeleteExecutionSlotActionTest extends TestCase
             'slot_number' => 1,
             'external_port' => 30000,
             'service_name' => 'server-service-1',
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
         ]);
 
         ExecutionSlot::updated(function () {
@@ -96,10 +105,10 @@ class DeleteExecutionSlotActionTest extends TestCase
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->status);
         $this->assertDatabaseHas('execution_slots', [
             'id' => $executionSlot->id,
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
         ]);
         Queue::assertNothingPushed();
     }
@@ -107,10 +116,10 @@ class DeleteExecutionSlotActionTest extends TestCase
     public static function invalidSlotStatuses(): array
     {
         return [
-            'provisioning' => [ExecutionSlot::STATUS_PROVISIONING],
-            'deleting' => [ExecutionSlot::STATUS_DELETING],
-            'allocated' => [ExecutionSlot::STATUS_ALLOCATED],
-            'failed' => [ExecutionSlot::STATUS_FAILED],
+            'provisioning' => [ExecutionSlotStatus::Provisioning],
+            'deleting' => [ExecutionSlotStatus::Deleting],
+            'allocated' => [ExecutionSlotStatus::Allocated],
+            'failed' => [ExecutionSlotStatus::Failed],
         ];
     }
 }

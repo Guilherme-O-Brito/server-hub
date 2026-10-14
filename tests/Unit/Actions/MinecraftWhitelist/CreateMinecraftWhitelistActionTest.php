@@ -5,7 +5,7 @@ namespace Tests\Unit\Actions\MinecraftWhitelist;
 use App\Actions\MinecraftWhitelist\CreateMinecraftWhitelistAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

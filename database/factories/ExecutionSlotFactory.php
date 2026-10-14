@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,7 +25,7 @@ class ExecutionSlotFactory extends Factory
             'slot_number' => $slot_number,
             'external_port' => $this->faker->unique()->numberBetween(30000,31000),
             'service_name' => 'server-service-'.$slot_number,
-            'status' => ExecutionSlot::STATUS_FREE,
+            'status' => ExecutionSlotStatus::Free,
             'server_id' => null,
             'server_type' => null,
             'hostname' => ExecutionSlot::generateHostname($slot_number),
@@ -36,7 +37,7 @@ class ExecutionSlotFactory extends Factory
         return $this->state(fn () => [
             'server_type' => $server->getMorphClass(),
             'server_id' => $server->id,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
     }
 }

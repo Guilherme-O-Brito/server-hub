@@ -3,7 +3,8 @@
 namespace Tests\Feature\Servers\Minecraft;
 
 use App\Jobs\StopMinecraftServerJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -38,7 +39,7 @@ class StopMinecraftServerTest extends TestCase
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(3), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
@@ -70,7 +71,7 @@ class StopMinecraftServerTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(7), $minecraftServer->operation_id);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
@@ -96,7 +97,7 @@ class StopMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Running, $minecraftServer->status);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
         Queue::assertNothingPushed();
     }
@@ -110,7 +111,7 @@ class StopMinecraftServerTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, $status);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/stop");
@@ -122,7 +123,7 @@ class StopMinecraftServerTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
         Queue::assertNothingPushed();
     }
@@ -164,7 +165,7 @@ class StopMinecraftServerTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
         $this->assertValidOperationId($minecraftServer->operation_id);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
@@ -194,7 +195,7 @@ class StopMinecraftServerTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running, $attributes);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         return [$minecraftServer, $executionSlot];

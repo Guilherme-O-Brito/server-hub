@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ExecutionSlotStatusChanged;
 use App\Exceptions\ExecutionSlotStateException;
 use App\enums\ExecutionSlotStatus;
 use DB;
@@ -69,13 +70,24 @@ class ExecutionSlot extends Model
 
         $this->server()->dissociate();
 
-        $this->status = ExecutionSlotStatus::Free;
-
-        $this->save();
+        $this->updateStatus(ExecutionSlotStatus::Free);
 
         return true;
     }
-    
+
+    /**
+     * Used to centralize status changes on Execution Slots and to guarantee the correct dispatch of its event
+     * @param ExecutionSlotStatus $status
+     * @return void
+     */
+    public function updateStatus(ExecutionSlotStatus $status) 
+    {
+        $this->status = $status;
+        $this->save();
+
+        ExecutionSlotStatusChanged::dispatch($this);
+    }
+
     public static function generateHostname(int $slot_number): string 
     {
         // generate the slot hostname based on the app.url config and the slot_number

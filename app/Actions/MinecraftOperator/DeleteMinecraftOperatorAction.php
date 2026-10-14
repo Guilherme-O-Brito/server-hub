@@ -4,7 +4,7 @@ namespace App\Actions\MinecraftOperator;
 
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftOperator;
 use App\Models\MinecraftServer;
 use DB;

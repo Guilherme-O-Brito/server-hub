@@ -2,7 +2,8 @@
 
 namespace Tests\Unit\Services\Kubernetes;
 
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -240,7 +241,7 @@ class ProvisioningServiceTest extends TestCase
             'slot_number' => 1,
             'external_port' => 30000,
             'service_name' => 'server-service-1',
-            'status' => ExecutionSlot::STATUS_PROVISIONING,
+            'status' => ExecutionSlotStatus::Provisioning,
         ]);
 
         $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);
@@ -265,7 +266,7 @@ class ProvisioningServiceTest extends TestCase
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_PROVISIONING, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Provisioning, $executionSlot->status);
     }
 
     public function test_update_execution_slot_updates_existing_service_and_marks_slot_allocated(): void
@@ -274,7 +275,7 @@ class ProvisioningServiceTest extends TestCase
             'slot_number' => 1,
             'external_port' => 30000,
             'service_name' => 'server-service-1',
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);
@@ -299,7 +300,7 @@ class ProvisioningServiceTest extends TestCase
 
         $executionSlot->refresh();
 
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
     }
 
     public function test_delete_execution_slot_uses_delete_service_call(): void
@@ -308,7 +309,7 @@ class ProvisioningServiceTest extends TestCase
             'slot_number' => 1,
             'external_port' => 30000,
             'service_name' => 'server-service-1',
-            'status' => ExecutionSlot::STATUS_DELETING,
+            'status' => ExecutionSlotStatus::Deleting,
         ]);
 
         $minecraftBuilder = $this->createMock(MinecraftManifestBuilder::class);

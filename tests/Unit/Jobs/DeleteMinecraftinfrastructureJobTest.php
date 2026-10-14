@@ -3,7 +3,8 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\DeleteMinecraftinfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -35,7 +36,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertDatabaseMissing('minecraft_servers', ['id' => $minecraftServer->id]);
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->status);
         $this->assertNull($executionSlot->server_id);
         $this->assertNull($executionSlot->server_type);
     }

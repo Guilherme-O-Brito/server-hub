@@ -5,7 +5,8 @@ namespace Tests\Unit\Actions;
 use App\Actions\StopMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Jobs\StopMinecraftServerJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -39,7 +40,7 @@ class StopMinecraftServerActionTest extends TestCase
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(11), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
 
         Queue::assertPushed(StopMinecraftServerJob::class, function (StopMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
@@ -58,7 +59,7 @@ class StopMinecraftServerActionTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, $status);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         try {
@@ -73,7 +74,7 @@ class StopMinecraftServerActionTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame($status, $minecraftServer->status);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
         Queue::assertNothingPushed();
     }
@@ -105,7 +106,7 @@ class StopMinecraftServerActionTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopping);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         try {
@@ -120,7 +121,7 @@ class StopMinecraftServerActionTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Stopping, $minecraftServer->status);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertSame($minecraftServer->id, $executionSlot->server_id);
         $this->assertSame($minecraftServer->getMorphClass(), $executionSlot->server_type);
         Queue::assertNothingPushed();
@@ -150,7 +151,7 @@ class StopMinecraftServerActionTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertSame(MinecraftServerStatus::Running, $minecraftServer->status);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
         Queue::assertNothingPushed();
     }
@@ -174,7 +175,7 @@ class StopMinecraftServerActionTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Running, $attributes);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create([
             'slot_number' => 1,
-            'status' => ExecutionSlot::STATUS_ALLOCATED,
+            'status' => ExecutionSlotStatus::Allocated,
         ]);
 
         return [$minecraftServer, $executionSlot];

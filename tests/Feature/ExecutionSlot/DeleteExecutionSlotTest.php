@@ -3,6 +3,7 @@
 namespace Tests\Feature\ExecutionSlot;
 
 use App\Jobs\ExecutionSlot\DeleteExecutionSlotServiceJob;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,7 +43,7 @@ class DeleteExecutionSlotTest extends TestCase
 		$this->assertDatabaseHas('execution_slots', [
 			'slot_number' => 3,
 			'external_port' => 30002,
-			'status' => ExecutionSlot::STATUS_DELETING,
+			'status' => ExecutionSlotStatus::Deleting,
 		]);
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 1]);
 		$this->assertDatabaseHas('execution_slots', ['slot_number' => 2]);
@@ -95,7 +96,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'service_name' => 'server-service-2',
 			'server_id' => 10,
 			'server_type' => 'minecraft_server',
-			'status' => ExecutionSlot::STATUS_ALLOCATED,
+			'status' => ExecutionSlotStatus::Allocated,
 		]);
 
 		$response = $this->actingAs($admin)->delete('/execution-slot');
@@ -106,7 +107,7 @@ class DeleteExecutionSlotTest extends TestCase
 			'slot_number' => 2,
 			'external_port' => 30001,
 			'server_id' => 10,
-			'status' => ExecutionSlot::STATUS_ALLOCATED,
+			'status' => ExecutionSlotStatus::Allocated,
 		]);
 		$this->assertDatabaseCount('execution_slots', 2);
 		Queue::assertNothingPushed();

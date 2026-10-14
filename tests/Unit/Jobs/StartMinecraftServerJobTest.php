@@ -3,7 +3,8 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\StartMinecraftServerJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
@@ -127,7 +128,7 @@ class StartMinecraftServerJobTest extends TestCase
 
         (new StartMinecraftServerJob(999, $executionSlot->id, $this->operationId(1)))->handle($service);
 
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->refresh()->status);
+        $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->refresh()->status);
     }
 
     public function test_failed_marks_current_start_as_failed_records_error_and_releases_its_slot(): void
@@ -143,7 +144,7 @@ class StartMinecraftServerJobTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->status);
         $this->assertSame('Kubernetes failed', $minecraftServer->last_error);
-        $this->assertSame(ExecutionSlot::STATUS_FREE, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->status);
         $this->assertNull($executionSlot->server_id);
         $this->assertNull($executionSlot->server_type);
     }
@@ -193,7 +194,7 @@ class StartMinecraftServerJobTest extends TestCase
         $executionSlot->refresh();
 
         $this->assertDatabaseMissing('minecraft_servers', ['id' => $serverId]);
-        $this->assertSame(ExecutionSlot::STATUS_ALLOCATED, $executionSlot->status);
+        $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertSame($serverId, $executionSlot->server_id);
         $this->assertNull($executionSlot->server);
     }

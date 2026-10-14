@@ -2,6 +2,7 @@
 
 namespace App\Jobs\ExecutionSlot;
 
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use App\Services\Kubernetes\ProvisioningService;
 use DB;
@@ -36,7 +37,7 @@ class CreateExecutionSlotServiceJob implements ShouldQueue, ShouldBeEncrypted
     {
         $slot = ExecutionSlot::findOrFail($this->slotId);
 
-        if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+        if (! $slot || $slot->status !== ExecutionSlotStatus::Provisioning || $slot->operation_id !== $this->operationId) {
             return;
         }
 
@@ -45,13 +46,11 @@ class CreateExecutionSlotServiceJob implements ShouldQueue, ShouldBeEncrypted
         DB::transaction(function () {
             $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
 
-            if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+            if (! $slot || $slot->status !== ExecutionSlotStatus::Provisioning || $slot->operation_id !== $this->operationId) {
                 return;
             }
             
-            $slot->update([
-                'status' => ExecutionSlot::STATUS_FREE
-            ]);
+            $slot->updateStatus(ExecutionSlotStatus::Free);
         });
     }
 
@@ -60,14 +59,12 @@ class CreateExecutionSlotServiceJob implements ShouldQueue, ShouldBeEncrypted
         DB::transaction(function () use ($exception) {
             $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
     
-            if (! $slot || $slot->status !== ExecutionSlot::STATUS_PROVISIONING || $slot->operation_id !== $this->operationId) {
+            if (! $slot || $slot->status !== ExecutionSlotStatus::Provisioning || $slot->operation_id !== $this->operationId) {
                 return;
             }
 
-            $slot->update([
-                'status' => ExecutionSlot::STATUS_FAILED,
-                'last_error' => $exception->getMessage(),
-            ]);
+            $slot->last_error = $exception->getMessage();
+            $slot->updateStatus(ExecutionSlotStatus::Failed);
             
         });
     }

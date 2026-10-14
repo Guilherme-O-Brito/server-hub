@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use Illuminate\Database\Eloquent\Factories\Factory;

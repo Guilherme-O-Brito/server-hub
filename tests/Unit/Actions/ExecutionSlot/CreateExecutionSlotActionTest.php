@@ -4,6 +4,7 @@ namespace Tests\Unit\Actions\ExecutionSlot;
 
 use App\Actions\ExecutionSlot\CreateExecutionSlotAction;
 use App\Jobs\ExecutionSlot\CreateExecutionSlotServiceJob;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -43,7 +44,7 @@ class CreateExecutionSlotActionTest extends TestCase
             'external_port' => 30000,
             'service_name' => 'server-service-1',
             'hostname' => 'sv1.server-hub.test',
-            'status' => ExecutionSlot::STATUS_PROVISIONING,
+            'status' => ExecutionSlotStatus::Provisioning,
         ]);
 
         Queue::assertPushed(CreateExecutionSlotServiceJob::class, function (CreateExecutionSlotServiceJob $job) use ($executionSlot) {

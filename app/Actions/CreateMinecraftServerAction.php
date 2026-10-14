@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use App\Jobs\CreateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\User;
 use App\Models\MinecraftServer;
 use Illuminate\Support\Str;

@@ -3,8 +3,8 @@
 namespace App\Actions\ExecutionSlot;
 
 use App\Exceptions\NoExecutionSlotAvailableException;
+use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
-use DB;
 use Illuminate\Database\Eloquent\Model;
 
 class AllocateExecutionSlotAction
@@ -13,7 +13,7 @@ class AllocateExecutionSlotAction
     {
         
         // find the first free slot
-        $slot = ExecutionSlot::where('status', ExecutionSlot::STATUS_FREE)->orderBy('slot_number')->lockForUpdate()->first();
+        $slot = ExecutionSlot::where('status', ExecutionSlotStatus::Free)->orderBy('slot_number')->lockForUpdate()->first();
 
         if (! $slot) {
             throw new NoExecutionSlotAvailableException(
@@ -23,9 +23,7 @@ class AllocateExecutionSlotAction
 
         $slot->server()->associate($server);
 
-        $slot->status = ExecutionSlot::STATUS_ALLOCATED;
-
-        $slot->save();
+        $slot->updateStatus(ExecutionSlotStatus::Allocated);
 
         return $slot;
 

@@ -4,7 +4,7 @@ namespace Tests\Unit\Actions;
 
 use App\Actions\CreateMinecraftServerAction;
 use App\Jobs\CreateMinecraftInfrastructureJob;
-use App\MinecraftServerStatus;
+use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
