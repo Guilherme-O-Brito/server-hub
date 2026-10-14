@@ -48,6 +48,7 @@ class ExecutionSlotStatusChanged implements ShouldBroadcast, ShouldDispatchAfter
         return [
             'id' => $this->slot->id,
             'status' => $this->slot->status,
+            'server_type' => $this->slot->server_type ?? null,
             'server' => $server ? [
                 'server_name' => $server->server_name,
                 'owner' => [
