@@ -72,11 +72,14 @@ import ExecutionSlotsCard from './components/ExecutionSlotsCard.vue';
 import MinecraftVersionsCard from './components/MinecraftVersionsCard.vue';
 import UserManagementCard from './components/UserManagementCard.vue';
 import { fetchExecutionSlots } from './services/adminPageService';
+import { useExecutionSlotStatusUpdates } from '../../composables/useExecutionSlotStatusUpdates';
 
 const auth = inject('auth');
 const executionSlots = ref([]);
 const isLoadingSlots = ref(true);
 const slotsError = ref('');
+
+useExecutionSlotStatusUpdates(executionSlots);
 
 const loadExecutionSlots = async () => {
     isLoadingSlots.value = true;

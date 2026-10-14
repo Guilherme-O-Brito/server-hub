@@ -159,7 +159,6 @@
 import {
     inject,
     nextTick,
-    onBeforeUnmount,
     ref,
     watch,
 } from 'vue';
@@ -200,7 +199,6 @@ const props = defineProps({
 
 const router = useRouter();
 const auth = inject('auth');
-const STATUS_REFRESH_INTERVAL = 5000;
 
 const server = ref(null);
 const whitelist = ref([]);
@@ -224,7 +222,6 @@ const isAdminModalOpen = ref(false);
 const deletionTarget = ref(null);
 const deletionError = ref('');
 const isDeleting = ref(false);
-let statusRefreshTimer = null;
 
 const errorMessage = (error, fallback) => (
     error.response?.data?.errors?.nickname?.[0]
@@ -506,42 +503,9 @@ const handleNicknameSubmit = async (nickname) => {
     }
 };
 
-const stopStatusRefresh = () => {
-    if (statusRefreshTimer) {
-        window.clearInterval(statusRefreshTimer);
-        statusRefreshTimer = null;
-    }
-};
-
-const startStatusRefresh = () => {
-    stopStatusRefresh();
-    statusRefreshTimer = window.setInterval(async () => {
-        if (!server.value || isControlBusy.value) {
-            return;
-        }
-
-        try {
-            await refreshServer();
-        } catch {
-            // Keep the last confirmed server state when a refresh fails.
-        }
-    }, STATUS_REFRESH_INTERVAL);
-};
-
 watch(
     () => props.serverId,
-    async () => {
-        stopStatusRefresh();
-        await loadDashboard();
-
-        if (!pageError.value) {
-            startStatusRefresh();
-        }
-    },
+    loadDashboard,
     { immediate: true },
 );
-
-onBeforeUnmount(() => {
-    stopStatusRefresh();
-});
 </script>

@@ -146,6 +146,7 @@ import PaginationControls from './components/PaginationControls.vue';
 import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
 import ConnectedUserCard from '../ConnectedUserCard.vue';
+import { useExecutionSlotStatusUpdates } from '../../composables/useExecutionSlotStatusUpdates';
 import { fetchServerPageData } from './services/serverPageService';
 
 const router = useRouter();
@@ -174,6 +175,8 @@ const gameOptions = computed(() => {
 
     return Array.from(gamesByKey.values());
 });
+
+useExecutionSlotStatusUpdates(executionSlots);
 
 const filteredServers = computed(() => {
     return servers.value.filter((server) => {
