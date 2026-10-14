@@ -43,9 +43,17 @@ class ExecutionSlotStatusChanged implements ShouldBroadcast, ShouldDispatchAfter
 
     public function broadcastWith(): array
     {
+        $server = $this->slot->server;
+
         return [
             'id' => $this->slot->id,
             'status' => $this->slot->status,
+            'server' => $server ? [
+                'server_name' => $server->server_name,
+                'owner' => [
+                    'name' => $server->owner->name
+                ]
+            ]: null
         ];
     }
 }
