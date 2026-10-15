@@ -3,6 +3,7 @@
 namespace App\Jobs\ExecutionSlot;
 
 use App\enums\ExecutionSlotStatus;
+use App\Events\ExecutionSlotDeleted;
 use App\Models\ExecutionSlot;
 use App\Services\Kubernetes\ProvisioningService;
 use DB;
@@ -45,12 +46,14 @@ class DeleteExecutionSlotServiceJob implements ShouldQueue, ShouldBeEncrypted
 
         DB::transaction(function () {
             $slot = ExecutionSlot::query()->lockForUpdate()->find($this->slotId);
-
+            $slot_id = $slot->id;
             if (! $slot || $slot->status !== ExecutionSlotStatus::Deleting || $slot->operation_id !== $this->operationId) {
                 return;
             }
 
             $slot->delete();
+
+            ExecutionSlotDeleted::dispatch($slot_id);
         });
     }
 

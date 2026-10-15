@@ -69,6 +69,17 @@ export const useExecutionSlotStatusUpdates = (executionSlots) => {
         }
     };
 
+    const handleSlotDeleted = ({ id } = {}) => {
+        if (id == null) {
+            return;
+        }
+
+        executionSlots.value = executionSlots.value.filter(
+            (slot) => String(slot.id) !== String(id),
+        );
+        pendingUpdates.delete(String(id));
+    };
+
     const stopWatchingSlots = watch(executionSlots, (slots) => {
         slots.forEach((slot) => {
             const slotId = String(slot.id);
@@ -83,7 +94,8 @@ export const useExecutionSlotStatusUpdates = (executionSlots) => {
     onMounted(() => {
         window.Echo
             .private('execution-slots')
-            .listen('.slot.status.changed', handleStatusChanged);
+            .listen('.slot.status.changed', handleStatusChanged)
+            .listen('.slot.deleted', handleSlotDeleted);
     });
 
     onBeforeUnmount(() => {

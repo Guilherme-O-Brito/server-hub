@@ -214,7 +214,6 @@ const confirmDelete = async () => {
         await deleteLastExecutionSlot();
         confirmationAction.value = null;
         actionMessage.value = 'Slot excluído com sucesso.';
-        emit('changed');
     } catch (error) {
         confirmationError.value = errorMessage(error, 'Não foi possível excluir o último slot.');
     } finally {
