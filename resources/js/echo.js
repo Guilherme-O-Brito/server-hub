@@ -3,12 +3,20 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
+const appConfigElement = document.getElementById('app-config');
+
+if (!appConfigElement) {
+    throw new Error('Elemento #app-config não encontrado.');
+}
+
+const { reverb } = JSON.parse(appConfigElement.textContent);
+
 window.Echo = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    key: reverb.key,
+    wsHost: reverb.host,
+    wsPort: Number(reverb.port),
+    wssPort: Number(reverb.port),
+    forceTLS: reverb.scheme === 'https',
     enabledTransports: ['ws', 'wss'],
 });

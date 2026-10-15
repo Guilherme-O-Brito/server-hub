@@ -7,12 +7,21 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('imgs/logo/Logo server-hub2.svg') }}">
     @routes
     @auth
-        <div id="authUser" data-auth-user='@json([
-                "id" => Auth::user()->id,
-                "name" => Auth::user()->name,
-                "email" => Auth::user()->email
-            ], JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)'>
-        </div>
+    <script id="app-config" type="application/json">
+        {!! Illuminate\Support\Js::encode([
+            'authUser' => [
+                'id' => Auth::user()->id,
+                'name' => Auth::user()->name,
+                'email' => Auth::user()->email,
+            ],
+            'reverb' => [
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('viteenv.reverb.host'),
+                'port' => config('viteenv.reverb.port'),
+                'scheme' => config('viteenv.reverb.scheme'),
+            ],
+        ]) !!}
+    </script>
     @endauth
     @vite(['resources/css/app.css'])
     <title>Server Hub</title>

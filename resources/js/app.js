@@ -20,18 +20,17 @@ if (csrfToken) {
 
 window.axios = axios;
 
-const rootElement = document.getElementById('authUser');
+const configElement = document.getElementById('app-config');
 
-if (!rootElement) {
-    throw new Error('Elemento #authUser não encontrado.');
+if (!configElement) {
+    throw new Error('Elemento #app-config não encontrado.');
 }
 
 let authUser = null;
 
 try {
-    authUser = rootElement.dataset.authUser
-        ? JSON.parse(rootElement.dataset.authUser)
-        : null;
+    const appConfig = JSON.parse(configElement.textContent);
+    authUser = appConfig.authUser ?? null;
 } catch (error) {
     console.error('Não foi possível carregar o usuário autenticado.', error)
 }
