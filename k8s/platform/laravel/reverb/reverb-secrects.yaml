@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: reverb-secret
+  namespace: server-hub
+type: Opaque
+
+stringData:
+  REVERB_APP_ID: "<your_reverb_app_id>"
+  REVERB_APP_KEY: "<your_reverb_app_key>"
+  REVERB_APP_SECRET: "<your_reverb_app_secret>"

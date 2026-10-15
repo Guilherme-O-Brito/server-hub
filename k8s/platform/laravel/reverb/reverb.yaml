@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reverb
+  namespace: server-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reverb
+  template:
+    metadata:
+      labels:
+        app: reverb
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+      containers:
+        - name: reverb
+          image: ghcr.io/guilherme-o-brito/server-hub:latest
+          command:
+            - php
+          args:
+            - artisan
+            - reverb:start
+          envFrom:
+            - configMapRef:
+                name: laravel-env
+            - secretRef:
+                name: reverb-secret
+          ports:
+            - containerPort: 8080
+              name: websocket
+          volumeMounts:
+            - name: storage
+              mountPath: /app/storage
+            - name: bootstrap-cache
+              mountPath: /app/bootstrap/cache
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            tcpSocket:
+              port: websocket
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          readinessProbe:
+            tcpSocket:
+              port: websocket
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: storage
+          emptyDir: {}
+        - name: bootstrap-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

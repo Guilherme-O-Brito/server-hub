@@ -16,3 +16,11 @@ spec:
                 name: laravel-service
                 port:
                   number: 80
+          
+          - path: /app
+            pathType: Prefix
+            backend:
+              service:
+                name: reverb-service
+                port:
+                  number: 8080

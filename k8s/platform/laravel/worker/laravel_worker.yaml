@@ -34,6 +34,8 @@ spec:
                 name: laravel-env
             - secretRef:
                 name: laravel-secret
+            - secretRef:
+                name: reverb-secret
           volumeMounts:
             - name: laravel-data
               mountPath: /app/storage

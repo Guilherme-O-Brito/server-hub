@@ -54,6 +54,8 @@ spec:
                 name: laravel-env
             - secretRef:
                 name: laravel-secret
+            - secretRef:
+                name: reverb-secret
           ports:
             - containerPort: 8080
           volumeMounts:
