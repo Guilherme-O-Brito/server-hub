@@ -186,9 +186,12 @@ import {
     fetchMinecraftServerAdmins,
     fetchOperators,
     fetchWhitelist,
+    mergeMinecraftServerUpdate,
     startMinecraftServer,
     stopMinecraftServer,
+    unwrapMinecraftServerUpdate,
 } from './services/minecraftServerService';
+import { useMinecraftServerUpdates } from '../../composables/useMinecraftServerUpdates';
 
 const props = defineProps({
     serverId: {
@@ -280,6 +283,55 @@ const loadAdmins = async () => {
 const refreshServer = async () => {
     server.value = await fetchMinecraftServer(props.serverId);
 };
+
+const handleServerUpdated = (payload) => {
+    const serverData = unwrapMinecraftServerUpdate(payload);
+
+    if (
+        !serverData
+        || Number(serverData.id) !== Number(props.serverId)
+        || !server.value
+    ) {
+        return;
+    }
+
+    const updatedServer = mergeMinecraftServerUpdate(
+        serverData,
+        server.value,
+        auth?.user?.id,
+    );
+
+    if (!updatedServer) {
+        return;
+    }
+
+    server.value = updatedServer;
+
+    if (Array.isArray(serverData.whitelist)) {
+        whitelist.value = serverData.whitelist;
+    }
+
+    if (Array.isArray(serverData.operators)) {
+        operators.value = serverData.operators;
+    }
+
+    if (Array.isArray(serverData.admins)) {
+        admins.value = serverData.admins;
+    }
+};
+
+const handleServerDeleted = ({ id } = {}) => {
+    if (id == null || Number(id) !== Number(props.serverId)) {
+        return;
+    }
+
+    void router.replace({ name: 'servers.index' });
+};
+
+useMinecraftServerUpdates(() => props.serverId, {
+    onUpdated: handleServerUpdated,
+    onDeleted: handleServerDeleted,
+});
 
 const loadDashboard = async () => {
     isLoading.value = true;

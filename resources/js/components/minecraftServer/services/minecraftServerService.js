@@ -1,22 +1,67 @@
 import axios from 'axios';
 import { route } from 'ziggy-js';
 
-const normalizeServer = (server) => ({
-    id: Number(server.id),
-    ownerId: server.owner_id == null ? null : Number(server.owner_id),
-    name: server.server_name,
-    motd: server.motd,
-    difficulty: server.difficulty,
-    version: server.version ?? null,
-    forceGamemode: Boolean(server.force_gamemode),
-    allowFlight: Boolean(server.allow_flight),
-    accessRole: server.access_role ?? null,
-    status: server.status ?? null,
-    lastError: server.last_error ?? null,
-    executionSlot: server.execution_slot ?? null,
-    players: server.players ?? null,
-    resources: server.resources ?? server.metrics ?? null,
-});
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+const normalizeServer = (server, current = {}) => {
+    const value = (key, fallback = null) => (
+        hasOwn(server, key) ? server[key] : fallback
+    );
+
+    const ownerId = value('owner_id', current.ownerId);
+
+    return {
+        ...current,
+        id: server.id == null ? current.id : Number(server.id),
+        ownerId: ownerId == null ? null : Number(ownerId),
+        name: value('server_name', current.name),
+        motd: value('motd', current.motd),
+        difficulty: value('difficulty', current.difficulty),
+        version: value('version', current.version),
+        forceGamemode: Boolean(value('force_gamemode', current.forceGamemode ?? false)),
+        allowFlight: Boolean(value('allow_flight', current.allowFlight ?? false)),
+        accessRole: value('access_role', current.accessRole),
+        status: value('status', current.status),
+        lastError: value('last_error', current.lastError),
+        executionSlot: value('execution_slot', current.executionSlot),
+        players: value('players', current.players),
+        resources: value('resources', value('metrics', current.resources)),
+    };
+};
+
+export const unwrapMinecraftServerUpdate = (payload) => {
+    if (Array.isArray(payload)) {
+        return payload[0] ?? null;
+    }
+
+    if (payload && hasOwn(payload, '0')) {
+        return payload[0];
+    }
+
+    return payload?.server ?? payload ?? null;
+};
+
+export const mergeMinecraftServerUpdate = (payload, current, viewerId) => {
+    const server = unwrapMinecraftServerUpdate(payload);
+
+    if (!server || server.id == null) {
+        return null;
+    }
+
+    const updated = normalizeServer(server, current);
+
+    if (!hasOwn(server, 'access_role')) {
+        if (Number(updated.ownerId) === Number(viewerId)) {
+            updated.accessRole = 'owner';
+        } else if (Array.isArray(server.admins)) {
+            updated.accessRole = server.admins.some(
+                (admin) => Number(admin.id) === Number(viewerId),
+            ) ? 'admin' : null;
+        }
+    }
+
+    return updated;
+};
 
 export const fetchMinecraftServer = async (serverId) => {
     const response = await axios.get(

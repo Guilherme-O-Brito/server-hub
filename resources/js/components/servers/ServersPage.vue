@@ -147,6 +147,7 @@ import ServerCard from './components/ServerCard.vue';
 import ServerFilters from './components/ServerFilters.vue';
 import ConnectedUserCard from '../ConnectedUserCard.vue';
 import { useExecutionSlotStatusUpdates } from '../../composables/useExecutionSlotStatusUpdates';
+import { useMinecraftServerListUpdates } from '../../composables/useMinecraftServerListUpdates';
 import { fetchServerPageData } from './services/serverPageService';
 
 const router = useRouter();
@@ -177,6 +178,7 @@ const gameOptions = computed(() => {
 });
 
 useExecutionSlotStatusUpdates(executionSlots);
+useMinecraftServerListUpdates(servers, auth?.user?.id);
 
 const filteredServers = computed(() => {
     return servers.value.filter((server) => {
