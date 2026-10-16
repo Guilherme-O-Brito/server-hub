@@ -20,7 +20,6 @@ class DeleteUserTest extends TestCase
         $user = User::factory()->create([
             'is_admin' => false
         ]);
-
         $response = $this->actingAs($admin)->delete("/admin/user/{$user->id}");
 
         $response->assertOk();
@@ -28,7 +27,6 @@ class DeleteUserTest extends TestCase
         $this->assertDatabaseMissing('users', [
             'id' => $user->id
         ]);
-
     }
 
     public function test_admin_cannot_delete_user_who_still_owns_minecraft_servers(): void
@@ -40,7 +38,6 @@ class DeleteUserTest extends TestCase
             'is_admin' => false,
         ]);
         $minecraftServer = MinecraftServer::factory()->for($user, 'owner')->create();
-
         $response = $this->actingAs($admin)->delete("/admin/user/{$user->id}");
 
         $response->assertStatus(409);

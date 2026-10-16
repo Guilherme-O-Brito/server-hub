@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Servers\Minecraft\MinecraftVersion;
 
+use App\Events\MinecraftServerUpdated;
+use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class ToggleMinecraftVersionTest extends TestCase
@@ -17,12 +20,20 @@ class ToggleMinecraftVersionTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $minecraftVersion = MinecraftVersion::factory()->enabled()->create();
+        $owner = User::factory()->create();
+        $serverUsingVersion = MinecraftServer::factory()->for($owner, 'owner')->create([
+            'minecraft_version_id' => $minecraftVersion->id,
+        ]);
+        $serverUsingAnotherVersion = MinecraftServer::factory()->for($owner, 'owner')->create();
+        Event::fake();
 
         $response = $this->actingAs($admin)->post(self::ROUTE."/{$minecraftVersion->id}/toggle");
 
         $response->assertOk();
         $response->assertJson(['message' => 'Minecraft version toggled.']);
         $this->assertFalse($minecraftVersion->refresh()->is_enabled);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($serverUsingVersion));
+        Event::assertNotDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($serverUsingAnotherVersion));
     }
 
     public function test_admin_can_toggle_disabled_version_to_enabled(): void

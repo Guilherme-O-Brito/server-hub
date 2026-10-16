@@ -3,12 +3,14 @@
 namespace Tests\Unit\Actions;
 
 use App\Actions\CreateMinecraftServerAction;
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\CreateMinecraftInfrastructureJob;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -26,6 +28,7 @@ class CreateMinecraftServerActionTest extends TestCase
         $minecraftVersion = MinecraftVersion::factory()->enabled()->create();
 
         $action = new CreateMinecraftServerAction();
+        Event::fake();
 
         $result = $action->execute($user, [
             'server_name' => 'Action Server',
@@ -59,5 +62,6 @@ class CreateMinecraftServerActionTest extends TestCase
             return $job->serverId === $minecraftServer->id
                 && $job->operationId === $minecraftServer->operation_id;
         });
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Unit\Jobs;
 
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\Events\MinecraftServerDeleted;
+use App\Events\MinecraftServerUpdated;
 use App\enums\MinecraftServerStatus;
 use App\enums\ExecutionSlotStatus;
 use App\Models\ExecutionSlot;
@@ -26,7 +27,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         $admin = User::factory()->create();
         $minecraftServer->admins()->attach($admin);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
-        Event::fake();
+        Event::fake([MinecraftServerDeleted::class, MinecraftServerUpdated::class]);
 
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->once())
@@ -54,6 +55,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
                 && $userIds === $expectedUserIds;
         });
         Event::assertDispatchedTimes(MinecraftServerDeleted::class, 1);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_handle_deletes_current_server_when_it_has_no_slot(): void
@@ -73,7 +75,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
     public function test_handle_ignores_job_with_stale_operation_id_without_calling_service_or_releasing_slot(): void
     {
-        Event::fake();
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(9)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
@@ -146,6 +148,8 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
 
     public function test_failed_marks_current_deletion_as_delete_failed_and_records_error(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer();
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
@@ -160,10 +164,17 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         $this->assertSame(MinecraftServerStatus::DeleteFailed, $minecraftServer->status);
         $this->assertSame('Delete failed', $minecraftServer->last_error);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
+        Event::assertDispatched(MinecraftServerUpdated::class, function (MinecraftServerUpdated $event) use ($minecraftServer) {
+            return $event->server->is($minecraftServer)
+                && $event->server->status === MinecraftServerStatus::DeleteFailed
+                && $event->server->last_error === 'Delete failed';
+        });
     }
 
     public function test_failed_ignores_stale_job(): void
     {
+        Event::fake();
+
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
             'operation_id' => $this->operationId(6),
@@ -177,6 +188,7 @@ class DeleteMinecraftinfrastructureJobTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Deleting, $minecraftServer->status);
         $this->assertSame('newer error', $minecraftServer->last_error);
         $this->assertSame($this->operationId(6), $minecraftServer->operation_id);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_middleware_uses_shared_server_lock(): void

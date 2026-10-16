@@ -6,6 +6,7 @@ use App\Actions\ExecutionSlot\AllocateExecutionSlotAction;
 use App\Actions\StartMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
 use App\Exceptions\NoExecutionSlotAvailableException;
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\StartMinecraftServerJob;
 use App\enums\MinecraftServerStatus;
 use App\enums\ExecutionSlotStatus;
@@ -13,6 +14,7 @@ use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -34,6 +36,7 @@ class StartMinecraftServerActionTest extends TestCase
             'slot_number' => 1,
             'status' => ExecutionSlotStatus::Free,
         ]);
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $result = (new StartMinecraftServerAction(new AllocateExecutionSlotAction()))->execute($minecraftServer);
 
@@ -47,6 +50,7 @@ class StartMinecraftServerActionTest extends TestCase
         $this->assertNull($minecraftServer->last_error);
         $this->assertSame(ExecutionSlotStatus::Allocated, $executionSlot->status);
         $this->assertTrue($executionSlot->server->is($minecraftServer));
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
 
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
@@ -58,6 +62,7 @@ class StartMinecraftServerActionTest extends TestCase
     public function test_execute_calls_allocate_execution_slot_action(): void
     {
         Queue::fake();
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $owner = User::factory()->create();
         $minecraftServer = $this->createMinecraftServer($owner, MinecraftServerStatus::Stopped, [
@@ -82,6 +87,7 @@ class StartMinecraftServerActionTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->refresh()->status);
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(7), $minecraftServer->operation_id);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
         Queue::assertPushed(StartMinecraftServerJob::class, function (StartMinecraftServerJob $job) use ($minecraftServer, $executionSlot) {
             return $job->serverId === $minecraftServer->id
                 && $job->slotId === $executionSlot->id

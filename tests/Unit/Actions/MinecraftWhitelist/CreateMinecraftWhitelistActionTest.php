@@ -4,11 +4,13 @@ namespace Tests\Unit\Actions\MinecraftWhitelist;
 
 use App\Actions\MinecraftWhitelist\CreateMinecraftWhitelistAction;
 use App\Exceptions\MinecraftServerStateException;
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
@@ -27,6 +29,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
             'last_error' => 'previous error',
             'operation_id' => $this->operationId(6),
         ]);
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $result = (new CreateMinecraftWhitelistAction())->execute($minecraftServer, [
             'nickname' => 'Steve_01',
@@ -43,6 +46,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(6), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
@@ -59,6 +63,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
         $minecraftServer = $this->createMinecraftServer($owner, $status, [
             'operation_id' => $this->operationId(7),
         ]);
+        Event::fake();
 
         try {
             (new CreateMinecraftWhitelistAction())->execute($minecraftServer, [
@@ -78,6 +83,7 @@ class CreateMinecraftWhitelistActionTest extends TestCase
             'minecraft_server_id' => $minecraftServer->id,
             'nickname' => 'BlockedNick',
         ]);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
         Queue::assertNothingPushed();
     }
 

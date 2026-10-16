@@ -4,6 +4,7 @@ namespace Tests\Unit\Actions;
 
 use App\Actions\UpdateMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
+use App\Events\MinecraftServerUpdated;
 use App\Events\MinecraftServerStatusChanged;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\enums\MinecraftServerStatus;
@@ -45,7 +46,7 @@ class UpdateMinecraftServerActionTest extends TestCase
 
         $action = new UpdateMinecraftServerAction();
 
-        Event::fake();
+        Event::fake([MinecraftServerUpdated::class, MinecraftServerStatusChanged::class]);
 
         $action->execute($user, $minecraftServer, [
             'server_name' => 'Updated Server',
@@ -71,6 +72,10 @@ class UpdateMinecraftServerActionTest extends TestCase
         Event::assertDispatched(MinecraftServerStatusChanged::class, function (MinecraftServerStatusChanged $event) use ($minecraftServer) {
             return $event->server->is($minecraftServer)
                 && $event->server->status === MinecraftServerStatus::Provisioning;
+        });
+        Event::assertDispatched(MinecraftServerUpdated::class, function (MinecraftServerUpdated $event) use ($minecraftServer) {
+            return $event->server->is($minecraftServer)
+                && $event->server->server_name === 'Updated Server';
         });
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
@@ -100,6 +105,7 @@ class UpdateMinecraftServerActionTest extends TestCase
             'status' => $status,
             'operation_id' => $this->operationId(8),
         ]);
+        Event::fake();
 
         try {
             (new UpdateMinecraftServerAction())->execute($user, $minecraftServer, [
@@ -125,6 +131,7 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertFalse($minecraftServer->allow_flight);
         $this->assertSame($status, $minecraftServer->status);
         $this->assertSame($this->operationId(8), $minecraftServer->operation_id);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
         Queue::assertNothingPushed();
     }
 

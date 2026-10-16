@@ -3,11 +3,13 @@
 namespace Tests\Feature\Servers\Minecraft;
 
 use App\Jobs\UpdateMinecraftInfrastructureJob;
+use App\Events\MinecraftServerUpdated;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -35,6 +37,7 @@ class UpdateMinecraftServerTest extends TestCase
             'last_error' => 'previous error',
             'operation_id' => $this->operationId(4),
         ]);
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $response = $this->actingAs($owner)->put(
             "/servers/minecraft/{$minecraftServer->id}",
@@ -61,6 +64,10 @@ class UpdateMinecraftServerTest extends TestCase
         $this->assertValidOperationId($updatedServer->operation_id);
         $this->assertNotSame($this->operationId(4), $updatedServer->operation_id);
         $this->assertNull($updatedServer->last_error);
+        Event::assertDispatched(MinecraftServerUpdated::class, function (MinecraftServerUpdated $event) use ($updatedServer) {
+            return $event->server->is($updatedServer)
+                && $event->server->server_name === 'Updated Server';
+        });
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($updatedServer) {
             return $job->serverId === $updatedServer->id

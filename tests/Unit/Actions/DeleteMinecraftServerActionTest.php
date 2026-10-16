@@ -4,11 +4,13 @@ namespace Tests\Unit\Actions;
 
 use App\Actions\DeleteMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\DeleteMinecraftinfrastructureJob;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
@@ -34,6 +36,7 @@ class DeleteMinecraftServerActionTest extends TestCase
             'last_error' => 'previous error',
             'operation_id' => $this->operationId(4),
         ]);
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
 
         $action = new DeleteMinecraftServerAction();
 
@@ -54,6 +57,10 @@ class DeleteMinecraftServerActionTest extends TestCase
         Queue::assertPushed(DeleteMinecraftinfrastructureJob::class, function (DeleteMinecraftinfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
                 && $job->operationId === $minecraftServer->operation_id;
+        });
+        Event::assertDispatched(MinecraftServerUpdated::class, function (MinecraftServerUpdated $event) use ($minecraftServer) {
+            return $event->server->is($minecraftServer)
+                && $event->server->status === MinecraftServerStatus::Deleting;
         });
     }
 
@@ -122,6 +129,7 @@ class DeleteMinecraftServerActionTest extends TestCase
     public function test_execute_rolls_back_operation_id_status_and_error_when_transaction_fails(): void
     {
         Queue::fake();
+        Event::fake([MinecraftServerUpdated::class]);
 
         $owner = User::factory()->create();
         $minecraftServer = MinecraftServer::factory()->for($owner, 'owner')->create([
@@ -149,6 +157,7 @@ class DeleteMinecraftServerActionTest extends TestCase
         $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertSame('preserved error', $minecraftServer->last_error);
         Queue::assertNothingPushed();
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public static function nonStoppedServerStatuses(): array

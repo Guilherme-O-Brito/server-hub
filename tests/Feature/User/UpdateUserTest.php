@@ -21,7 +21,6 @@ class UpdateUserTest extends TestCase
         $user = User::factory()->create([
             'is_admin' => false
         ]);
-
         $response = $this->actingAs($admin)->put("/admin/user/{$user->id}", [
             'name' => 'Joãozin do bet',
             'email' => 'joaozin@dobet.com',
@@ -40,7 +39,6 @@ class UpdateUserTest extends TestCase
         $user->refresh();
 
         $this->assertTrue(Hash::check('123@Abcde', $user->password));
-
     }
 
     public function test_changing_password_removes_only_affected_user_sessions()

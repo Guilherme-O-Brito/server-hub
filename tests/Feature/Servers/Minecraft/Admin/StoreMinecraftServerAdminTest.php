@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Servers\Minecraft;
 
+use App\Events\MinecraftServerUpdated;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class StoreMinecraftServerAdminTest extends TestCase
@@ -23,6 +25,7 @@ class StoreMinecraftServerAdminTest extends TestCase
             'force_gamemode' => true,
             'allow_flight' => false,
         ]);
+        Event::fake();
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/admins/{$admin->id}");
 
@@ -33,6 +36,7 @@ class StoreMinecraftServerAdminTest extends TestCase
             'minecraft_server_id' => $minecraftServer->id,
             'user_id' => $admin->id,
         ]);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_guest_cannot_add_admin_to_minecraft_server(): void
@@ -66,6 +70,7 @@ class StoreMinecraftServerAdminTest extends TestCase
             'force_gamemode' => true,
             'allow_flight' => false,
         ]);
+        Event::fake();
 
         $response = $this->actingAs($otherUser)->post("/servers/minecraft/{$minecraftServer->id}/admins/{$admin->id}");
 
@@ -75,6 +80,7 @@ class StoreMinecraftServerAdminTest extends TestCase
             'minecraft_server_id' => $minecraftServer->id,
             'user_id' => $admin->id,
         ]);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_owner_cannot_add_themselves_as_admin(): void
@@ -114,6 +120,7 @@ class StoreMinecraftServerAdminTest extends TestCase
         ]);
 
         $minecraftServer->admins()->attach($admin->id);
+        Event::fake();
 
         $response = $this->actingAs($owner)->post("/servers/minecraft/{$minecraftServer->id}/admins/{$admin->id}");
 
@@ -127,6 +134,7 @@ class StoreMinecraftServerAdminTest extends TestCase
             'minecraft_server_id' => $minecraftServer->id,
             'user_id' => $admin->id,
         ]);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_cannot_add_admin_to_nonexistent_minecraft_server(): void

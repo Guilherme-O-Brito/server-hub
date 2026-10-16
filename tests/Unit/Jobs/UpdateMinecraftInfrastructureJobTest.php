@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Jobs;
 
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\Services\Kubernetes\ProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -18,6 +20,8 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
 
     public function test_handle_runs_current_update_and_marks_server_stopped(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'previous error',
             'operation_id' => $this->operationId(4),
@@ -34,10 +38,13 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Stopped, $minecraftServer->status);
         $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_handle_ignores_stale_operation_id_without_calling_service(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(8)]);
         $service = $this->createMock(ProvisioningService::class);
         $service->expects($this->never())->method('updateMinecraftServer');
@@ -46,6 +53,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->refresh()->status);
         $this->assertSame($this->operationId(8), $minecraftServer->operation_id);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_handle_ignores_job_when_server_status_no_longer_matches(): void
@@ -94,6 +102,8 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
 
     public function test_failed_marks_current_update_failed_and_records_error(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer();
 
         (new UpdateMinecraftInfrastructureJob($minecraftServer->id, $this->operationId(4)))
@@ -103,10 +113,13 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->status);
         $this->assertSame('Update failed', $minecraftServer->last_error);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_failed_ignores_stale_job(): void
     {
+        Event::fake();
+
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
             'operation_id' => $this->operationId(5),
@@ -120,6 +133,7 @@ class UpdateMinecraftInfrastructureJobTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Provisioning, $minecraftServer->status);
         $this->assertSame('newer error', $minecraftServer->last_error);
         $this->assertSame($this->operationId(5), $minecraftServer->operation_id);
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_middleware_uses_shared_server_lock(): void

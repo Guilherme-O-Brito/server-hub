@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Jobs;
 
+use App\Events\MinecraftServerUpdated;
 use App\Jobs\StartMinecraftServerJob;
 use App\enums\MinecraftServerStatus;
 use App\enums\ExecutionSlotStatus;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Services\Kubernetes\ProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -20,6 +22,8 @@ class StartMinecraftServerJobTest extends TestCase
 
     public function test_handle_runs_current_operation_and_marks_server_running(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'previous error',
             'operation_id' => $this->operationId(4),
@@ -44,10 +48,13 @@ class StartMinecraftServerJobTest extends TestCase
         $this->assertSame($this->operationId(4), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_handle_ignores_stale_operation_id_without_calling_services(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer(['operation_id' => $this->operationId(8)]);
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
         $service = $this->createMock(ProvisioningService::class);
@@ -59,6 +66,7 @@ class StartMinecraftServerJobTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->refresh()->status);
         $this->assertTrue($executionSlot->refresh()->isAllocatedTo($minecraftServer));
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_handle_ignores_job_when_server_status_no_longer_matches(): void
@@ -133,6 +141,8 @@ class StartMinecraftServerJobTest extends TestCase
 
     public function test_failed_marks_current_start_as_failed_records_error_and_releases_its_slot(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class, \App\Events\ExecutionSlotStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer();
         $executionSlot = ExecutionSlot::factory()->occupied($minecraftServer)->create();
 
@@ -147,10 +157,13 @@ class StartMinecraftServerJobTest extends TestCase
         $this->assertSame(ExecutionSlotStatus::Free, $executionSlot->status);
         $this->assertNull($executionSlot->server_id);
         $this->assertNull($executionSlot->server_type);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_failed_ignores_stale_job_without_releasing_slot(): void
     {
+        Event::fake();
+
         $minecraftServer = $this->createMinecraftServer([
             'last_error' => 'newer error',
             'operation_id' => $this->operationId(5),
@@ -166,10 +179,13 @@ class StartMinecraftServerJobTest extends TestCase
         $this->assertSame(MinecraftServerStatus::Starting, $minecraftServer->status);
         $this->assertSame('newer error', $minecraftServer->last_error);
         $this->assertTrue($executionSlot->isAllocatedTo($minecraftServer));
+        Event::assertNotDispatched(MinecraftServerUpdated::class);
     }
 
     public function test_failed_marks_current_start_failed_when_slot_no_longer_exists(): void
     {
+        Event::fake([MinecraftServerUpdated::class, \App\Events\MinecraftServerStatusChanged::class]);
+
         $minecraftServer = $this->createMinecraftServer();
 
         (new StartMinecraftServerJob($minecraftServer->id, 999, $this->operationId(4)))
@@ -179,6 +195,7 @@ class StartMinecraftServerJobTest extends TestCase
 
         $this->assertSame(MinecraftServerStatus::Failed, $minecraftServer->status);
         $this->assertSame('Missing slot failure', $minecraftServer->last_error);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($minecraftServer));
     }
 
     public function test_failed_does_not_release_slot_when_server_no_longer_exists(): void

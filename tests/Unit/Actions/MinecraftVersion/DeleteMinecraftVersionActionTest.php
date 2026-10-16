@@ -4,10 +4,12 @@ namespace Tests\Unit\Actions\MinecraftVersion;
 
 use App\Actions\MinecraftVersion\DeleteMinecraftVersionAction;
 use App\Exceptions\MinecraftVersionDeleteException;
+use App\Events\MinecraftServerUpdated;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class DeleteMinecraftVersionActionTest extends TestCase
@@ -30,6 +32,7 @@ class DeleteMinecraftVersionActionTest extends TestCase
         $serverUsingOtherVersion = MinecraftServer::factory()
             ->for($owner, 'owner')
             ->create(['minecraft_version_id' => $olderEnabledReplacement->id]);
+        Event::fake();
 
         $result = (new DeleteMinecraftVersionAction())->execute($versionToDelete);
 
@@ -44,6 +47,10 @@ class DeleteMinecraftVersionActionTest extends TestCase
         $this->assertSame($latestEnabledReplacement->id, $firstServerUsingDeletedVersion->refresh()->minecraft_version_id);
         $this->assertSame($latestEnabledReplacement->id, $secondServerUsingDeletedVersion->refresh()->minecraft_version_id);
         $this->assertSame($olderEnabledReplacement->id, $serverUsingOtherVersion->refresh()->minecraft_version_id);
+        Event::assertDispatchedTimes(MinecraftServerUpdated::class, 2);
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($firstServerUsingDeletedVersion));
+        Event::assertDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($secondServerUsingDeletedVersion));
+        Event::assertNotDispatched(MinecraftServerUpdated::class, fn (MinecraftServerUpdated $event) => $event->server->is($serverUsingOtherVersion));
     }
 
     public function test_execute_throws_when_no_other_enabled_version_exists_and_keeps_database_unchanged(): void
