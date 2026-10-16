@@ -29,6 +29,16 @@ class ExecutionSlot extends Model
         'operation_id'
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'operation_id',
+        'last_error'
+    ];
+
     protected $casts = [
         'slot_number' => 'integer',
         'external_port' => 'integer',

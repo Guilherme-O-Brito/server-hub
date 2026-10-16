@@ -31,6 +31,16 @@ class MinecraftServer extends Model
     
     protected $guarded = ['id', 'owner_id'];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'operation_id',
+        'last_error'
+    ];
+
     protected $casts = [
         'force_gamemode' => 'boolean',
         'allow_flight' => 'boolean',
