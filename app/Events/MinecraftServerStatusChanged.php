@@ -33,7 +33,7 @@ class MinecraftServerStatusChanged implements ShouldBroadcast, ShouldDispatchAft
     {
 
         $channels = [
-            new PrivateChannel("servers.{$this->server->id}")
+            new PrivateChannel("servers.minecraft.{$this->server->id}")
         ];
 
         $userIds = $this->server->admins()->pluck('users.id');

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\enums\MinecraftServerStatus;
+use App\Events\MinecraftServerDeleted;
 use App\Models\ExecutionSlot;
 use App\Models\MinecraftServer;
 use App\Services\Kubernetes\ProvisioningService;
@@ -59,8 +60,17 @@ class DeleteMinecraftinfrastructureJob implements ShouldQueue, ShouldBeEncrypted
             if ($slot) {
                 $slot->release($server);
             }
-            
+            $serverId = $server->id;
+            $userIds = $server->admins()
+                ->pluck('users.id')
+                ->push($server->owner->id)
+                ->unique()
+                ->values()
+                ->all();
+
             $server->delete();
+
+            MinecraftServerDeleted::dispatch($serverId, $userIds);
         });
     }
 
