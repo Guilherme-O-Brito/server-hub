@@ -25,7 +25,7 @@ class MinecraftServerStatusChangedTest extends TestCase
         $channels = (new MinecraftServerStatusChanged($server))->broadcastOn();
 
         $this->assertSame([
-            'private-servers.'.$server->id,
+            'private-servers.minecraft.'.$server->id,
             'private-users.'.$owner->id.'.servers',
             'private-users.'.$admin->id.'.servers',
         ], array_map(fn (PrivateChannel $channel) => $channel->name, $channels));
