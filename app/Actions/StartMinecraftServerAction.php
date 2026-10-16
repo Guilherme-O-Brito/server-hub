@@ -32,11 +32,11 @@ class StartMinecraftServerAction
 
             $operationId = (string) Str::uuid();
 
-            $server->update([
-                'status' => MinecraftServerStatus::Starting,
+            $server->fill([
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Starting);
 
             DB::afterCommit(function () use ($server, $slot, $operationId) {
                 StartMinecraftServerJob::dispatch($server->id, $slot->id, $operationId);

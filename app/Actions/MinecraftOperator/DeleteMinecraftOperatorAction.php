@@ -25,11 +25,11 @@ class DeleteMinecraftOperatorAction
             
             $operationId = (string) Str::uuid();
 
-            $server->update([
-                'status' => MinecraftServerStatus::Provisioning,
+            $server->fill([
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Provisioning);
 
             DB::afterCommit(function () use ($server, $operationId, $minecraftOperator) {
                 $minecraftOperator->delete();

@@ -36,11 +36,11 @@ class StopMinecraftServerAction
 
             $operationId = (string) Str::uuid();
 
-            $server->update([
-                'status' => MinecraftServerStatus::Stopping,
+            $server->fill([
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Stopping);
 
             DB::afterCommit(function () use ($server, $slot, $operationId){
                 StopMinecraftServerJob::dispatch($server->id, $slot->id, $operationId);

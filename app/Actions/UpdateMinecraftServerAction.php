@@ -25,17 +25,17 @@ class UpdateMinecraftServerAction
 
             $operationId = (string) Str::uuid();
 
-            $server->update([
+            $server->fill([
                 'server_name' => $data['server_name'],
                 'motd' => $data['motd'] ?? "{$user->name}'s minecraft server",
                 'minecraft_version_id' => $data['minecraft_version_id'],
                 'difficulty' => $data['difficulty'],
                 'force_gamemode' => $data['force_gamemode'],
                 'allow_flight' => $data['allow_flight'],
-                'status' => MinecraftServerStatus::Provisioning,
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Provisioning);
 
             DB::afterCommit(function () use ($server, $operationId) {
                 UpdateMinecraftInfrastructureJob::dispatch($server->id, $operationId);

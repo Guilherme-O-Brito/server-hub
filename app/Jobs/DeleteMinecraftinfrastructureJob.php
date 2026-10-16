@@ -74,10 +74,8 @@ class DeleteMinecraftinfrastructureJob implements ShouldQueue, ShouldBeEncrypted
                 return;
             }
 
-            $server->update([
-                'status' => MinecraftServerStatus::DeleteFailed,
-                'last_error' => $exception->getMessage(),
-            ]);
+            $server->last_error = $exception->getMessage();
+            $server->updateStatus(MinecraftServerStatus::DeleteFailed);
         });
     }
 }

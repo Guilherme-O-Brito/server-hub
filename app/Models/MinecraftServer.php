@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\enums\MinecraftServerStatus;
+use App\Events\MinecraftServerStatusChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -69,6 +70,19 @@ class MinecraftServer extends Model
             ExecutionSlot::class,
             'server'
         );
+    }
+
+    /**
+     * Used to centralize status changes on Minecraft Servers and to guarantee the correct dispatch of its event
+     * @param MinecraftServerStatus $status
+     * @return void
+     */
+    public function updateStatus(MinecraftServerStatus $status)
+    {
+        $this->status = $status;
+        $this->save();
+
+        MinecraftServerStatusChanged::dispatch($this);
     }
 
     public function scopeVisibleToUser(Builder $query, User $user): Builder

@@ -50,10 +50,10 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue, ShouldBeEncrypted
                 return;
             }
 
-            $server->update([
-                'status' => MinecraftServerStatus::Stopped,
+            $server->fill([
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Stopped);
         });
     }
 
@@ -66,10 +66,8 @@ class UpdateMinecraftInfrastructureJob implements ShouldQueue, ShouldBeEncrypted
                 return;
             }
 
-            $server->update([
-                'status' => MinecraftServerStatus::Failed,
-                'last_error' => $exception->getMessage(),
-            ]);
+            $server->last_error = $exception->getMessage();
+            $server->updateStatus(MinecraftServerStatus::Failed);
         });
     }
 }

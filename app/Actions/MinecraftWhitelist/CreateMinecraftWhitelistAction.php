@@ -24,11 +24,11 @@ class CreateMinecraftWhitelistAction
 
             $operationId = (string) Str::uuid();
 
-            $server->update([
-                'status' => MinecraftServerStatus::Provisioning,
+            $server->fill([
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Provisioning);
 
             $server->whitelist()->create([
                 'nickname' => $validated['nickname']

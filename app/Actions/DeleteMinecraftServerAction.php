@@ -25,11 +25,11 @@ class DeleteMinecraftServerAction
 
             $operationId = (string) Str::uuid();
 
-            $server->update([
-                'status' => MinecraftServerStatus::Deleting,
+            $server->fill([
                 'operation_id' => $operationId,
                 'last_error' => null
             ]);
+            $server->updateStatus(MinecraftServerStatus::Deleting);
 
             DB::afterCommit(function () use ($server, $operationId) {
                 DeleteMinecraftinfrastructureJob::dispatch($server->id, $operationId);
