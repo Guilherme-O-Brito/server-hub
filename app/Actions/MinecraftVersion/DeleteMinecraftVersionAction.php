@@ -3,6 +3,7 @@
 namespace App\Actions\MinecraftVersion;
 
 use App\Exceptions\MinecraftVersionDeleteException;
+use App\Events\MinecraftServerUpdated;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use DB;
@@ -25,11 +26,19 @@ class DeleteMinecraftVersionAction
                 );
             }
 
+            $serverIds = MinecraftServer::query()
+                ->where('minecraft_version_id', $minecraftVersion->id)
+                ->pluck('id');
+
             MinecraftServer::query()
-            ->where('minecraft_version_id', $minecraftVersion->id)
-            ->update([
-                'minecraft_version_id' => $replacementVersion->id
-            ]);
+                ->where('minecraft_version_id', $minecraftVersion->id)
+                ->update([
+                    'minecraft_version_id' => $replacementVersion->id
+                ]);
+
+            MinecraftServer::query()->whereIn('id', $serverIds)->get()->each(
+                fn (MinecraftServer $server) => MinecraftServerUpdated::dispatch($server)
+            );
 
             $minecraftVersion->delete();
         });

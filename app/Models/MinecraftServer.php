@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\enums\MinecraftServerStatus;
 use App\Events\MinecraftServerStatusChanged;
+use App\Events\MinecraftServerUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -48,6 +49,13 @@ class MinecraftServer extends Model
         'minecraft_server_id' => 'integer',
         'status' => MinecraftServerStatus::class
     ];
+
+    protected static function booted()
+    {
+        static::updated(function (MinecraftServer $server) {
+            MinecraftServerUpdated::dispatch($server);
+        });
+    }
 
     public function owner() 
     {

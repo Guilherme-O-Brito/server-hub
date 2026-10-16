@@ -86,7 +86,6 @@ class StopMinecraftServerJob implements ShouldQueue, ShouldBeEncrypted
                 'last_error' => null
             ]);
             $server->updateStatus(MinecraftServerStatus::Stopped);
-            
         });
     }
 

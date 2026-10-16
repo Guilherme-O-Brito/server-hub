@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MinecraftServerUpdated;
 use App\Models\MinecraftServer;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class MinecraftServerAdminController extends Controller
         }
 
         $minecraftServer->admins()->syncWithoutDetaching([$user->id]);
+        MinecraftServerUpdated::dispatch($minecraftServer);
 
         return response()->json(['message' => 'Admin added successfully.'], 201);
 
@@ -50,6 +52,8 @@ class MinecraftServerAdminController extends Controller
         if ($detached === 0) {
             return response()->json(['message' => 'User is not an admin.'], 404);
         }
+
+        MinecraftServerUpdated::dispatch($minecraftServer);
 
         return response()->json(['message' => 'Admin removed successfully.']);
     }

@@ -31,15 +31,12 @@ class MinecraftServerStatusChanged implements ShouldBroadcast, ShouldDispatchAft
      */
     public function broadcastOn(): array
     {
-
-        $channels = [
-            new PrivateChannel("servers.minecraft.{$this->server->id}")
-        ];
-
         $userIds = $this->server->admins()->pluck('users.id');
         $ownerId = $this->server->owner->id;
 
-        $channels[] = new PrivateChannel("users.{$ownerId}.servers");
+        $channels = [
+            new PrivateChannel("users.{$ownerId}.servers")
+        ];
 
         foreach ($userIds as $userId) {
             $channels[] = new PrivateChannel("users.{$userId}.servers");

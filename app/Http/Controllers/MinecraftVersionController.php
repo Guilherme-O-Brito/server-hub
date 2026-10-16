@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\MinecraftVersion\DeleteMinecraftVersionAction;
 use App\Exceptions\MinecraftVersionDeleteException;
+use App\Events\MinecraftServerUpdated;
+use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -44,6 +46,11 @@ class MinecraftVersionController extends Controller
         $minecraftVersion->is_enabled = !$minecraftVersion->is_enabled;
 
         $minecraftVersion->save();
+
+        MinecraftServer::query()
+            ->where('minecraft_version_id', $minecraftVersion->id)
+            ->get()
+            ->each(fn (MinecraftServer $server) => MinecraftServerUpdated::dispatch($server));
         
         return response()->json(['message' => 'Minecraft version toggled.']);
     }
