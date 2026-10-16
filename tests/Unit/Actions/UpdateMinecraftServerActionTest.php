@@ -4,12 +4,14 @@ namespace Tests\Unit\Actions;
 
 use App\Actions\UpdateMinecraftServerAction;
 use App\Exceptions\MinecraftServerStateException;
+use App\Events\MinecraftServerStatusChanged;
 use App\Jobs\UpdateMinecraftInfrastructureJob;
 use App\enums\MinecraftServerStatus;
 use App\Models\MinecraftServer;
 use App\Models\MinecraftVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
@@ -43,6 +45,8 @@ class UpdateMinecraftServerActionTest extends TestCase
 
         $action = new UpdateMinecraftServerAction();
 
+        Event::fake();
+
         $action->execute($user, $minecraftServer, [
             'server_name' => 'Updated Server',
             'difficulty' => 2,
@@ -63,6 +67,11 @@ class UpdateMinecraftServerActionTest extends TestCase
         $this->assertValidOperationId($minecraftServer->operation_id);
         $this->assertNotSame($this->operationId(12), $minecraftServer->operation_id);
         $this->assertNull($minecraftServer->last_error);
+
+        Event::assertDispatched(MinecraftServerStatusChanged::class, function (MinecraftServerStatusChanged $event) use ($minecraftServer) {
+            return $event->server->is($minecraftServer)
+                && $event->server->status === MinecraftServerStatus::Provisioning;
+        });
 
         Queue::assertPushed(UpdateMinecraftInfrastructureJob::class, function (UpdateMinecraftInfrastructureJob $job) use ($minecraftServer) {
             return $job->serverId === $minecraftServer->id
