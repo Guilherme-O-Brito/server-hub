@@ -48,7 +48,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Server-Hub ${{ github.ref_name }}
-          generate_release_notes: true
+          generate_release_notes: false
           files: |
             server-hub-${{ env.VERSION }}.tar.gz
             k3s-declaratives-${{ env.VERSION }}.tar.gz
