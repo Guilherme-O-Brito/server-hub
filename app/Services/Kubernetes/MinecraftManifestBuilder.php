@@ -65,12 +65,14 @@ class MinecraftManifestBuilder
                     'app' => $minecraftServer->getDeployName(),
                 ],
                 'ports' => [
-                    [
+                    [   
+                        'name' => 'rcon',
                         'protocol' => 'TCP',
                         'port' => 25575,
                         'targetPort' => 25575,
                     ],
                     [   
+                        'name' => 'socket',
                         'protocol' => 'TCP',
                         'port' => 25576,
                         'targetPort' => 25576
