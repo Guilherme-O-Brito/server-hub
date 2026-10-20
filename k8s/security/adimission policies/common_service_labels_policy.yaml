@@ -1,0 +1,49 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+
+metadata:
+  name: server-hub-games-service-common-labels
+
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - services
+
+  validations:
+    - expression: >
+        has(object.metadata.labels) &&
+        'app.kubernetes.io/name' in object.metadata.labels &&
+        'app.kubernetes.io/managed-by' in object.metadata.labels &&
+        'server-hub.io/workload' in object.metadata.labels &&
+        object.metadata.labels['app.kubernetes.io/name'] in
+          ['execution-slot', 'minecraft-console']
+      message: "Services in games must include the common Server-Hub labels and identify an approved service type."
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+
+metadata:
+  name: server-hub-games-service-common-labels
+
+spec:
+  policyName: server-hub-games-service-common-labels
+
+  validationActions:
+    - Deny
+    - Audit
+
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: games

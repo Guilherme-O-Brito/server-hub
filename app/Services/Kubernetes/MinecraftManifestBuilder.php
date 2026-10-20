@@ -43,6 +43,43 @@ class MinecraftManifestBuilder
         ];
     }
 
+    public function service(MinecraftServer $minecraftServer): array
+    {
+        return [
+            'apiVersion' => 'v1',
+            'kind' => 'Service',
+            'metadata' => [
+                'name' => "{$minecraftServer->getServiceName()}",
+                'namespace' => 'games',
+                'labels' => [
+                    'app.kubernetes.io/name' => 'minecraft-console',
+                    'app.kubernetes.io/managed-by' => 'server-hub',
+                    'server-hub.io/workload' => 'minecraft-console-service',
+                    'server-hub.io/game' => 'minecraft',
+                    'server-hub.io/server-id' => (string) $minecraftServer->id,
+                ],
+            ],
+            'spec' => [
+                'type' => 'ClusterIP',
+                'selector' => [
+                    'app' => $minecraftServer->getDeployName(),
+                ],
+                'ports' => [
+                    [
+                        'protocol' => 'TCP',
+                        'port' => 25575,
+                        'targetPort' => 25575,
+                    ],
+                    [   
+                        'protocol' => 'TCP',
+                        'port' => 25576,
+                        'targetPort' => 25576
+                    ]
+                ]
+            ]
+        ];
+    }
+
     public function server_env(MinecraftServer $minecraftServer): array
     {
         return [
@@ -74,7 +111,15 @@ class MinecraftManifestBuilder
                 'ALLOW_FLIGHT' => $minecraftServer->allow_flight ? 'true' : 'false',
                 'ANNOUNCE_PLAYER_ACHIEVEMENTS' => 'true',
                 'SERVER_NAME' => "$minecraftServer->server_name",
-                'SEED' => "$minecraftServer->seed"
+                'SEED' => "$minecraftServer->seed",
+                'ENABLE_RCON' => 'true',
+                'RCON_PORT' => '25575',
+                'WEBSOCKET_CONSOLE' => 'true',
+                'WEBSOCKET_ADDRESS' => '0.0.0.0:25576',
+                'WEBSOCKET_LOG_BUFFER_SIZE' => '200',
+                //'WEBSOCKET_ALLOWED_ORIGINS' => 'http://server-hub.internal',
+                'WEBSOCKET_DISABLE_ORIGIN_CHECK' => 'true',
+                'WEBSOCKET_DISABLE_AUTHENTICATION' => 'false',
             ]
         ];
     }
@@ -137,6 +182,18 @@ class MinecraftManifestBuilder
                                     [
                                         'configMapRef' => [
                                             'name' => $minecraftServer->getEnvName(),
+                                        ],
+                                    ],
+                                ],
+
+                                'env' => [
+                                    [
+                                        'name' => 'RCON_PASSWORD',
+                                        'valueFrom' => [
+                                            'secretKeyRef' => [
+                                                'name' => "minecraft-secret",
+                                                'key' => 'password',
+                                            ],
                                         ],
                                     ],
                                 ],

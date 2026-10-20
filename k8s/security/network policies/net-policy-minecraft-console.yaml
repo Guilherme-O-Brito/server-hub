@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: minecraft-console-only-from-laravel
+  namespace: games
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: minecraft
+      app.kubernetes.io/managed-by: server-hub
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: server-hub
+          podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - laravel
+                  - laravel-worker
+
+      ports:
+        - protocol: TCP
+          port: 25575
+        - protocol: TCP
+          port: 25576
+
+    # Preserva a entrada de jogadores pelo Service NodePort dos execution slots.
+    - ports:
+        - protocol: TCP
+          port: 25565

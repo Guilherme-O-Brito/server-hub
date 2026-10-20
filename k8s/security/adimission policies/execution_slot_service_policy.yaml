@@ -22,6 +22,18 @@ spec:
   validations:
 
     - expression: >
+        has(object.metadata.labels) &&
+        object.metadata.labels.size() == 4 &&
+        object.metadata.labels['app.kubernetes.io/name'] == 'execution-slot' &&
+        object.metadata.labels['app.kubernetes.io/managed-by'] == 'server-hub' &&
+        object.metadata.labels['server-hub.io/workload'] == 'execution-slot-service' &&
+        object.metadata.labels['server-hub.io/slot-number'].matches('^[0-9]+$') &&
+        object.metadata.name ==
+          'server-service-' + object.metadata.labels['server-hub.io/slot-number']
+      message: "ExecutionSlot Services must have the approved labels and name format."
+
+    - expression: >
+        object.metadata.name.matches('^server-service-[0-9]+$') &&
         object.spec.type == 'NodePort'
       message: "Only NodePort Services are allowed in games."
 
@@ -65,3 +77,6 @@ spec:
     namespaceSelector:
       matchLabels:
         kubernetes.io/metadata.name: games
+    objectSelector:
+      matchLabels:
+        app.kubernetes.io/name: execution-slot

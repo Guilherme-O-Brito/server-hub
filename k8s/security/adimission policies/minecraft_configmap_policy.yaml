@@ -27,7 +27,7 @@ spec:
 
     - expression: >
         has(object.data) &&
-        object.data.size() == 21 &&
+        object.data.size() == 28 &&
         [
           'EULA',
           'MEMORY',
@@ -49,7 +49,14 @@ spec:
           'ALLOW_FLIGHT',
           'ANNOUNCE_PLAYER_ACHIEVEMENTS',
           'SERVER_NAME',
-          'SEED'
+          'SEED',
+          'ENABLE_RCON',
+          'RCON_PORT',
+          'WEBSOCKET_CONSOLE',
+          'WEBSOCKET_ADDRESS',
+          'WEBSOCKET_LOG_BUFFER_SIZE',
+          'WEBSOCKET_DISABLE_ORIGIN_CHECK',
+          'WEBSOCKET_DISABLE_AUTHENTICATION'
         ].all(k, k in object.data)
       message: "Minecraft ConfigMaps must contain exactly the approved environment keys."
 
@@ -65,7 +72,14 @@ spec:
         object.data['ENABLE_WHITELIST'] == 'true' &&
         object.data['PREVENT_PROXY_CONNECTIONS'] == 'false' &&
         object.data['PLAYER_IDLE_TIMEOUT'] == '5' &&
-        object.data['ANNOUNCE_PLAYER_ACHIEVEMENTS'] == 'true'
+        object.data['ANNOUNCE_PLAYER_ACHIEVEMENTS'] == 'true' &&
+        object.data['ENABLE_RCON'] == 'true' &&
+        object.data['RCON_PORT'] == '25575' &&
+        object.data['WEBSOCKET_CONSOLE'] == 'true' &&
+        object.data['WEBSOCKET_ADDRESS'] == '0.0.0.0:25576' &&
+        object.data['WEBSOCKET_LOG_BUFFER_SIZE'] == '200' &&
+        object.data['WEBSOCKET_DISABLE_ORIGIN_CHECK'] == 'true' &&
+        object.data['WEBSOCKET_DISABLE_AUTHENTICATION'] == 'false'
       message: "Fixed Minecraft environment settings may not be changed."
 
     - expression: >

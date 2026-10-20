@@ -143,4 +143,9 @@ class MinecraftServer extends Model
     {
         return "minecraft-{$this->id}-storage";
     }
+
+    public function getServiceName(): string
+    {
+        return "minecraft-{$this->id}-console-service";
+    }
 }

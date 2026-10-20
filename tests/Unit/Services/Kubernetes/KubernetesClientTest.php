@@ -63,6 +63,24 @@ class KubernetesClientTest extends TestCase
         });
     }
 
+    public function test_create_service_sends_expected_post_request(): void
+    {
+        Http::fake([
+            '*' => Http::response(['ok' => true], 201),
+        ]);
+
+        $client = $this->newClient();
+        $manifest = ['kind' => 'Service'];
+
+        $client->createService($manifest);
+
+        Http::assertSent(function (HttpRequest $request) use ($manifest) {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://kubernetes.default.svc/api/v1/namespaces/games/services'
+                && $request->data() === $manifest;
+        });
+    }
+
     public function test_update_config_map_sends_expected_put_request(): void
     {
         Http::fake([
@@ -94,6 +112,22 @@ class KubernetesClientTest extends TestCase
         Http::assertSent(function (HttpRequest $request) {
             return $request->method() === 'DELETE'
                 && $request->url() === 'https://kubernetes.default.svc/api/v1/namespaces/games/configmaps/minecraft-env-1';
+        });
+    }
+
+    public function test_delete_service_sends_expected_delete_request(): void
+    {
+        Http::fake([
+            '*' => Http::response([], 200),
+        ]);
+
+        $client = $this->newClient();
+
+        $client->deleteService('minecraft-1-console-service');
+
+        Http::assertSent(function (HttpRequest $request) {
+            return $request->method() === 'DELETE'
+                && $request->url() === 'https://kubernetes.default.svc/api/v1/namespaces/games/services/minecraft-1-console-service';
         });
     }
 

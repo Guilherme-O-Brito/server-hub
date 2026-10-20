@@ -107,7 +107,13 @@ spec:
     # Configuração somente através de um ConfigMap.
     - expression: >
         variables.containers.all(c,
-          (!has(c.env) || c.env.size() == 0) &&
+          has(c.env) &&
+          c.env.size() == 1 &&
+          c.env[0].name == 'RCON_PASSWORD' &&
+          has(c.env[0].valueFrom) &&
+          has(c.env[0].valueFrom.secretKeyRef) &&
+          c.env[0].valueFrom.secretKeyRef.name == 'minecraft-secret' &&
+          c.env[0].valueFrom.secretKeyRef.key == 'password' &&
           has(c.envFrom) &&
           c.envFrom.size() == 1 &&
           c.envFrom.all(e,

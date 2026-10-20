@@ -41,6 +41,7 @@ class ProvisioningServiceTest extends TestCase
         $configMapManifest = ['kind' => 'ConfigMap'];
         $pvcManifest = ['kind' => 'PersistentVolumeClaim'];
         $deploymentManifest = ['kind' => 'Deployment'];
+        $serviceManifest = ['kind' => 'Service'];
 
         $builder->expects($this->once())
             ->method('server_env')
@@ -57,6 +58,11 @@ class ProvisioningServiceTest extends TestCase
             ->with($minecraftServer)
             ->willReturn($deploymentManifest);
 
+        $builder->expects($this->once())
+            ->method('service')
+            ->with($minecraftServer)
+            ->willReturn($serviceManifest);
+
         $client->expects($this->once())
             ->method('createConfigMap')
             ->with($configMapManifest)
@@ -70,6 +76,11 @@ class ProvisioningServiceTest extends TestCase
         $client->expects($this->once())
             ->method('createDeployment')
             ->with($deploymentManifest)
+            ->willReturn([]);
+
+        $client->expects($this->once())
+            ->method('createService')
+            ->with($serviceManifest)
             ->willReturn([]);
 
         $service = new ProvisioningService($builder, $slotBuilder, $client);
@@ -108,6 +119,10 @@ class ProvisioningServiceTest extends TestCase
         $client->expects($this->once())
             ->method('deleteConfigMap')
             ->with("minecraft-env-{$minecraftServer->id}");
+
+        $client->expects($this->once())
+            ->method('deleteService')
+            ->with("minecraft-{$minecraftServer->id}-console-service");
 
         $service = new ProvisioningService($builder, $slotBuilder, $client);
 

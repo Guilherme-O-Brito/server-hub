@@ -26,6 +26,12 @@ class ExecutionSlotManifestBuilder
             'metadata' => [
                 'name' => "{$executionSlot->service_name}",
                 'namespace' => 'games',
+                'labels' => [
+                    'app.kubernetes.io/name' => 'execution-slot',
+                    'app.kubernetes.io/managed-by' => 'server-hub',
+                    'server-hub.io/workload' => 'execution-slot-service',
+                    'server-hub.io/slot-number' => (string) $executionSlot->slot_number,
+                ],
             ],
             'spec' => [
                 'type' => 'NodePort',

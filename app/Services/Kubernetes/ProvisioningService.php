@@ -19,6 +19,8 @@ class ProvisioningService
 
         $this->client->createDeployment($this->minecraftBuilder->deployment($server));
 
+        $this->client->createService($this->minecraftBuilder->service($server));
+
     }
 
     public function updateMinecraftServer(MinecraftServer $server): void
@@ -33,6 +35,8 @@ class ProvisioningService
         $this->client->deletePvc($server->getStorageName());
 
         $this->client->deleteConfigMap($server->getEnvName());
+
+        $this->client->deleteService($server->getServiceName());
     }
 
     public function startMinecraftServer(MinecraftServer $server): void

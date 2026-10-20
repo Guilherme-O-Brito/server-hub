@@ -40,6 +40,7 @@ class MinecraftManifestBuilderTest extends TestCase
         $pvc = $builder->pvc($minecraftServer);
         $configMap = $builder->server_env($minecraftServer);
         $deployment = $builder->deployment($minecraftServer);
+        $consoleService = $builder->service($minecraftServer);
 
         $expectedLabels = [
             'app.kubernetes.io/name' => 'minecraft',
@@ -66,6 +67,24 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame('false', $configMap['data']['FORCE_GAMEMODE']);
         $this->assertSame('true', $configMap['data']['ALLOW_FLIGHT']);
         $this->assertSame('Steve_01,Alex_02', $configMap['data']['WHITELIST']);
+        $this->assertSame(28, count($configMap['data']));
+        $this->assertSame([
+            'ENABLE_RCON' => 'true',
+            'RCON_PORT' => '25575',
+            'WEBSOCKET_CONSOLE' => 'true',
+            'WEBSOCKET_ADDRESS' => '0.0.0.0:25576',
+            'WEBSOCKET_LOG_BUFFER_SIZE' => '200',
+            'WEBSOCKET_DISABLE_ORIGIN_CHECK' => 'true',
+            'WEBSOCKET_DISABLE_AUTHENTICATION' => 'false',
+        ], array_intersect_key($configMap['data'], array_flip([
+            'ENABLE_RCON',
+            'RCON_PORT',
+            'WEBSOCKET_CONSOLE',
+            'WEBSOCKET_ADDRESS',
+            'WEBSOCKET_LOG_BUFFER_SIZE',
+            'WEBSOCKET_DISABLE_ORIGIN_CHECK',
+            'WEBSOCKET_DISABLE_AUTHENTICATION',
+        ])));
 
         $this->assertSame('Deployment', $deployment['kind']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $deployment['metadata']['name']);
@@ -81,5 +100,50 @@ class MinecraftManifestBuilderTest extends TestCase
         $this->assertSame("minecraft-{$minecraftServer->id}-storage", $deployment['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName']);
         $this->assertSame(25565, $deployment['spec']['template']['spec']['containers'][0]['ports'][0]['containerPort']);
         $this->assertSame('itzg/minecraft-server:latest', $deployment['spec']['template']['spec']['containers'][0]['image']);
+        $this->assertSame([
+            [
+                'name' => 'RCON_PASSWORD',
+                'valueFrom' => [
+                    'secretKeyRef' => [
+                        'name' => 'minecraft-secret',
+                        'key' => 'password',
+                    ],
+                ],
+            ],
+        ], $deployment['spec']['template']['spec']['containers'][0]['env']);
+
+        $this->assertSame([
+            'apiVersion' => 'v1',
+            'kind' => 'Service',
+            'metadata' => [
+                'name' => "minecraft-{$minecraftServer->id}-console-service",
+                'namespace' => 'games',
+                'labels' => [
+                    'app.kubernetes.io/name' => 'minecraft-console',
+                    'app.kubernetes.io/managed-by' => 'server-hub',
+                    'server-hub.io/workload' => 'minecraft-console-service',
+                    'server-hub.io/game' => 'minecraft',
+                    'server-hub.io/server-id' => (string) $minecraftServer->id,
+                ],
+            ],
+            'spec' => [
+                'type' => 'ClusterIP',
+                'selector' => [
+                    'app' => "minecraft-{$minecraftServer->id}",
+                ],
+                'ports' => [
+                    [
+                        'protocol' => 'TCP',
+                        'port' => 25575,
+                        'targetPort' => 25575,
+                    ],
+                    [
+                        'protocol' => 'TCP',
+                        'port' => 25576,
+                        'targetPort' => 25576,
+                    ],
+                ],
+            ],
+        ], $consoleService);
     }
 }

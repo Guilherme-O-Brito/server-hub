@@ -31,4 +31,11 @@ class MinecraftServerTest extends TestCase
         });
         Event::assertDispatchedTimes(MinecraftServerStatusChanged::class, 1);
     }
+
+    public function test_get_service_name_returns_the_console_service_name(): void
+    {
+        $server = MinecraftServer::factory()->create(['id' => 42]);
+
+        $this->assertSame('minecraft-42-console-service', $server->getServiceName());
+    }
 }

@@ -41,6 +41,12 @@ class ExecutionSlotManifestBuilderTest extends TestCase
         $this->assertSame('Service', $service['kind']);
         $this->assertSame('server-service-1', $service['metadata']['name']);
         $this->assertSame('games', $service['metadata']['namespace']);
+        $this->assertSame([
+            'app.kubernetes.io/name' => 'execution-slot',
+            'app.kubernetes.io/managed-by' => 'server-hub',
+            'server-hub.io/workload' => 'execution-slot-service',
+            'server-hub.io/slot-number' => '1',
+        ], $service['metadata']['labels']);
         $this->assertSame('NodePort', $service['spec']['type']);
         $this->assertSame("minecraft-{$minecraftServer->id}", $service['spec']['selector']['app']);
         $this->assertSame('TCP', $service['spec']['ports'][0]['protocol']);

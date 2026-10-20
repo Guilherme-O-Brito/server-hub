@@ -1,0 +1,80 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+
+metadata:
+  name: server-hub-minecraft-console-service
+
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - services
+
+  validations:
+
+    - expression: >
+        has(object.metadata.labels) &&
+        object.metadata.labels.size() == 5 &&
+        object.metadata.labels['app.kubernetes.io/name'] == 'minecraft-console' &&
+        object.metadata.labels['app.kubernetes.io/managed-by'] == 'server-hub' &&
+        object.metadata.labels['server-hub.io/workload'] == 'minecraft-console-service' &&
+        object.metadata.labels['server-hub.io/game'] == 'minecraft' &&
+        object.metadata.labels['server-hub.io/server-id'].matches('^[0-9]+$') &&
+        object.metadata.name ==
+          'minecraft-' + object.metadata.labels['server-hub.io/server-id'] + '-console-service'
+      message: "Minecraft console Services must have the approved labels and name format."
+
+    - expression: >
+        object.spec.type == 'ClusterIP'
+      message: "Minecraft console Services must use ClusterIP."
+
+    - expression: >
+        object.metadata.name.matches('^minecraft-[0-9]+-console-service$') &&
+        object.spec.selector.size() == 1 &&
+        'app' in object.spec.selector &&
+        object.spec.selector['app'] ==
+          object.metadata.name.replace('-console-service', '')
+      message: "Minecraft console Service name and selector must match the approved Builder format."
+
+    - expression: >
+        object.spec.ports.size() == 2 &&
+        object.spec.ports.all(p, p.protocol == 'TCP') &&
+        object.spec.ports.exists(p, p.port == 25575 && p.targetPort == 25575) &&
+        object.spec.ports.exists(p, p.port == 25576 && p.targetPort == 25576)
+      message: "Minecraft console Services may expose only TCP ports 25575 and 25576."
+
+    - expression: >
+        !has(object.spec.externalIPs) ||
+        object.spec.externalIPs.size() == 0
+      message: "externalIPs are not allowed on Minecraft console Services."
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+
+metadata:
+  name: server-hub-minecraft-console-service-games
+
+spec:
+  policyName: server-hub-minecraft-console-service
+
+  validationActions:
+    - Deny
+    - Audit
+
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: games
+    objectSelector:
+      matchLabels:
+        app.kubernetes.io/name: minecraft-console
