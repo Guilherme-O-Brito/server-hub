@@ -142,6 +142,36 @@ class SendMinecraftServerCommandTest extends TestCase
         )->assertStatus(502);
     }
 
+    public function test_console_commands_are_limited_to_five_requests_per_second_and_limit_resets(): void
+    {
+        $owner = User::factory()->create();
+        $server = MinecraftServer::factory()->for($owner, 'owner')->create(['status' => 'running']);
+        $action = $this->createMock(SendMinecraftServerCommandAction::class);
+        $action->expects($this->exactly(6))
+            ->method('execute')
+            ->willReturn('ok');
+        $this->app->instance(SendMinecraftServerCommandAction::class, $action);
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->actingAs($owner)->postJson(
+                "/servers/minecraft/{$server->id}/console/commands",
+                ['command' => 'list']
+            )->assertOk()->assertExactJson(['response' => 'ok']);
+        }
+
+        $this->actingAs($owner)->postJson(
+            "/servers/minecraft/{$server->id}/console/commands",
+            ['command' => 'list']
+        )->assertTooManyRequests();
+
+        $this->travel(2)->seconds();
+
+        $this->actingAs($owner)->postJson(
+            "/servers/minecraft/{$server->id}/console/commands",
+            ['command' => 'list']
+        )->assertOk()->assertExactJson(['response' => 'ok']);
+    }
+
     public function test_non_running_server_returns_409_with_state_error_message(): void
     {
         $owner = User::factory()->create();
