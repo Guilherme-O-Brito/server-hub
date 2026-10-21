@@ -7,10 +7,12 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "amphp/websocket-client": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/reverb": "^1.0",
         "laravel/tinker": "^2.10.1",
-        "tightenco/ziggy": "^2.6"
+        "tightenco/ziggy": "^2.6",
+        "xpaw/php-source-query-class": "^6.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
