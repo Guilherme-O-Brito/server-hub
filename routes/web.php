@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExecutionSlotController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\MinecraftConsoleController;
 use App\Http\Controllers\MinecraftOperatorController;
 use App\Http\Controllers\MinecraftServerAdminController;
 use App\Http\Controllers\MinecraftServerController;
@@ -70,6 +71,8 @@ Route::prefix('/servers')->group(function () {
         });
         // index minecraft versions
         Route::get('/version', [MinecraftVersionController::class, 'index'])->name('index.minecraftVersion');
+        // minecraft console routes
+        Route::post('/{minecraftServer}/console/commands', [MinecraftConsoleController::class, 'sendCommand'])->name('command.minecraftServer.console');
         
     });
 });

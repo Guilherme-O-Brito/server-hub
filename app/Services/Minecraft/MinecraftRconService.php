@@ -2,6 +2,7 @@
 
 namespace App\Services\Minecraft;
 
+use Exception;
 use xPaw\SourceQuery\SourceQuery;
 
 class MinecraftRconService
@@ -18,6 +19,5 @@ class MinecraftRconService
         } finally {
             $client->Disconnect();
         }
-
     }
 }
