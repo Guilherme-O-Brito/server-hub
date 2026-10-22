@@ -29,7 +29,7 @@ COPY . .
 
 RUN npm run build
 
-FROM dunglas/frankenphp:1.12.3-php8.5.6-bookworm
+FROM dunglas/frankenphp:1.13.2-builder-php8.5.12-bookworm
 
 WORKDIR /app
 
